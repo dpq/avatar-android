@@ -93,5 +93,14 @@
                               android:layout_above="@+id/StartButton"
                               android:layout_centerHorizontal="true"
                               android:text="Send link" />
+
+                          <SurfaceView
+                              android:id="@+id/CameraPreview"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:layout_above="@+id/SendLinkButton"
+                              android:layout_below="@+id/LeftEngineForward"
+                              android:padding="100dp"
+                              android:layout_centerHorizontal="true" />
   
     </RelativeLayout>
