@@ -1,20 +1,11 @@
 package ru.glavbot.test1;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+//import com.ryong21.R;
 
 import edu.gvsu.masl.asynchttp.ConnectionManager;
 import edu.gvsu.masl.asynchttp.ConnectionResponceHandler;
@@ -24,35 +15,23 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
-import android.hardware.Camera;
-import android.hardware.Camera.ErrorCallback;
-import android.hardware.Camera.Parameters;
-import android.hardware.Camera.PreviewCallback;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
+
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
+
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.os.ParcelFileDescriptor;
-import android.os.PowerManager;
+
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Surface;
+
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -60,6 +39,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import android.widget.VideoView;
 
 public class Test1Activity extends Activity {
     /** Called when the activity is first created. */
@@ -75,6 +55,8 @@ public class Test1Activity extends Activity {
      private  ToggleButton startButton;
      private Button sendLinkButton;
      private SurfaceView cameraPreview;
+     private VideoView videoView;
+     private VideoSender videoSender;
  
      private static final int SEND_CONTROL_LINK_DIALOG = 1001;
      private static final String SHARED_PREFS = "RobotSharedPrefs";
@@ -83,7 +65,7 @@ public class Test1Activity extends Activity {
      private static final String SHARED_PREFS_TOKEN = "token";    
      
      private static final String SERVER_SCHEME = "http";    
-     private static final String SERVER_AUTHORITY = "auth.glavbot.ru"; 
+     static final String SERVER_AUTHORITY = "auth.glavbot.ru"; 
      private static final String SHARE_PATH = "share"; 
      private static final String CMD_PATH = "cmd"; 
      private static final String MACADDR_PARAM = "macaddr";
@@ -93,7 +75,7 @@ public class Test1Activity extends Activity {
      private static final String TOKEN_PARAM = "token";
      private static final String MODE_PARAM = "mode";
      private static final String MODE_PARAM_VALUE = "read";
-     private static final int SERVER_VIDEO_PORT = 10000;
+   //  private static final int SERVER_VIDEO_PORT = 10000;
 
      
      
@@ -104,9 +86,31 @@ public class Test1Activity extends Activity {
      
    //  protected PowerManager.WakeLock mWakeLock;
 
+ 	WebView webView;
+
+ //	String bodyHtml;
+ //	private static final String rtmpUrl=	"rtmp://dev.glavbot.ru/flvplayback";
+ 	//private static final String fileName;
+ //	private static final Button refreshButton;
+// 	private static final String htmlPost = "</body></html>";
+// 	private static final String htmlPre = "<!DOCTYPE html>" 
+// 		    					+ "<html lang=\"en\">"
+// 		    					+ "<head><meta charset=\"utf-8\">" 
+// 		    					+ "</head>"
+// 		    					+ "<body style='margin:0; pading:0;"
+// 		    					+ " background-color: #000000;'>";
+//
+// 	private static final String htmlCode = "<embed " 
+// 		    							+ "type=\"application/x-shockwave-flash\""
+// 		    							+ "id=\"player1\" " + "name=\"player1\" "
+// 		    							+ "src=\"http://dev.glavbot.ru/test/rec/GBread.swf\""
+// 		    							+ "width=\"520\""
+// 		    							+ "height=\"440\"" /*+ " flashvars=@FILESRC@"*/
+// 		    							+ "allowfullscreen=\"true\"" 
+// 		    							+ "allowscripaccess=\"always\""
+// 		    							+ "/>	";
 
 
-     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,22 +143,38 @@ public class Test1Activity extends Activity {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				// TODO Auto-generated method stub
-				if(isChecked)
+				if(isChecked/*&&(!isRunning)*/)
 				{
-					runCommands();
 					isRunning=true;
+					runCommands();
+					//startPlayer();
 				}
 				else
+				//if((!isChecked)&&isRunning)
 				{
+					isRunning=false;
 					ConnectionManager.getInstance().stopCurrent();
 					doHangup(true);
-					isRunning=false;
+					
 				}
 			}
 			
 		});
+		
+		/*webView = (WebView) findViewById(R.id.webview);
+
+		webView.getSettings().setJavaScriptEnabled(true);
+		webView.getSettings().setAllowFileAccess(true);
+		webView.getSettings().setPluginsEnabled(true);
+		webView.getSettings().setSupportZoom(true);
+		webView.getSettings().setAppCacheEnabled(true);
+		*/
+		videoView= (VideoView)findViewById(R.id.videoView);
+		
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        senderThread.start();
+        
+        videoSender = new VideoSender(this, cameraPreview, videoView);
+        //senderThread.start();
         /* This code together with the one in onDestroy() 
          * will make the screen be always on until this Activity gets destroyed. */
       //  final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -164,12 +184,42 @@ public class Test1Activity extends Activity {
     }
     
 
+/*	private void startPlayer() {
+
+		//rtmpUrl = "rtmp://dev.glavbot.ru/flvplayback";
+		//fileName = etFileName.getText().toString();
+		//if (fileName.endsWith(".flv")) {
+		//	fileName = "flv:" + fileName;
+		//}
+
+		bodyHtml = htmlCode;
+		bodyHtml = bodyHtml.replaceAll("@FILESRC@", 
+				"\"token=" + session_token
+				+ "&streamer=" + rtmpUrl + "\"");
+		webView.loadDataWithBaseURL("http://127.0.0.1",
+				htmlPre + bodyHtml
+				+ htmlPost, "text/html", "UTF-8", null);
+	}
+	private void stopPlayer() {
+
+		//rtmpUrl = "rtmp://dev.glavbot.ru/flvplayback";
+		//fileName = etFileName.getText().toString();
+		//if (fileName.endsWith(".flv")) {
+		//	fileName = "flv:" + fileName;
+		//}
+
+		webView.loadDataWithBaseURL("http://127.0.0.1",
+				htmlPre 
+				+ htmlPost, "text/html", "UTF-8", null);
+	}
+*/
 
     @Override
     protected void onPause() {
         super.onPause();
      //   releaseMediaRecorder();       // if you are using MediaRecorder, release it first
-        releaseCamera();              // release the camera immediately on pause event
+        //releaseCamera();              // release the camera immediately on pause event
+        videoSender.stopCamera();
         ConnectionManager.getInstance().stopCurrent();
         
 
@@ -180,10 +230,16 @@ public class Test1Activity extends Activity {
     protected void onResume()
     {
     	super.onResume();
+    	
     	SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
     	email=prefs.getString(SHARED_PREFS_EMAIL, null);
     	ttl=prefs.getInt(SHARED_PREFS_TTL, 0);
     	session_token = prefs.getString( SHARED_PREFS_TOKEN, null);
+    	//stopPlayer();
+    	if(isRunning)
+    	{
+    		videoSender.startCamera();
+    	}
     	
     }
 	
@@ -191,11 +247,7 @@ public class Test1Activity extends Activity {
     @Override
     public void onDestroy() {
        // this.mWakeLock.release();
-        if(mChildHandler!= null)
-        {
-        	mChildHandler.getLooper().quit();
-        }
-        releaseCamera();
+    	videoSender.stopCamera();
         super.onDestroy();
     //    releaseMediaRecorder();
 
@@ -352,350 +404,16 @@ public class Test1Activity extends Activity {
 		
 	};
 	
-	Socket socket = null; 
+//	Socket socket = null; 
 
-	ParcelFileDescriptor pfd = null; 
+	//ParcelFileDescriptor pfd = null; 
 
-	MediaRecorder recorder =  new MediaRecorder();
-	
-	protected Camera getFrontCamera()
-	{
-		Camera.CameraInfo inf = new Camera.CameraInfo();
-		for(int i = 0; i< Camera.getNumberOfCameras(); i++)
-		{
-			
-			Camera.getCameraInfo(i, inf);
-			if(inf.facing==Camera.CameraInfo.CAMERA_FACING_FRONT)
-			{
-				Camera c =Camera.open(i);
-				setCameraDisplayOrientation(inf,c);
-				c.setErrorCallback(new ErrorCallback(){
-
-					public void onError(int error, Camera camera) {
-						// TODO Auto-generated method stub
-						switch(error)
-						{
-						case Camera.CAMERA_ERROR_SERVER_DIED:
-						case Camera.CAMERA_ERROR_UNKNOWN:
-								stopCamera();
-								camera.release();
-								reallyStartCamera();
-							break;
-						}
-					}
-					
-				});
-				return c;
-			}
-		}
-		return null;
-	}
+	//MediaRecorder recorder =  new MediaRecorder();
 	
 	
-	Camera frontCamera;
 	
 	
-
 	
-	 public  void setCameraDisplayOrientation(
-			 Camera.CameraInfo info, Camera camera) {
-
-	     int rotation = getWindowManager().getDefaultDisplay()
-	             .getRotation();
-	     int degrees = 0;
-	     switch (rotation) {
-	         case Surface.ROTATION_0: degrees = 0; break;
-	         case Surface.ROTATION_90: degrees = 90; break;
-	         case Surface.ROTATION_180: degrees = 180; break;
-	         case Surface.ROTATION_270: degrees = 270; break;
-	     }
-
-	     int result;
-	    /* if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-	         result = (info.orientation + degrees) % 360;
-	         result = (360 - result) % 360;  // compensate the mirror
-	     } else {  // back-facing*/
-	         result = (info.orientation - degrees + 360) % 360;
-	    /* }*/
-	     camera.setDisplayOrientation(result);
-	 }
-
-	 public static final int MEDIA_TYPE_IMAGE = 1;
-	 public static final int MEDIA_TYPE_VIDEO = 2;
-
-	 /** Create a file Uri for saving an image or video */
-/*	 private static Uri getOutputMediaFileUri(int type){
-	       return Uri.fromFile(getOutputMediaFile(type));
-	 }*/
-
-	 /** Create a File for saving an image or video */
-	 private File getOutputMediaFile(int type){
-	     // To be safe, you should check that the SDCard is mounted
-	     // using Environment.getExternalStorageState() before doing this.
-		 File mediaStorageDir;
-		 if (type == MEDIA_TYPE_IMAGE){
-			 mediaStorageDir= new File(Environment.getExternalStoragePublicDirectory(
-	               Environment.DIRECTORY_PICTURES), "MyCameraApp");
-		 }
-		 else
-		if(type == MEDIA_TYPE_VIDEO) { 
-		
-		 mediaStorageDir= new File(Environment.getExternalStoragePublicDirectory(
-	               Environment.DIRECTORY_MOVIES), "MyCameraApp");
-		}
-	 	else
-		 return null;
-	     // This location works best if you want the created images to be shared
-	     // between applications and persist after your app has been uninstalled.
-
-	     // Create the storage directory if it does not exist
-	     if (! mediaStorageDir.exists()){
-	         if (! mediaStorageDir.mkdirs()){
-	             Log.d("MyCameraApp", "failed to create directory");
-	             return null;
-	         }
-	     }
-
-	     // Create a media file name
-	     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-	    
-	     String filename;
-	     if (type == MEDIA_TYPE_IMAGE){
-	    	 filename = mediaStorageDir.getPath() + File.separator +
-	         "IMG_"+ timeStamp + ".jpg";
-	     } else if(type == MEDIA_TYPE_VIDEO) {
-	    	 filename = mediaStorageDir.getPath() + File.separator +
-	         "VID_"+ timeStamp + ".mp4";
-	     } else {
-	         return null;
-	     }
-	     File mediaFile=new File(filename);
-	     return mediaFile;
-	 }
-	
-	 private static final int NUM_FRAMES=15;
-	 private Handler mChildHandler;
-	 private static final String eol = System.getProperty("line.separator"); 
-	 private Thread senderThread = new Thread()
-	 {
-		 public void run() {
-
-		        /*
-		         * You have to prepare the looper before creating the handler.
-		         */
-		        Looper.prepare();
-
-		        /*
-		         * Create the child handler on the child thread so it is bound to the
-		         * child thread's message queue.
-		         */
-		        mChildHandler = new Handler() {
-
-		            public void handleMessage(Message msg) {
-		            	byte[] data = (byte[])msg.obj;
-						YuvImage img = new YuvImage(data,ImageFormat.NV21,320,240,null);
-						ByteArrayOutputStream os= new ByteArrayOutputStream();
-						//ByteArrayOutputStream s = new ByteArrayOutputStream();
-						
-							img.compressToJpeg(new Rect(0,0,320,240), 20, os);
-						
-						String s =String.format(
-								"--boundarydonotcross"+eol+
-								"Content-Type: image/jpeg"+eol+
-								"Content-Length: %d"+eol+eol,os.size());
-						try {
-							OutputStream socketOutputStream = socket.getOutputStream();
-							socketOutputStream.write(s.getBytes());
-							socketOutputStream.write(os.toByteArray());
-							socketOutputStream.write(eol.getBytes());
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							Log.e("","",e);
-							
-						}
-						
-		            }
-		        };
-
-		        /*
-		         * Start looping the message queue of this thread.
-		         */
-		        Looper.loop();
-		    }
-	 };
-	 
-	 
-	 
-	protected void setupCamera(Camera camera)
-	{
-		Camera.Parameters p = camera.getParameters();
-		//List<Integer> formats =p.getSupportedPreviewFormats () ;
-		p.setPreviewFormat (ImageFormat.NV21);
-		p.setPreviewSize(320, 240);
-		camera.setParameters(p);
-		for(int i = 0; i<NUM_FRAMES;i++)
-		{
-			camera.addCallbackBuffer(new byte[320*240*ImageFormat.getBitsPerPixel(ImageFormat.NV21)]);
-		}
-		//int format = p.getPictureFormat();
-		camera.setPreviewCallbackWithBuffer(new PreviewCallback()
-		{
-
-			public void onPreviewFrame(byte[] data, Camera camera) {
-				// TODO Auto-generated method stub
-				
-				byte[] anotherImg = data.clone();
-				Message msg = mChildHandler.obtainMessage();
-                msg.obj =anotherImg;
-                mChildHandler.sendMessage(msg);
-				camera.addCallbackBuffer(data);
-			}
-			
-		});
-		
-		
-	}
-	 
-	protected void reallyStartCamera()
-	{
-
-		frontCamera = getFrontCamera();
-		if((socket!= null)&&(frontCamera!=null))
-		{
-			try {
-				frontCamera.setPreviewDisplay(cameraPreview.getHolder());
-			} catch (IOException e1) {
-				Log.e("","",e1);
-			}
-			setupCamera(frontCamera);
-			cameraPreview.setVisibility(View.VISIBLE);
-			frontCamera.startPreview();
-			
-			//recorder =  new MediaRecorder();
-			//frontCamera.unlock();
-			//frontCamera.unlock();
-			//recorder.setCamera(frontCamera);
-
-			//recorder.setAudioChannels(1);
-		//	recorder.setAudioSamplingRate(96000);
-		//	recorder.setCaptureRate(30);
-			//recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-			//recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-			
-			//recorder.setProfile(CamcorderProfile.get( CamcorderProfile.QUALITY_LOW));
-			//recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-			//recorder.setVideoSize(640, 480);
-			//recorder.setVideoFrameRate(30);
-			
-			//recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-			//recorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
-			
-			//pfd = ParcelFileDescriptor.fromSocket(socket);
-			//FileDescriptor f = pfd.getFileDescriptor(); 
-			//recorder.setOutputFile(/*getOutputMediaFile(MEDIA_TYPE_VIDEO).toString()*/f);
-			//recorder.setPreviewDisplay(cameraPreview.getHolder().getSurface());
-			//try {
-			//	recorder.prepare();
-			//	recorder.start();
-			//} catch (IllegalStateException e) {
-				// TODO Auto-generated catch block
-			//	Log.e("","",e);
-			//} catch (IOException e) {
-				// TODO Auto-generated catch block
-			//	Log.e("","",e);
-			//}
-		}
-	}
-	
-	protected void startCamera()
-	{
-		 AsyncTask<Void, Void, Socket> startConnection = new  AsyncTask<Void, Void, Socket>()
-					{
-
-						@Override
-						protected Socket doInBackground(Void... params) {
-							// TODO Auto-generated method stub
-							InetAddress addr=null;
-							try {
-								addr = InetAddress.getByName(SERVER_AUTHORITY);
-							} catch (UnknownHostException e) {
-								// TODO Auto-generated catch block
-								Log.e("","",e);
-								
-							}
-							catch (Exception e) {
-								// TODO Auto-generated catch block
-								Log.e("","",e);
-							}
-							try {
-								return new Socket(addr, SERVER_VIDEO_PORT);
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								Log.e("","",e);
-								
-							}
-							catch (Exception e) {
-								// TODO Auto-generated catch block
-								Log.e("","",e);
-							}
-							 return null;
-						}
-						@Override
-					    protected void onPostExecute(Socket sock) {
-							socket = sock;
-							//startConnection.(true);
-							reallyStartCamera();
-					    }
-
-					};
-		startConnection.execute();
-	}
-	
-	protected void stopCamera()
-	{
-//		recorder.stop();
-		if(frontCamera!=null)
-		{
-			frontCamera.stopPreview();
-			cameraPreview.setVisibility(View.INVISIBLE);
-			releaseCamera();
-			//try {
-				// recorder.
-			//	recorder.stop();
-
-			//} catch (Exception e) {
-				// TODO Auto-generated catch block
-				//Log.e("", "", e);
-
-			//}
-			// frontCamera.stopPreview();
-		/*	try {
-				socket.shutdownInput();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				Log.e("", "", e);
-
-			}*/
-		//	releaseMediaRecorder();
-		}
-	}
-	
-
- //   private void releaseMediaRecorder(){
- //       if (recorder != null) {
- //       	recorder.reset();   // clear recorder configuration
- //       	recorder.release(); // release the recorder object
- //       	recorder = null;
- //           frontCamera.lock();           // lock camera for later use
-//        }
-//    }
-
-    private void releaseCamera(){
-        if (frontCamera != null){
-        	frontCamera.release();        // release the camera for other applications
-        	frontCamera = null;
-        }
-    }
 
 	protected void runCommands()
 	{
@@ -705,10 +423,11 @@ public class Test1Activity extends Activity {
 		.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
 		Uri uri=builder.build();
 		HttpConnection connection = new HttpConnection(cmdConnectionHandler);
-		connection.setTimeout(Integer.MAX_VALUE);
+		connection.setTimeout(1000*60*60*24);
 		connection.setPollingMode(true);
 		connection.get(uri.toString());
-		startCamera();
+		videoSender.startCamera();
+		//startCamera();
 	}
 	
 
@@ -730,26 +449,54 @@ public class Test1Activity extends Activity {
 		
 		if(value>0)
 		{
-			drawColor(leftEngineForward,leftEngineBackward,value);
+			drawColor(leftEngineForward,leftEngineBackward,255);
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 
 		}
 		else
+			if(value<0)	
 		{
-			drawColor(leftEngineBackward,leftEngineForward,-value);
+			drawColor(leftEngineBackward,leftEngineForward,255);
+			value= -value;
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 		}
+		else
+			if(value==0)
+			{
+				drawColor(leftEngineBackward,leftEngineForward,0);
+				wave.setBackgroundColor(0);
+				
+			}
+		wave.invalidate();
 	}
 
 	public void doRight(int value)
 	{
 		if(value>0)
 		{
-			drawColor(rightEngineForward,rightEngineBackward,value);
+			drawColor(rightEngineForward,rightEngineBackward,255);
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 
 		}
 		else
+		if(value<0)
 		{
-			drawColor(rightEngineBackward,rightEngineForward,-value);
+			drawColor(rightEngineBackward,rightEngineForward,255);
+			value= -value;
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 		}
+		else
+		if(value==0)
+		{
+			drawColor(rightEngineBackward,rightEngineForward,0);
+			wave.setBackgroundColor(0);
+			
+		}
+		wave.invalidate();
 	}
 	
 
@@ -809,7 +556,9 @@ public class Test1Activity extends Activity {
 		     pitchRight.invalidate();
 		     wave.setBackgroundColor(0xff000000);
 		     wave.invalidate();
-		     stopCamera();
+		     videoSender.stopCamera();
+		  //  stopPlayer();
+		  //   stopCamera();
 		}
 		else
 		{
@@ -852,11 +601,12 @@ public class Test1Activity extends Activity {
 		@Override
 		protected void onConnectionFail(Exception e) {
 			// TODO Auto-generated method stub
-			//if(isRunning)
-			//{
-				Toast.makeText(Test1Activity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
+			Toast.makeText(Test1Activity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
+			if(isRunning)
+			{
+				runCommands();
 				//startButton.toggle();
-			//}
+			}
 		}
 
 		@Override
@@ -881,13 +631,13 @@ public class Test1Activity extends Activity {
 				{
 					doPitch(r.getInt("pitch"));
 				}
-				doWave(r.has("wave"));
+				//doWave(r.has("wave"));
 				doHangup(r.has("hangup"));
 				
 			}
 			catch(JSONException e)
 			{
-				Log.e("ConnectionResponceHandler", "onConnectionSuccessful", e);
+				Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
 				//Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
 			}
 		}
