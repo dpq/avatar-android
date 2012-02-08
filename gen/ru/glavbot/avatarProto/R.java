@@ -5,7 +5,7 @@
  * should not be modified by hand.
  */
 
-package ru.glavbot.test1;
+package ru.glavbot.avatarProto;
 
 public final class R {
     public static final class attr {

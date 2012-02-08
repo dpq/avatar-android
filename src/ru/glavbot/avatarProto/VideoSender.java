@@ -1,4 +1,4 @@
-package ru.glavbot.test1;
+package ru.glavbot.avatarProto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -12,6 +12,7 @@ import java.net.UnknownHostException;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import ru.glavbot.avatarProto.R;
 
 
 import android.content.Context;
@@ -53,158 +54,157 @@ public class VideoSender extends Thread{
 		this.context=context;
 		this.preview=preview;
 		this.foreignStream=foreignStream;
-		senderThread =new Thread()
-		 {
-			 public void run() {
+		
 
-			        Looper.prepare();
-			        
-			        mChildHandler = new Handler() {
-
-			        	boolean isRunning = false;
-			        	Socket socket = null;
-			        	private int counter = 0;
-			        	
-			        	private void processFrame(Message msg)
-			        	{
-			        		if((!isRunning)||(socket == null)||(!socket.isConnected()))
-			        		{
-			        			Log.e("senderThread.processFrame","Sending video to uninitialized socket");
-			        		}
-			        		else
-			        		{
-			        		HandlerBuffer data = (HandlerBuffer)msg.obj;
-			        		data.lock();
-							YuvImage img = new YuvImage(data.getData(),ImageFormat.NV21,PREVIEW_WIDTH,PREVIEW_HEIGHT,null);
-							
-							ByteArrayOutputStream os= new ByteArrayOutputStream();
-							//ByteArrayOutputStream s = new ByteArrayOutputStream();
-							boolean result=	img.compressToJpeg(new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1), 50, os);
-							/*if(!result)
-							{
-								Log.w("","cast failed!");
-							}
-							else
-							{
-								Log.w("","cast succeed!");
-							}*/
-							Date d2 = new Date();
-							Date d1=data.d;
-							Log.d("",String.format("time to convert: %d", d2.getTime()-d1.getTime()));
-							data.unlock();
-/*
-							Bitmap b =BitmapFactory.decodeByteArray(os.toByteArray(), 0, os.toByteArray().length);
-							Bitmap b1=Bitmap.createBitmap(PREVIEW_WIDTH,PREVIEW_HEIGHT,b.getConfig());
-							int width = 
-							for(int i =0; i< b.getWidth();i++)
-								for(int j = 0; j<b.getHeight();j++)
-								{
-									b1.setPixel(i, j, b.getPixel(b.getWidth()-i, j));
-								}
-		                           
-*/
-							
-							
-							String s =String.format(
-									"--boundarydonotcross"+eol+
-									"Content-Type: image/jpeg"+eol+
-									"Content-Length: %d"+eol+eol,os.size());
-							try {
-								OutputStream socketOutputStream = socket.getOutputStream();
-								socketOutputStream.write(s.getBytes());
-								socketOutputStream.write(os.toByteArray());
-								socketOutputStream.write(eol.getBytes());
-							Date d3 = new Date();
-							Log.d("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
-							Log.d("",String.format("time total: %d", d3.getTime()-d1.getTime()));
-							
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								Log.e("","",e);
-								
-							}
-							counter++;
-							if(counter>15)
-							{
-								System.gc();
-								counter = 0;
-							}
-			        		}
-			        	}
-			        	
-			        	private void initializeSocket(String hostname)
-			        	{
-			        		
-								// TODO Auto-generated method stub
-								InetAddress addr=null;
-								try {
-									addr = InetAddress.getByName(hostname);
-								} catch (UnknownHostException e) {
-									// TODO Auto-generated catch block
-									Log.e("","",e);
-									
-								}
-								catch (Exception e) {
-									// TODO Auto-generated catch block
-									Log.e("","",e);
-								}
-								try {
-									socket = new Socket(addr, SERVER_VIDEO_PORT);
-									socket.setKeepAlive(true);
-									isRunning=true;
-									OutputStream s = socket.getOutputStream();
-									s.write(((Test1Activity) context).getSession_token().getBytes());
-									
-								} 
-								catch (Exception e) {
-									// TODO Auto-generated catch block
-									Log.e(this.getClass().getName(),this.toString(),e);
-									isRunning=false;
-								}
-					
-			        	}
-			        	private void closeSocket()
-			        	{
-			        		if(socket!=null)
-			        		{
-			        			try {
-									socket.close();
-								} catch (IOException e) {
-									Log.e("","",e);
-								}
-			        		}
-			        		socket = null;
-							isRunning=false;
-					
-			        	}
-			        	
-			        	
-			            public void handleMessage(Message msg) {
-			            	
-			            	switch (msg.what)
-			            	{
-			            		case PROCESS_FRAME: 
-			            			processFrame(msg);
-			            			break;
-			            		case INITIALIZE_VIDEO_SOCKET:
-			            			initializeSocket((String)msg.obj);
-			            			break;
-			            		case CLOSE_VIDEO_SOCKET:
-			            			closeSocket();
-			            			break;
-			            		default:
-			            			throw new RuntimeException("Unknown command to video writer thread");
-			            	};
-							
-			            }
-			        };
-
-			        Looper.loop();
-			    }
-		 };
-		senderThread.start();
+		start();
 	}
 
+	 public void run() {
+
+	        Looper.prepare();
+	        
+	        mChildHandler = new Handler() {
+
+	        	boolean isRunning = false;
+	        	Socket socket = null;
+	        	private int counter = 0;
+	        	
+	        	private void processFrame(Message msg)
+	        	{
+	        		if((!isRunning)||(socket == null)||(!socket.isConnected()))
+	        		{
+	        			Log.e("senderThread.processFrame","Sending video to uninitialized socket");
+	        		}
+	        		else
+	        		{
+	        		HandlerBuffer data = (HandlerBuffer)msg.obj;
+	        		data.lock();
+					YuvImage img = new YuvImage(data.getData(),ImageFormat.NV21,PREVIEW_WIDTH,PREVIEW_HEIGHT,null);
+					
+					ByteArrayOutputStream os= new ByteArrayOutputStream();
+					//ByteArrayOutputStream s = new ByteArrayOutputStream();
+					boolean result=	img.compressToJpeg(new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1), 50, os);
+					/*if(!result)
+					{
+						Log.w("","cast failed!");
+					}
+					else
+					{
+						Log.w("","cast succeed!");
+					}*/
+					Date d2 = new Date();
+					Date d1=data.d;
+					Log.d("",String.format("time to convert: %d", d2.getTime()-d1.getTime()));
+					data.unlock();
+/*
+					Bitmap b =BitmapFactory.decodeByteArray(os.toByteArray(), 0, os.toByteArray().length);
+					Bitmap b1=Bitmap.createBitmap(PREVIEW_WIDTH,PREVIEW_HEIGHT,b.getConfig());
+					int width = 
+					for(int i =0; i< b.getWidth();i++)
+						for(int j = 0; j<b.getHeight();j++)
+						{
+							b1.setPixel(i, j, b.getPixel(b.getWidth()-i, j));
+						}
+                        
+*/
+					
+					
+					String s =String.format(
+							"--boundarydonotcross"+eol+
+							"Content-Type: image/jpeg"+eol+
+							"Content-Length: %d"+eol+eol,os.size());
+					try {
+						OutputStream socketOutputStream = socket.getOutputStream();
+						socketOutputStream.write(s.getBytes());
+						socketOutputStream.write(os.toByteArray());
+						socketOutputStream.write(eol.getBytes());
+					Date d3 = new Date();
+					Log.d("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
+					Log.d("",String.format("time total: %d", d3.getTime()-d1.getTime()));
+					
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						Log.e("","",e);
+						
+					}
+					counter++;
+					if(counter>15)
+					{
+						System.gc();
+						counter = 0;
+					}
+	        		}
+	        	}
+	        	
+	        	private void initializeSocket(String hostname)
+	        	{
+	        		
+						// TODO Auto-generated method stub
+						InetAddress addr=null;
+						try {
+							addr = InetAddress.getByName(hostname);
+						} catch (UnknownHostException e) {
+							// TODO Auto-generated catch block
+							Log.e("","",e);
+							
+						}
+						catch (Exception e) {
+							// TODO Auto-generated catch block
+							Log.e("","",e);
+						}
+						try {
+							socket = new Socket(addr, SERVER_VIDEO_PORT);
+							socket.setKeepAlive(true);
+							isRunning=true;
+							OutputStream s = socket.getOutputStream();
+							s.write(((AvatarMainActivity) context).getSession_token().getBytes());
+							
+						} 
+						catch (Exception e) {
+							// TODO Auto-generated catch block
+							Log.e(this.getClass().getName(),this.toString(),e);
+							isRunning=false;
+						}
+			
+	        	}
+	        	private void closeSocket()
+	        	{
+	        		if(socket!=null)
+	        		{
+	        			try {
+							socket.close();
+						} catch (IOException e) {
+							Log.e("","",e);
+						}
+	        		}
+	        		socket = null;
+					isRunning=false;
+			
+	        	}
+	        	
+	        	
+	            public void handleMessage(Message msg) {
+	            	
+	            	switch (msg.what)
+	            	{
+	            		case PROCESS_FRAME: 
+	            			processFrame(msg);
+	            			break;
+	            		case INITIALIZE_VIDEO_SOCKET:
+	            			initializeSocket((String)msg.obj);
+	            			break;
+	            		case CLOSE_VIDEO_SOCKET:
+	            			closeSocket();
+	            			break;
+	            		default:
+	            			throw new RuntimeException("Unknown command to video writer thread");
+	            	};
+					
+	            }
+	        };
+
+	        Looper.loop();
+	    };
 
 
 	public Context getContext() {
@@ -335,7 +335,7 @@ public class VideoSender extends Thread{
 	 
 	 private static final int SERVER_VIDEO_PORT = 10000;
 	    
-	 private Thread senderThread= null;
+	// private Thread senderThread= null;
 	 
 	 
 	 
@@ -407,7 +407,7 @@ public class VideoSender extends Thread{
 	protected void startCamera()
 	{
 		// start socket;
-		Message msg = mChildHandler.obtainMessage(INITIALIZE_VIDEO_SOCKET,0,0,Test1Activity.SERVER_AUTHORITY);
+		Message msg = mChildHandler.obtainMessage(INITIALIZE_VIDEO_SOCKET,0,0,AvatarMainActivity.SERVER_AUTHORITY);
 		mChildHandler.sendMessage(msg);	
 		
 		// now camera;

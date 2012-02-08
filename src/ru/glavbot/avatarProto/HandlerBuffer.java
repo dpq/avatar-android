@@ -1,6 +1,7 @@
-package ru.glavbot.test1;
+package ru.glavbot.avatarProto;
 
 import java.util.Date;
+import ru.glavbot.avatarProto.R;
 
 public class HandlerBuffer {
 

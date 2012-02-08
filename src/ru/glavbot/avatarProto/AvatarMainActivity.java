@@ -1,9 +1,10 @@
-package ru.glavbot.test1;
+package ru.glavbot.avatarProto;
 
 
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import ru.glavbot.avatarProto.R;
 
 //import com.ryong21.R;
 
@@ -41,7 +42,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.VideoView;
 
-public class Test1Activity extends Activity {
+public class AvatarMainActivity extends Activity {
     /** Called when the activity is first created. */
 	 private  TextView leftEngineForward;
 	 private  TextView leftEngineBackward;
@@ -57,6 +58,7 @@ public class Test1Activity extends Activity {
      private SurfaceView cameraPreview;
      private VideoView videoView;
      private VideoSender videoSender;
+     private AudioSender audioSender;
  
      private static final int SEND_CONTROL_LINK_DIALOG = 1001;
      private static final String SHARED_PREFS = "RobotSharedPrefs";
@@ -76,6 +78,7 @@ public class Test1Activity extends Activity {
      private static final String MODE_PARAM = "mode";
      private static final String MODE_PARAM_VALUE = "read";
    //  private static final int SERVER_VIDEO_PORT = 10000;
+     private static final int SERVER_AUDIO_PORT = 10002;
 
      
      
@@ -174,6 +177,7 @@ public class Test1Activity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
         videoSender = new VideoSender(this, cameraPreview, videoView);
+        audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT);
         //senderThread.start();
         /* This code together with the one in onDestroy() 
          * will make the screen be always on until this Activity gets destroyed. */
@@ -220,6 +224,7 @@ public class Test1Activity extends Activity {
      //   releaseMediaRecorder();       // if you are using MediaRecorder, release it first
         //releaseCamera();              // release the camera immediately on pause event
         videoSender.stopCamera();
+        audioSender.stopVoice();
         ConnectionManager.getInstance().stopCurrent();
         
 
@@ -239,6 +244,7 @@ public class Test1Activity extends Activity {
     	if(isRunning)
     	{
     		videoSender.startCamera();
+    		audioSender.startVoice();
     	}
     	
     }
@@ -248,6 +254,7 @@ public class Test1Activity extends Activity {
     public void onDestroy() {
        // this.mWakeLock.release();
     	videoSender.stopCamera();
+    	audioSender.stopVoice();
         super.onDestroy();
     //    releaseMediaRecorder();
 
@@ -367,18 +374,18 @@ public class Test1Activity extends Activity {
 				if(status.equalsIgnoreCase("ok"))
 				{
 					setSession_token(r.getString("token"));
-					Toast.makeText(Test1Activity.this, "Invite sent successfully, waiting for commands", Toast.LENGTH_LONG).show();
+					Toast.makeText(AvatarMainActivity.this, "Invite sent successfully, waiting for commands", Toast.LENGTH_LONG).show();
 					startButton.toggle();
 				}
 				else
 				{
-					Toast.makeText(Test1Activity.this, "Invite sending failed with message \r"+r.getString("message"), Toast.LENGTH_LONG).show();
+					Toast.makeText(AvatarMainActivity.this, "Invite sending failed with message \r"+r.getString("message"), Toast.LENGTH_LONG).show();
 				}
 			}
 			catch(JSONException e)
 			{
 				Log.e("ConnectionResponceHandler", "onConnectionSuccessful", e);
-				Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
+				Toast.makeText(AvatarMainActivity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
 				
 			}
 		}
@@ -386,13 +393,13 @@ public class Test1Activity extends Activity {
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
 			// TODO Auto-generated method stub
-			Toast.makeText(Test1Activity.this, String.format("Server returned %d, try again later",statusCode), Toast.LENGTH_LONG).show();
+			Toast.makeText(AvatarMainActivity.this, String.format("Server returned %d, try again later",statusCode), Toast.LENGTH_LONG).show();
 		}
 
 		@Override
 		protected void onConnectionFail(Exception e) {
 			// TODO Auto-generated method stub
-			Toast.makeText(Test1Activity.this, String.format("Connection failed with message %d!",e.getMessage()), Toast.LENGTH_LONG).show();
+			Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %d!",e.getMessage()), Toast.LENGTH_LONG).show();
 		
 		}
 
@@ -427,6 +434,7 @@ public class Test1Activity extends Activity {
 		connection.setPollingMode(true);
 		connection.get(uri.toString());
 		videoSender.startCamera();
+		audioSender.startVoice();
 		//startCamera();
 	}
 	
@@ -557,6 +565,7 @@ public class Test1Activity extends Activity {
 		     wave.setBackgroundColor(0xff000000);
 		     wave.invalidate();
 		     videoSender.stopCamera();
+		     audioSender.stopVoice();
 		  //  stopPlayer();
 		  //   stopCamera();
 		}
@@ -601,7 +610,7 @@ public class Test1Activity extends Activity {
 		@Override
 		protected void onConnectionFail(Exception e) {
 			// TODO Auto-generated method stub
-			Toast.makeText(Test1Activity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
+			Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
 			if(isRunning)
 			{
 				runCommands();
