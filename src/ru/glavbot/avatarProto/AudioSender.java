@@ -1,19 +1,11 @@
 package ru.glavbot.avatarProto;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Date;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.media.AudioManager;
 import android.net.rtp.AudioCodec;
 import android.net.rtp.AudioGroup;
