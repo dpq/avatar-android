@@ -11,6 +11,7 @@ import org.apache.http.params.HttpConnectionParams;
 
 //import android.graphics.*;
 import android.os.*;
+import android.util.Log;
 
 /**
  * Asynchronous HTTP connections
@@ -38,7 +39,7 @@ public class HttpConnection implements Runnable {
 	private String data;
 
 	private HttpClient httpClient;
-	private int timeout = 25000;
+	private int timeout = 10000;
 	private boolean pollingMode=false;
 
 	public HttpConnection() {
@@ -133,6 +134,7 @@ public class HttpConnection implements Runnable {
 		handler.sendMessage(message);
 		}
 		} catch (Exception e) {
+			Log.e("", "", e);
 			handler.sendMessage(Message.obtain(handler,
 					HttpConnection.DID_ERROR, e));
 		}

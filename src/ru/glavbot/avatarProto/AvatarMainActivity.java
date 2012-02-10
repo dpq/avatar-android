@@ -154,6 +154,8 @@ public class AvatarMainActivity extends Activity {
 				{
 					isRunning=true;
 					runCommands();
+					videoSender.startCamera();
+					audioSender.startVoice();
 					//startPlayer();
 				}
 				else
@@ -350,7 +352,7 @@ public class AvatarMainActivity extends Activity {
 			{
 				final Calendar c = Calendar.getInstance();
 				timeoutD.setMinDate(c.getTimeInMillis()-10000);
-				timeoutD.setMaxDate(c.getTimeInMillis()+Integer.MAX_VALUE-(1000*60*60*24));
+				timeoutD.setMaxDate(c.getTimeInMillis()+((long)(Integer.MAX_VALUE-60*60*24))*1000);
 				c.add(Calendar.DAY_OF_YEAR, 1);				
 				timeoutD.updateDate(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
 				timeoutT.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
@@ -474,11 +476,10 @@ public class AvatarMainActivity extends Activity {
 		.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
 		Uri uri=builder.build();
 		HttpConnection connection = new HttpConnection(cmdConnectionHandler);
-		connection.setTimeout(1000*60*60*24);
+		//connection.setTimeout(1000*60*60*24);
 		connection.setPollingMode(true);
 		connection.get(uri.toString());
-		videoSender.startCamera();
-		audioSender.startVoice();
+
 		//startCamera();
 	}
 	
@@ -654,7 +655,7 @@ public class AvatarMainActivity extends Activity {
 		@Override
 		protected void onConnectionFail(Exception e) {
 			// TODO Auto-generated method stub
-			Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
+		//	Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
 			if(isRunning)
 			{
 				runCommands();
