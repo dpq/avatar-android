@@ -10,14 +10,18 @@
               android:orientation="horizontal"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
-              android:padding="10dp"
+              android:paddingTop="10dp"
+              android:paddingBottom="10dp"
               >
     	<TextView android:id="@+id/text_email"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:textColor="#FFF"
               android:text="Enter email"
+              
               />
+
+
 
     	<EditText
         	android:id="@+id/editTextEmail"
@@ -29,25 +33,36 @@
         	<requestFocus />
     	</EditText>
 	</LinearLayout>
-	<LinearLayout android:id="@+id/layout_timeout"
-              android:orientation="horizontal"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:padding="10dp"
-              >
-    	<TextView android:id="@+id/text_timeout"
+	    	<TextView android:id="@+id/text_timeout"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:textColor="#FFF"
-              android:text="Enter ttl"
+              android:text="Select expiration date"
               />
-    	<EditText
+	<LinearLayout android:id="@+id/layout_timeout"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="fill_parent"
+              android:gravity="left"
+              >
+
+    	<!--<EditText
         	android:id="@+id/editTextTimeout"
         	android:layout_width="fill_parent"
         	android:layout_height="wrap_content"
         	android:inputType="numberDecimal"
          >
-    	</EditText>
+    	</EditText>-->
+    	<DatePicker
+    	    android:id="@+id/datePickerValidToDate"
+    	    android:layout_width="wrap_content"
+    	    android:layout_height="wrap_content" 
+    	    android:layout_weight="0.6"/>
+    	<TimePicker
+		    android:id="@+id/timePickerValidToTime"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content" 
+		    android:layout_weight="0.4"/>
 	</LinearLayout>
 		<LinearLayout android:id="@+id/layout_buttons"
               android:orientation="horizontal"

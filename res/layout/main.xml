@@ -7,7 +7,7 @@
         <TextView
             android:id="@+id/LeftEngineForward"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/LeftEngineBackward"
             android:layout_alignParentTop="true"
             android:text="2" 
@@ -15,7 +15,7 @@
         <TextView
             android:id="@+id/LeftEngineBackward"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
             android:text="1" 
@@ -23,7 +23,7 @@
         <TextView
              android:id="@+id/RightEngineForward"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/LeftEngineForward"
             android:layout_alignParentTop="true"
             android:text="3" 
@@ -31,7 +31,7 @@
                         <TextView
              android:id="@+id/RightEngineBackward"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/RightEngineForward"
             android:layout_alignParentTop="true"
             android:text="4" 
@@ -39,7 +39,7 @@
                 <TextView
              android:id="@+id/YawUp"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/YawDown"
             android:layout_alignParentTop="true"
             android:text="8" 
@@ -47,7 +47,7 @@
             <TextView
              android:id="@+id/YawDown"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/PitchLeft"
             android:layout_alignParentTop="true"
             android:text="7" 
@@ -55,7 +55,7 @@
               <TextView
              android:id="@+id/PitchLeft"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/PitchRight"
             android:layout_alignParentTop="true"
             android:text="6" 
@@ -63,7 +63,7 @@
                           <TextView
              android:id="@+id/PitchRight"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/RightEngineBackward"
             android:layout_alignParentTop="true"
             android:text="5" 
@@ -71,7 +71,7 @@
                           <TextView
              android:id="@+id/Wave"
             android:layout_width="0.3937in"
-            android:layout_height="1in"
+            android:layout_height="2in"
             android:layout_toRightOf="@+id/YawUp"
             android:layout_alignParentTop="true"
             android:text="9" 

@@ -2,6 +2,8 @@ package ru.glavbot.avatarProto;
 
 
 
+import java.util.Calendar;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import ru.glavbot.avatarProto.R;
@@ -36,8 +38,10 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.VideoView;
@@ -262,7 +266,8 @@ public class AvatarMainActivity extends Activity {
 
     
 	EditText emailET;
-	EditText timeout;
+	DatePicker timeoutD;
+	TimePicker timeoutT;
 	@Override
 	protected Dialog  onCreateDialog(int id)
 	{
@@ -285,7 +290,13 @@ public class AvatarMainActivity extends Activity {
 				builder.setTitle("Enter email!");
 				alertDialog = builder.create();
 				emailET = (EditText) layout.findViewById(R.id.editTextEmail);
-				timeout = (EditText) layout.findViewById(R.id.editTextTimeout);
+				timeoutD = (DatePicker) layout.findViewById(R.id.datePickerValidToDate);
+				timeoutD.setCalendarViewShown(false);
+				timeoutD.setSpinnersShown(true);
+				
+			//	timeoutD.s
+				timeoutT= (TimePicker) layout.findViewById(R.id.timePickerValidToTime);
+				timeoutT.setIs24HourView(true);
 				Button buttonOk = (Button)layout.findViewById(R.id.buttonOk);
 				Button buttonCancel = (Button)layout.findViewById(R.id.buttonCancel);
 				buttonOk.setOnClickListener(new OnClickListener(){
@@ -293,17 +304,31 @@ public class AvatarMainActivity extends Activity {
 					public void onClick(View v) {
 						//v.getParent()
 						setEmail(emailET.getText().toString());
-						String s = timeout.getText().toString();
-						Integer iClass=Integer.decode(s);
-						int i =iClass.intValue();
+						//String s = timeout.getText().toString();
+						long cur = Calendar.getInstance().getTimeInMillis();
+						long dateTo = timeoutD.getCalendarView().getDate();
+						long timeTo = timeoutT.getCurrentHour()*1000*60*60+timeoutT.getCurrentMinute()*1000*60;
+						long ttl = ((dateTo+timeTo) - cur)/1000;
+						if(ttl<0){ttl=0;}
+						try{
+							setTtl((int) ttl);
+						}catch(NumberFormatException e)
+						{
+							Log.e("AvatarMainActivity", "AlertDialog.buttonOk.onClick", e);
+							setTtl(0);
+								
+						}
 						
-						setTtl(i);
+						
+						
+						
+						shareRobot();
+						alertDialog.dismiss();
 						if(isRunning)
 						{
 							startButton.toggle();
 						}
-						shareRobot();
-						alertDialog.dismiss();
+						
 					}});
 				buttonCancel.setOnClickListener(new OnClickListener(){
 
@@ -316,6 +341,25 @@ public class AvatarMainActivity extends Activity {
 		return d;
 	}
 
+	@Override
+	protected void onPrepareDialog (int id, Dialog dialog) 
+	{
+		switch (id)
+		{
+			case SEND_CONTROL_LINK_DIALOG:
+			{
+				final Calendar c = Calendar.getInstance();
+				timeoutD.setMinDate(c.getTimeInMillis()-10000);
+				timeoutD.setMaxDate(c.getTimeInMillis()+Integer.MAX_VALUE-(1000*60*60*24));
+				c.add(Calendar.DAY_OF_YEAR, 1);				
+				timeoutD.updateDate(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
+				timeoutT.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
+				timeoutT.setCurrentMinute(c.get(Calendar.MINUTE));
+				
+				
+			}
+		};
+	}
 
 	public String getEmail() {
 		return email;
@@ -355,7 +399,7 @@ public class AvatarMainActivity extends Activity {
 		builder.scheme(SERVER_SCHEME).authority(SERVER_AUTHORITY).path(SHARE_PATH)
 		.appendQueryParameter(MACADDR_PARAM, macAddr)
 		.appendQueryParameter(EMAIL_PARAM, email)
-		.appendQueryParameter(TTL_PARAM, String.format("%d", ttl*60));
+		.appendQueryParameter(TTL_PARAM, String.format("%d", ttl));
 		Uri uri=builder.build();
 		HttpConnection connection = new HttpConnection(shareConnectionHandler);
 		connection.get(uri.toString());
