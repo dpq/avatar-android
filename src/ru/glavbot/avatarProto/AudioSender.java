@@ -57,43 +57,19 @@ public class AudioSender extends Thread{
 	
 	Handler mChildHandler;
 	
+	private static final int INIT_RTP=0;
 	private static final int START_RTP=1;
 	private static final int STOP_RTP=2;
 	
 	
 	 public void run() {
 
-		// codec = AudioCodec.getCodec(, "AMR/8000", "mode-set=1");
-			group= new AudioGroup();
-			//group.
-			try {
-				stream = new AudioStream(InetAddress.getByName("0.0.0.0"));
-				
-			} catch (SocketException e) {
-				// TODO Auto-generated catch block
-				Log.e("AudioSender","run",e);
-				
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				Log.e("AudioSender","run",e);
-				
-			}
-			group.setMode(AudioGroup.MODE_ON_HOLD);
-			//group.
-			stream.setCodec(AudioCodec.AMR);
-			stream.setMode(AudioStream.MODE_NORMAL);
-			try {
-				stream.associate(InetAddress.getByName(host), port);
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				Log.e("","",e);
-				
-			}
+		
 	        Looper.prepare();
 	        
 	        mChildHandler = new Handler() {
 
-	        	boolean isRunning = false;
+	        //	boolean isRunning = false;
 	        	
 	        	
 	        	        	
@@ -102,6 +78,9 @@ public class AudioSender extends Thread{
 	            	
 	            	switch (msg.what)
 	            	{
+	            		case INIT_RTP:
+	            			initRtp();
+	            			break;
 	            		case START_RTP:
 	            			startRtp();
 	            			break;
@@ -117,21 +96,64 @@ public class AudioSender extends Thread{
 
 
 
-				private void stopRtp() {
+				private void initRtp() {
 					// TODO Auto-generated method stub
+					// codec = AudioCodec.getCodec(, "AMR/8000", "mode-set=1");
+					group= new AudioGroup();
 					group.setMode(AudioGroup.MODE_ON_HOLD);
-					group.clear();
+					//group.
+					try {
+						stream = new AudioStream(InetAddress.getByName("0.0.0.0"));
+						
+					} catch (SocketException e) {
+						// TODO Auto-generated catch block
+						Log.e("AudioSender","run",e);
+						
+					} catch (UnknownHostException e) {
+						// TODO Auto-generated catch block
+						Log.e("AudioSender","run",e);
+						
+					}
+					stream.setCodec(AudioCodec.AMR);
+					stream.setMode(AudioStream.MODE_NORMAL);
+					try {
+						stream.associate(InetAddress.getByName(host), port);
+					} catch (UnknownHostException e) {
+						// TODO Auto-generated catch block
+						Log.e("","",e);
+						
+					}
+				}
+
+
+
+
+				private void stopRtp() {
+					if(group!=null)
+					{
+						group.setMode(AudioGroup.MODE_ON_HOLD);
+						group.clear();
+						stream.join(null);
+						stream.release();
+						stream=null;
+						group=null;
+					}
 				}
 
 
 
 
 				private void startRtp() {
-					// TODO Auto-generated method stub
-					group.setMode(AudioGroup.MODE_ON_HOLD);
-					stream.join(group);
-					group.setMode(AudioGroup.MODE_NORMAL);
-					group.sendDtmf(1);
+					if(group==null)
+					{
+						initRtp();
+					}
+					if(!stream.isBusy())
+					{
+						group.setMode(AudioGroup.MODE_ON_HOLD);
+						stream.join(group);
+						group.setMode(AudioGroup.MODE_NORMAL);
+					}
 				}
 
 

@@ -16,9 +16,14 @@ import edu.gvsu.masl.asynchttp.HttpConnection;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -91,32 +96,9 @@ public class AvatarMainActivity extends Activity {
      private  int  ttl;
      private boolean isRunning=false;
      
-   //  protected PowerManager.WakeLock mWakeLock;
-
  	WebView webView;
-
- //	String bodyHtml;
- //	private static final String rtmpUrl=	"rtmp://dev.glavbot.ru/flvplayback";
- 	//private static final String fileName;
- //	private static final Button refreshButton;
-// 	private static final String htmlPost = "</body></html>";
-// 	private static final String htmlPre = "<!DOCTYPE html>" 
-// 		    					+ "<html lang=\"en\">"
-// 		    					+ "<head><meta charset=\"utf-8\">" 
-// 		    					+ "</head>"
-// 		    					+ "<body style='margin:0; pading:0;"
-// 		    					+ " background-color: #000000;'>";
-//
-// 	private static final String htmlCode = "<embed " 
-// 		    							+ "type=\"application/x-shockwave-flash\""
-// 		    							+ "id=\"player1\" " + "name=\"player1\" "
-// 		    							+ "src=\"http://dev.glavbot.ru/test/rec/GBread.swf\""
-// 		    							+ "width=\"520\""
-// 		    							+ "height=\"440\"" /*+ " flashvars=@FILESRC@"*/
-// 		    							+ "allowfullscreen=\"true\"" 
-// 		    							+ "allowscripaccess=\"always\""
-// 		    							+ "/>	";
-
+ 	ConnectivityManager network;
+ 	boolean isNetworkAvailable=false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -141,7 +123,15 @@ public class AvatarMainActivity extends Activity {
     	sendLinkButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				showDialog(SEND_CONTROL_LINK_DIALOG);
+				if(isNetworkAvailable)
+				{
+					showDialog(SEND_CONTROL_LINK_DIALOG);
+				}
+				else
+				{
+					Toast.makeText(AvatarMainActivity.this, "No wifi connection available. Please enable wifi!", Toast.LENGTH_LONG).show();
+				}
+				
 			}
     		
     	});
@@ -150,21 +140,26 @@ public class AvatarMainActivity extends Activity {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				// TODO Auto-generated method stub
+				
 				if(isChecked/*&&(!isRunning)*/)
 				{
-					isRunning=true;
-					runCommands();
-					videoSender.startCamera();
-					audioSender.startVoice();
+					if(isNetworkAvailable)
+					{
+						isRunning=true;
+						turnAllOn();
+					}
+					else
+					{
+						Toast.makeText(AvatarMainActivity.this, "No wifi connection available. Please enable wifi!", Toast.LENGTH_LONG).show();
+						buttonView.toggle();
+					}
 					//startPlayer();
 				}
 				else
-				//if((!isChecked)&&isRunning)
+				if(isRunning)
 				{
 					isRunning=false;
-					ConnectionManager.getInstance().stopCurrent();
-					doHangup(true);
-					
+					turnAllOff();
 				}
 			}
 			
@@ -184,6 +179,9 @@ public class AvatarMainActivity extends Activity {
         
         videoSender = new VideoSender(this, cameraPreview, videoView);
         audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT);
+        network = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        isNetworkAvailable=inf.isConnected();
         //senderThread.start();
         /* This code together with the one in onDestroy() 
          * will make the screen be always on until this Activity gets destroyed. */
@@ -193,47 +191,59 @@ public class AvatarMainActivity extends Activity {
 
     }
     
+    boolean isListeningNetwork=false;
 
-/*	private void startPlayer() {
+    BroadcastReceiver networkStateListener = new  BroadcastReceiver() {
 
-		//rtmpUrl = "rtmp://dev.glavbot.ru/flvplayback";
-		//fileName = etFileName.getText().toString();
-		//if (fileName.endsWith(".flv")) {
-		//	fileName = "flv:" + fileName;
-		//}
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(BroadcastReceiver.class.getSimpleName(), "action: "
+                    + intent.getAction());
+            //isNetworkAvailable =!intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, true);
+            NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            isNetworkAvailable=inf.isConnected();
 
-		bodyHtml = htmlCode;
-		bodyHtml = bodyHtml.replaceAll("@FILESRC@", 
-				"\"token=" + session_token
-				+ "&streamer=" + rtmpUrl + "\"");
-		webView.loadDataWithBaseURL("http://127.0.0.1",
-				htmlPre + bodyHtml
-				+ htmlPost, "text/html", "UTF-8", null);
-	}
-	private void stopPlayer() {
+        }
 
-		//rtmpUrl = "rtmp://dev.glavbot.ru/flvplayback";
-		//fileName = etFileName.getText().toString();
-		//if (fileName.endsWith(".flv")) {
-		//	fileName = "flv:" + fileName;
-		//}
+    };
+    
+    public void startListeningNetwork() {
+    	if(!isListeningNetwork)
+    	{
+    		IntentFilter filter = new IntentFilter();
+    		filter.addAction("android.intent.action.SERVICE_STATE");
+    		this.registerReceiver(networkStateListener, filter);
+    		isListeningNetwork=true;
+    	}
+    }
 
-		webView.loadDataWithBaseURL("http://127.0.0.1",
-				htmlPre 
-				+ htmlPost, "text/html", "UTF-8", null);
-	}
-*/
+    public void stopListeningNetwork() {
+    	if(isListeningNetwork)
+    	{
+    		this.unregisterReceiver(networkStateListener);
+    		isListeningNetwork=false;
+    	}
+    }  
+    
+    private void turnAllOff()
+    {
+    	doHangup();
+        ConnectionManager.getInstance().stopCurrent();
+    }
+    
+    private void turnAllOn()
+    {
+    	runCommands();
+    	videoSender.startCamera();
+    	audioSender.startVoice();
+    	
+    }
 
     @Override
     protected void onPause() {
         super.onPause();
-     //   releaseMediaRecorder();       // if you are using MediaRecorder, release it first
-        //releaseCamera();              // release the camera immediately on pause event
-        videoSender.stopCamera();
-        audioSender.stopVoice();
-        ConnectionManager.getInstance().stopCurrent();
-        
-
+       turnAllOff();
+       stopListeningNetwork();
     }
 
     
@@ -247,20 +257,20 @@ public class AvatarMainActivity extends Activity {
     	ttl=prefs.getInt(SHARED_PREFS_TTL, 0);
     	session_token = prefs.getString( SHARED_PREFS_TOKEN, null);
     	//stopPlayer();
+    	startListeningNetwork();
     	if(isRunning)
     	{
-    		videoSender.startCamera();
-    		audioSender.startVoice();
+    		turnAllOn();
     	}
-    	
+
     }
 	
     
     @Override
     public void onDestroy() {
        // this.mWakeLock.release();
-    	videoSender.stopCamera();
-    	audioSender.stopVoice();
+    	turnAllOff();
+    	stopListeningNetwork();
         super.onDestroy();
     //    releaseMediaRecorder();
 
@@ -281,7 +291,6 @@ public class AvatarMainActivity extends Activity {
 				AlertDialog.Builder builder;
 				final AlertDialog alertDialog;
 
-				//Context mContext = getApplicationContext();
 				LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
 				View layout = inflater.inflate(R.layout.send_invite_dialog,
 				                               (ViewGroup) findViewById(R.id.layout_root));
@@ -296,7 +305,7 @@ public class AvatarMainActivity extends Activity {
 				timeoutD.setCalendarViewShown(false);
 				timeoutD.setSpinnersShown(true);
 				
-			//	timeoutD.s
+			
 				timeoutT= (TimePicker) layout.findViewById(R.id.timePickerValidToTime);
 				timeoutT.setIs24HourView(true);
 				Button buttonOk = (Button)layout.findViewById(R.id.buttonOk);
@@ -304,9 +313,8 @@ public class AvatarMainActivity extends Activity {
 				buttonOk.setOnClickListener(new OnClickListener(){
 
 					public void onClick(View v) {
-						//v.getParent()
+
 						setEmail(emailET.getText().toString());
-						//String s = timeout.getText().toString();
 						long cur = Calendar.getInstance().getTimeInMillis();
 						long dateTo = timeoutD.getCalendarView().getDate();
 						long timeTo = timeoutT.getCurrentHour()*1000*60*60+timeoutT.getCurrentMinute()*1000*60;
@@ -320,10 +328,7 @@ public class AvatarMainActivity extends Activity {
 							setTtl(0);
 								
 						}
-						
-						
-						
-						
+
 						shareRobot();
 						alertDialog.dismiss();
 						if(isRunning)
@@ -351,8 +356,8 @@ public class AvatarMainActivity extends Activity {
 			case SEND_CONTROL_LINK_DIALOG:
 			{
 				final Calendar c = Calendar.getInstance();
-				timeoutD.setMinDate(c.getTimeInMillis()-10000);
-				timeoutD.setMaxDate(c.getTimeInMillis()+((long)(Integer.MAX_VALUE-60*60*24))*1000);
+				//timeoutD.setMinDate(c.getTimeInMillis()-10000);
+				//timeoutD.setMaxDate(c.getTimeInMillis()+((long)(Integer.MAX_VALUE-60*60*24))*1000);
 				c.add(Calendar.DAY_OF_YEAR, 1);				
 				timeoutD.updateDate(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
 				timeoutT.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
@@ -393,18 +398,23 @@ public class AvatarMainActivity extends Activity {
 
 
 	public void shareRobot() {
-		WifiManager wifiMan = (WifiManager) this.getSystemService(
-	            Context.WIFI_SERVICE);
-		WifiInfo wifiInf = wifiMan.getConnectionInfo();
-		String macAddr = wifiInf.getMacAddress();
-		Uri.Builder builder = new Uri.Builder();
-		builder.scheme(SERVER_SCHEME).authority(SERVER_AUTHORITY).path(SHARE_PATH)
-		.appendQueryParameter(MACADDR_PARAM, macAddr)
-		.appendQueryParameter(EMAIL_PARAM, email)
-		.appendQueryParameter(TTL_PARAM, String.format("%d", ttl));
-		Uri uri=builder.build();
-		HttpConnection connection = new HttpConnection(shareConnectionHandler);
-		connection.get(uri.toString());
+		if(isNetworkAvailable&& (ttl>0))
+		{
+			WifiManager wifiMan = (WifiManager) this
+					.getSystemService(Context.WIFI_SERVICE);
+			WifiInfo wifiInf = wifiMan.getConnectionInfo();
+			String macAddr = wifiInf.getMacAddress();
+			Uri.Builder builder = new Uri.Builder();
+			builder.scheme(SERVER_SCHEME).authority(SERVER_AUTHORITY)
+					.path(SHARE_PATH)
+					.appendQueryParameter(MACADDR_PARAM, macAddr)
+					.appendQueryParameter(EMAIL_PARAM, email)
+					.appendQueryParameter(TTL_PARAM, String.format("%d", ttl));
+			Uri uri = builder.build();
+			HttpConnection connection = new HttpConnection(
+					shareConnectionHandler);
+			connection.get(uri.toString());
+		}
 	}
 	
 	ConnectionResponceHandler shareConnectionHandler = new ConnectionResponceHandler()
@@ -457,15 +467,7 @@ public class AvatarMainActivity extends Activity {
 		
 	};
 	
-//	Socket socket = null; 
 
-	//ParcelFileDescriptor pfd = null; 
-
-	//MediaRecorder recorder =  new MediaRecorder();
-	
-	
-	
-	
 	
 
 	protected void runCommands()
@@ -476,11 +478,8 @@ public class AvatarMainActivity extends Activity {
 		.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
 		Uri uri=builder.build();
 		HttpConnection connection = new HttpConnection(cmdConnectionHandler);
-		//connection.setTimeout(1000*60*60*24);
 		connection.setPollingMode(true);
 		connection.get(uri.toString());
-
-		//startCamera();
 	}
 	
 
@@ -587,10 +586,8 @@ public class AvatarMainActivity extends Activity {
 		wave.setBackgroundColor(value?0xffffffff:0xff000000);
 		wave.invalidate();
 	}
-	public void doHangup(boolean value)
+	public void doHangup()
 	{
-		if(value)
-		{
 			 leftEngineForward.setBackgroundColor(0xff000000);
 			 leftEngineForward.invalidate();
 			 leftEngineBackward.setBackgroundColor(0xff000000);
@@ -611,13 +608,6 @@ public class AvatarMainActivity extends Activity {
 		     wave.invalidate();
 		     videoSender.stopCamera();
 		     audioSender.stopVoice();
-		  //  stopPlayer();
-		  //   stopCamera();
-		}
-		else
-		{
-		//	runCommands();
-		}
 	}
 	/*
 	 *     Каждая строка может содержать в себе JSON-список (далее “пакет”) с одним или более из следующих полей: left, right, yaw, pitch, wave, hangup.
@@ -637,25 +627,7 @@ public class AvatarMainActivity extends Activity {
 
 		@Override
 		protected void onConnectionSuccessful(String responce) {
-			// TODO Auto-generated method stub
-
-
-				doHangup(true);
-
-
-			//runCommands();
-		}
-
-		@Override
-		protected void onConnectionUnsuccessful(int statusCode) {
-			// TODO Auto-generated method stub
-			runCommands();
-		}
-
-		@Override
-		protected void onConnectionFail(Exception e) {
-			// TODO Auto-generated method stub
-		//	Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
+			parceJson(responce);
 			if(isRunning)
 			{
 				runCommands();
@@ -664,8 +636,21 @@ public class AvatarMainActivity extends Activity {
 		}
 
 		@Override
-		protected void onDataPart(String responce) {
-			// TODO Auto-generated method stub
+		protected void onConnectionUnsuccessful(int statusCode) {
+			runCommands();
+		}
+
+		@Override
+		protected void onConnectionFail(Exception e) {
+		//	Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
+			if(isRunning)
+			{
+				runCommands();
+			}
+		}
+
+		protected void parceJson(String responce)
+		{
 			try
 			{
 				JSONObject r = new JSONObject(responce);
@@ -686,7 +671,10 @@ public class AvatarMainActivity extends Activity {
 					doPitch(r.getInt("pitch"));
 				}
 				//doWave(r.has("wave"));
-				doHangup(r.has("hangup"));
+				if(r.has("hangup"))
+				{	
+					startButton.toggle();
+				}
 				
 			}
 			catch(JSONException e)
@@ -696,10 +684,14 @@ public class AvatarMainActivity extends Activity {
 			}
 		}
 		
+		@Override
+		protected void onDataPart(String responce) {
+			parceJson(responce);
+		}
+		
 	};
 	
 	
-
 	public String getSession_token() {
 		return session_token;
 	}

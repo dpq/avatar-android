@@ -157,7 +157,8 @@ public class VideoSender extends Thread{
 							socket.setKeepAlive(true);
 							isRunning=true;
 							OutputStream s = socket.getOutputStream();
-							s.write(((AvatarMainActivity) context).getSession_token().getBytes());
+							String ident = "ava-"+((AvatarMainActivity) context).getSession_token();
+							s.write(ident.getBytes());
 							
 						} 
 						catch (Exception e) {
@@ -417,58 +418,68 @@ public class VideoSender extends Thread{
 		{
 
 			preview.setVisibility(View.VISIBLE);
-			preview.getHolder().setFixedSize (PREVIEW_WIDTH, PREVIEW_HEIGHT);
-			if(!preview.getHolder().isCreating())
+			SurfaceHolder holder =preview.getHolder();
+			try
 			{
-				try {
-					frontCamera.setPreviewDisplay(preview.getHolder());
-				} catch (IOException e1) {
-					Log.e("","",e1);
-				}
-				
-				setupCamera(frontCamera);
-				frontCamera.startPreview();
+				holder.removeCallback(cameraCallback);
 			}
-			else
+			catch (Exception e)
 			{
-				//if(preview.getHolder().)
-			preview.getHolder().addCallback ( new SurfaceHolder.Callback (){
-
-				public void surfaceChanged(SurfaceHolder holder, int format,
-						int width, int height) {
-					// TODO Auto-generated method stub
-					
-				}
-
-				public void surfaceCreated(SurfaceHolder holder) {
-					// TODO Auto-generated method stub
-					try {
-						frontCamera.setPreviewDisplay(preview.getHolder());
-					} catch (IOException e1) {
-						Log.e("","",e1);
-					}
-					
-					frontCamera.startPreview();
-				}
-
-				public void surfaceDestroyed(SurfaceHolder holder) {
-					// TODO Auto-generated method stub
-					if(frontCamera!=null)
-					{
-						try {
-							frontCamera.setPreviewDisplay(null);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							Log.e("","",e);
-							
-						}
-					}
-				}}); 
+				Log.e("VideoSender::startCamera","remove callback failed");
+				// do nothing
 			}
-
-
+			
+			holder.addCallback (cameraCallback); 
+			
+			
+			if(!holder.isCreating())
+			{
+				startShow(holder);
+			}
 		}
 		
+	}
+	
+	SurfaceHolder.Callback cameraCallback = new SurfaceHolder.Callback (){
+
+		public void surfaceChanged(SurfaceHolder holder, int format,
+				int width, int height) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void surfaceCreated(SurfaceHolder holder) {
+			// TODO Auto-generated method stub
+			startShow(holder);
+		}
+
+		public void surfaceDestroyed(SurfaceHolder holder) {
+			// TODO Auto-generated method stub
+			if(frontCamera!=null)
+			{
+				try {
+					frontCamera.setPreviewDisplay(null);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					Log.e("","",e);
+					
+				}
+			}
+		}
+		};
+	
+	
+	private void startShow(SurfaceHolder holder)
+	{
+		holder.setFixedSize (PREVIEW_WIDTH, PREVIEW_HEIGHT);
+		try {
+			frontCamera.setPreviewDisplay(holder);
+		} catch (IOException e1) {
+			Log.e("","",e1);
+		}
+		
+		setupCamera(frontCamera);
+		frontCamera.startPreview();
 	}
 	
 	protected void stopCamera()
