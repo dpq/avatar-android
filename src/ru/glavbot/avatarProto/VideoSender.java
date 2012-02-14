@@ -49,11 +49,11 @@ public class VideoSender extends Thread{
 	private static final int PREVIEW_HEIGHT=240;
 	
 	
-	VideoSender (final Context context, SurfaceView preview, VideoView foreignStream)
+	VideoSender (final Context context, SurfaceView preview/*, VideoView foreignStream*/)
 	{
 		this.context=context;
 		this.preview=preview;
-		this.foreignStream=foreignStream;
+		//this.foreignStream=foreignStream;
 		
 
 		start();
@@ -94,7 +94,7 @@ public class VideoSender extends Thread{
 					}*/
 					Date d2 = new Date();
 					Date d1=data.d;
-					Log.d("",String.format("time to convert: %d", d2.getTime()-d1.getTime()));
+					Log.v("",String.format("time to convert: %d", d2.getTime()-d1.getTime()));
 					data.unlock();
 /*
 					Bitmap b =BitmapFactory.decodeByteArray(os.toByteArray(), 0, os.toByteArray().length);
@@ -119,8 +119,8 @@ public class VideoSender extends Thread{
 						socketOutputStream.write(os.toByteArray());
 						socketOutputStream.write(eol.getBytes());
 					Date d3 = new Date();
-					Log.d("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
-					Log.d("",String.format("time total: %d", d3.getTime()-d1.getTime()));
+					Log.v("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
+					Log.v("",String.format("time total: %d", d3.getTime()-d1.getTime()));
 					
 					} catch (IOException e) {
 						// TODO Auto-generated catch block

@@ -6,6 +6,8 @@ import java.util.Calendar;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import de.mjpegsample.MjpegView.MjpegView;
 import ru.glavbot.avatarProto.R;
 
 //import com.ryong21.R;
@@ -65,9 +67,10 @@ public class AvatarMainActivity extends Activity {
      private  ToggleButton startButton;
      private Button sendLinkButton;
      private SurfaceView cameraPreview;
-     private VideoView videoView;
+     private MjpegView videoView;
      private VideoSender videoSender;
      private AudioSender audioSender;
+     private VideoReceiver videoReceiver;
  
      private static final int SEND_CONTROL_LINK_DIALOG = 1001;
      private static final String SHARED_PREFS = "RobotSharedPrefs";
@@ -173,11 +176,13 @@ public class AvatarMainActivity extends Activity {
 		webView.getSettings().setSupportZoom(true);
 		webView.getSettings().setAppCacheEnabled(true);
 		*/
-		videoView= (VideoView)findViewById(R.id.videoView);
+		videoView= (MjpegView)findViewById(R.id.videoView);
+		
+		videoReceiver = new VideoReceiver(videoView,"http://dev.glavbot.ru/restreamer?oid=%s");
 		
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
-        videoSender = new VideoSender(this, cameraPreview, videoView);
+        videoSender = new VideoSender(this, cameraPreview);
         audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT);
         network = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -229,6 +234,7 @@ public class AvatarMainActivity extends Activity {
     {
     	doHangup();
         ConnectionManager.getInstance().stopCurrent();
+        videoReceiver.stopReceiveVideo();
     }
     
     private void turnAllOn()
@@ -236,6 +242,7 @@ public class AvatarMainActivity extends Activity {
     	runCommands();
     	videoSender.startCamera();
     	audioSender.startVoice();
+    	videoReceiver.startReceiveVideo();
     	
     }
 
@@ -257,6 +264,7 @@ public class AvatarMainActivity extends Activity {
     	ttl=prefs.getInt(SHARED_PREFS_TTL, 0);
     	session_token = prefs.getString( SHARED_PREFS_TOKEN, null);
     	//stopPlayer();
+    	videoReceiver.setToken(session_token);
     	startListeningNetwork();
     	if(isRunning)
     	{
@@ -699,6 +707,7 @@ public class AvatarMainActivity extends Activity {
 	public void setSession_token(String session_token) {
 		this.session_token = session_token;
 		getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putString(SHARED_PREFS_TOKEN, session_token).apply();
+		videoReceiver.setToken(session_token);
 	}
 
 }

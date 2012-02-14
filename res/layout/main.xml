@@ -102,7 +102,7 @@
 							android:layout_centerHorizontal="true" 
 							android:layout_above="@+id/CameraPreview"
 							/> -->  
-							<VideoView 
+							<de.mjpegsample.MjpegView.MjpegView
 							android:layout_width="fill_parent" 
 							android:id="@+id/videoView" 
 							android:layout_height="wrap_content"
@@ -114,8 +114,8 @@
 							/>  <!-- android:layout_below="@+id/webview" -->
                           <SurfaceView
                               android:id="@+id/CameraPreview"
-                              android:layout_width="240px"
-                              android:layout_height="320px"
+                              android:layout_width="24px"
+                              android:layout_height="32px"
                               
 							  android:layout_above="@+id/SendLinkButton"
                               android:layout_centerHorizontal="true" />
