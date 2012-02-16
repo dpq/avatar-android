@@ -6,7 +6,7 @@ import android.util.Log;
 public abstract class ConnectionResponceHandler {
 	private Handler handler;
 
-	Handler getNativeHandler() {
+	public Handler getNativeHandler() {
 		return handler;
 	};
 
@@ -17,7 +17,7 @@ public abstract class ConnectionResponceHandler {
 				case HttpConnection.DID_SUCCEED: {
 					ReadedResponce resp = (ReadedResponce) message.obj;
 					if ((resp.getStatus() >= 200) && (resp.getStatus() < 300)) {
-						onConnectionSuccessful(resp.getText());
+						onConnectionSuccessful(resp.getData());
 					} else {
 						onConnectionUnsuccessful(resp.getStatus());
 					}
@@ -32,7 +32,7 @@ public abstract class ConnectionResponceHandler {
 				}
 				case HttpConnection.GOT_PART: {
 					ReadedResponce resp = (ReadedResponce) message.obj;
-					onDataPart(resp.getText());
+					onDataPart(resp.getData());
 					break;
 				}
 				
@@ -41,8 +41,8 @@ public abstract class ConnectionResponceHandler {
 		};
 	};
 
-	protected abstract void onConnectionSuccessful(String responce);
-	protected abstract void onDataPart(String responce);
+	protected abstract void onConnectionSuccessful(Object responce);
+	protected abstract void onDataPart(Object responce);
 
 	protected abstract void onConnectionUnsuccessful(int statusCode);
 

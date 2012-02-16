@@ -1,6 +1,6 @@
 package ru.glavbot.avatarProto;
 
-import de.mjpegsample.MjpegView.MjpegInputStream;
+
 import de.mjpegsample.MjpegView.MjpegView;
 
 public class VideoReceiver {
@@ -26,9 +26,9 @@ public class VideoReceiver {
 		{
 			throw new RuntimeException("VideoReceiver started without token!");
 		}
-		view.setSource(MjpegInputStream.read(String.format(address, token)));
-		view.setDisplayMode(MjpegView.SIZE_BEST_FIT);
-		view.showFps(true);
+		view.requestRead(String.format(address, token));
+		//MjpegInputStream.read(,);
+
 	}
 	
 	public void stopReceiveVideo()

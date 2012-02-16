@@ -51,7 +51,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import android.widget.VideoView;
+
 
 public class AvatarMainActivity extends Activity {
     /** Called when the activity is first created. */
@@ -132,7 +132,7 @@ public class AvatarMainActivity extends Activity {
 				}
 				else
 				{
-					Toast.makeText(AvatarMainActivity.this, "No wifi connection available. Please enable wifi!", Toast.LENGTH_LONG).show();
+					Toast.makeText(AvatarMainActivity.this, R.string.toastNoWifi, Toast.LENGTH_LONG).show();
 				}
 				
 			}
@@ -153,7 +153,7 @@ public class AvatarMainActivity extends Activity {
 					}
 					else
 					{
-						Toast.makeText(AvatarMainActivity.this, "No wifi connection available. Please enable wifi!", Toast.LENGTH_LONG).show();
+						Toast.makeText(AvatarMainActivity.this, R.string.toastNoWifi, Toast.LENGTH_LONG).show();
 						buttonView.toggle();
 					}
 					//startPlayer();
@@ -265,6 +265,7 @@ public class AvatarMainActivity extends Activity {
     	session_token = prefs.getString( SHARED_PREFS_TOKEN, null);
     	//stopPlayer();
     	videoReceiver.setToken(session_token);
+    	audioSender.setToken(session_token);
     	startListeningNetwork();
     	if(isRunning)
     	{
@@ -306,7 +307,7 @@ public class AvatarMainActivity extends Activity {
 
 				builder = new AlertDialog.Builder(this);
 				builder.setView(layout);
-				builder.setTitle("Enter email!");
+				builder.setTitle(R.string.sendLinkDlgHeader);
 				alertDialog = builder.create();
 				emailET = (EditText) layout.findViewById(R.id.editTextEmail);
 				timeoutD = (DatePicker) layout.findViewById(R.id.datePickerValidToDate);
@@ -429,27 +430,27 @@ public class AvatarMainActivity extends Activity {
 	{
 
 		@Override
-		protected void onConnectionSuccessful(String responce) {
+		protected void onConnectionSuccessful(Object responce) {
 			// TODO Auto-generated method stub
 			try
 			{
-				JSONObject r = new JSONObject(responce);
+				JSONObject r = new JSONObject((String)responce);
 				String status = r.getString("status");
 				if(status.equalsIgnoreCase("ok"))
 				{
 					setSession_token(r.getString("token"));
-					Toast.makeText(AvatarMainActivity.this, "Invite sent successfully, waiting for commands", Toast.LENGTH_LONG).show();
+					Toast.makeText(AvatarMainActivity.this, R.string.toastInviteOk, Toast.LENGTH_LONG).show();
 					startButton.toggle();
 				}
 				else
 				{
-					Toast.makeText(AvatarMainActivity.this, "Invite sending failed with message \r"+r.getString("message"), Toast.LENGTH_LONG).show();
+					Toast.makeText(AvatarMainActivity.this, getResources().getString(R.string.toastInviteFail, r.getString("message")), Toast.LENGTH_LONG).show();
 				}
 			}
 			catch(JSONException e)
 			{
 				Log.e("ConnectionResponceHandler", "onConnectionSuccessful", e);
-				Toast.makeText(AvatarMainActivity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
+				Toast.makeText(AvatarMainActivity.this,R.string.toastInviteHz, Toast.LENGTH_LONG).show();
 				
 			}
 		}
@@ -457,18 +458,18 @@ public class AvatarMainActivity extends Activity {
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
 			// TODO Auto-generated method stub
-			Toast.makeText(AvatarMainActivity.this, String.format("Server returned %d, try again later",statusCode), Toast.LENGTH_LONG).show();
+			Toast.makeText(AvatarMainActivity.this,getResources().getString(R.string.toastInviteServerRefuse, statusCode), Toast.LENGTH_LONG).show();
 		}
 
 		@Override
 		protected void onConnectionFail(Exception e) {
 			// TODO Auto-generated method stub
-			Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %d!",e.getMessage()), Toast.LENGTH_LONG).show();
+			Toast.makeText(AvatarMainActivity.this,getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()) , Toast.LENGTH_LONG).show();
 		
 		}
 
 		@Override
-		protected void onDataPart(String responce) {
+		protected void onDataPart(Object responce) {
 			// TODO Auto-generated method stub
 			
 		}
@@ -594,26 +595,32 @@ public class AvatarMainActivity extends Activity {
 		wave.setBackgroundColor(value?0xffffffff:0xff000000);
 		wave.invalidate();
 	}
+	public void hitTheLights()
+	{
+		leftEngineForward.setBackgroundColor(0xff000000);
+		leftEngineForward.invalidate();
+		leftEngineBackward.setBackgroundColor(0xff000000);
+		leftEngineBackward.invalidate();
+		rightEngineForward.setBackgroundColor(0xff000000);
+		rightEngineForward.invalidate();
+		rightEngineBackward.setBackgroundColor(0xff000000);
+		rightEngineBackward.invalidate();
+		yawUp.setBackgroundColor(0xff000000);
+		yawUp.invalidate();
+		yawDown.setBackgroundColor(0xff000000);
+		yawDown.invalidate();
+		pitchLeft.setBackgroundColor(0xff000000);
+		pitchLeft.invalidate();
+		pitchRight.setBackgroundColor(0xff000000);
+		pitchRight.invalidate();
+		wave.setBackgroundColor(0xff000000);
+		wave.invalidate();
+
+	}
+	
 	public void doHangup()
 	{
-			 leftEngineForward.setBackgroundColor(0xff000000);
-			 leftEngineForward.invalidate();
-			 leftEngineBackward.setBackgroundColor(0xff000000);
-			 leftEngineBackward.invalidate();
-		     rightEngineForward.setBackgroundColor(0xff000000);
-		     rightEngineForward.invalidate();
-		     rightEngineBackward.setBackgroundColor(0xff000000);
-		     rightEngineBackward.invalidate();
-		     yawUp.setBackgroundColor(0xff000000);
-		     yawUp.invalidate();
-		     yawDown.setBackgroundColor(0xff000000);
-		     yawDown.invalidate();
-		     pitchLeft.setBackgroundColor(0xff000000);
-		     pitchLeft.invalidate();
-		     pitchRight.setBackgroundColor(0xff000000);
-		     pitchRight.invalidate();
-		     wave.setBackgroundColor(0xff000000);
-		     wave.invalidate();
+			hitTheLights();
 		     videoSender.stopCamera();
 		     audioSender.stopVoice();
 	}
@@ -634,10 +641,11 @@ public class AvatarMainActivity extends Activity {
 	{
 
 		@Override
-		protected void onConnectionSuccessful(String responce) {
-			parceJson(responce);
+		protected void onConnectionSuccessful(Object responce) {
+			parceJson((String)responce);
 			if(isRunning)
 			{
+				hitTheLights();
 				runCommands();
 				//startButton.toggle();
 			}
@@ -653,15 +661,16 @@ public class AvatarMainActivity extends Activity {
 		//	Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
 			if(isRunning)
 			{
+				hitTheLights();
 				runCommands();
 			}
 		}
 
-		protected void parceJson(String responce)
+		protected void parceJson(Object responce)
 		{
 			try
 			{
-				JSONObject r = new JSONObject(responce);
+				JSONObject r = new JSONObject((String)responce);
 				if (r.has("left"))
 				{
 					doLeft(r.getInt("left"));
@@ -693,8 +702,8 @@ public class AvatarMainActivity extends Activity {
 		}
 		
 		@Override
-		protected void onDataPart(String responce) {
-			parceJson(responce);
+		protected void onDataPart(Object responce) {
+			parceJson((String)responce);
 		}
 		
 	};
@@ -708,6 +717,7 @@ public class AvatarMainActivity extends Activity {
 		this.session_token = session_token;
 		getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putString(SHARED_PREFS_TOKEN, session_token).apply();
 		videoReceiver.setToken(session_token);
+		audioSender.setToken(session_token);
 	}
 
 }

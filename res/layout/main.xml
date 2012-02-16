@@ -6,75 +6,66 @@
 
         <TextView
             android:id="@+id/LeftEngineForward"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            style = "@style/ControlButton" 
             android:layout_toRightOf="@+id/LeftEngineBackward"
             android:layout_alignParentTop="true"
-            android:text="2" 
+            android:text="@string/control2" 
             android:background="#000000"/>
         <TextView
             android:id="@+id/LeftEngineBackward"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            style = "@style/ControlButton"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
-            android:text="1" 
+            android:text="@string/control1" 
             android:background="#000000"/>
         <TextView
              android:id="@+id/RightEngineForward"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            style = "@style/ControlButton"
             android:layout_toRightOf="@+id/LeftEngineForward"
             android:layout_alignParentTop="true"
-            android:text="3" 
+            android:text="@string/control3" 
             android:background="#000000"/>
                         <TextView
              android:id="@+id/RightEngineBackward"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            style = "@style/ControlButton"
             android:layout_toRightOf="@+id/RightEngineForward"
             android:layout_alignParentTop="true"
-            android:text="4" 
+            android:text="@string/control4" 
             android:background="#000000"/>
                 <TextView
              android:id="@+id/YawUp"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            style = "@style/ControlButton"
             android:layout_toRightOf="@+id/YawDown"
             android:layout_alignParentTop="true"
-            android:text="8" 
+            android:text="@string/control8" 
             android:background="#000000"/>
             <TextView
              android:id="@+id/YawDown"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            style = "@style/ControlButton"
             android:layout_toRightOf="@+id/PitchLeft"
             android:layout_alignParentTop="true"
-            android:text="7" 
+            android:text="@string/control7" 
             android:background="#000000"/>
               <TextView
              android:id="@+id/PitchLeft"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            style = "@style/ControlButton"
             android:layout_toRightOf="@+id/PitchRight"
             android:layout_alignParentTop="true"
-            android:text="6" 
+            android:text="@string/control6" 
             android:background="#000000"/>   
                           <TextView
-             android:id="@+id/PitchRight"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            android:id="@+id/PitchRight"
+            style = "@style/ControlButton"
             android:layout_toRightOf="@+id/RightEngineBackward"
             android:layout_alignParentTop="true"
-            android:text="5" 
+            android:text="@string/control5" 
             android:background="#000000"/>            
                           <TextView
-             android:id="@+id/Wave"
-            android:layout_width="0.3937in"
-            android:layout_height="2in"
+            android:id="@+id/Wave"
+            style = "@style/ControlButton"
             android:layout_toRightOf="@+id/YawUp"
             android:layout_alignParentTop="true"
-            android:text="9" 
+            android:text="@string/control9" 
             android:background="#000000"/>
 
                           <ToggleButton
@@ -84,7 +75,7 @@
                               android:layout_alignParentBottom="true"
                               android:layout_alignParentLeft="true"
                               android:layout_alignParentRight="true"
-                              android:text="Start|stop" />
+                              android:text="@string/btnstartstoptext" />
 
                           <Button
                               android:id="@+id/SendLinkButton"
@@ -92,7 +83,7 @@
                               android:layout_height="wrap_content"
                               android:layout_above="@+id/StartButton"
                               android:layout_centerHorizontal="true"
-                              android:text="Send link" />
+                              android:text="@string/btnsendlinktext" />
 						<!-- <WebView 
 							android:layout_width="fill_parent" 
 							android:id="@+id/webview" 
@@ -116,8 +107,6 @@
                               android:id="@+id/CameraPreview"
                               android:layout_width="24px"
                               android:layout_height="32px"
-                              
 							  android:layout_above="@+id/SendLinkButton"
                               android:layout_centerHorizontal="true" />
-  
     </RelativeLayout>

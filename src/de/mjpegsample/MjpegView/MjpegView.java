@@ -1,6 +1,19 @@
 package de.mjpegsample.MjpegView;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+
+
+import edu.gvsu.masl.asynchttp.ConnectionResponceHandler;
+import edu.gvsu.masl.asynchttp.HttpConnection;
+import edu.gvsu.masl.asynchttp.ReadedResponce;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -11,7 +24,10 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -37,12 +53,16 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     private int dispWidth;
     private int dispHeight;
     private int displayMode;
-
+    private Context context;
+    private int surfaceWidth;
+    private int surfaceHeight;
+    
     public class MjpegViewThread extends Thread {
         private SurfaceHolder mSurfaceHolder;
         private int frameCounter = 0;
         private long start;
         private Bitmap ovl;
+       
          
         public MjpegViewThread(SurfaceHolder surfaceHolder, Context context) { mSurfaceHolder = surfaceHolder; }
 
@@ -101,7 +121,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
             Canvas c = null;
             Paint p = new Paint();
             String fps = "";
-            while (mRun) {
+            while (mRun&&(!interrupted())) {
                 if(surfaceDone) {
                     try {
                         c = mSurfaceHolder.lockCanvas();
@@ -138,7 +158,8 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     private void init(Context context) {
         SurfaceHolder holder = getHolder();
         holder.addCallback(this);
-        thread = new MjpegViewThread(holder, context);
+        this.context=context;
+        
         setFocusable(true);
         overlayPaint = new Paint();
         overlayPaint.setTextAlign(Paint.Align.LEFT);
@@ -155,23 +176,47 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     public void startPlayback() { 
         if(mIn != null) {
             mRun = true;
+            thread = new MjpegViewThread(getHolder(), context);
+            thread.setSurfaceSize(surfaceWidth, surfaceHeight); 
             thread.start();    		
         }
     }
     
     public void stopPlayback() { 
         mRun = false;
+        initializing=false;
         boolean retry = true;
+        try {
+        	if(mIn!=null)
+			{
+        		mIn.close();
+			}
+		} catch (IOException e1) {			
+		}
         while(retry) {
             try {
-                thread.join();
-                retry = false;
+            	
+            	if(thread!=null)
+            	{
+            		thread.interrupt();
+            		thread.join();
+            		Log.d("",thread.isAlive()?"alive":"dead");
+            		thread=null;
+            	}
+            	retry = false;
             } catch (InterruptedException e) {}
         }
     }
 
     public MjpegView(Context context, AttributeSet attrs) { super(context, attrs); init(context); }
-    public void surfaceChanged(SurfaceHolder holder, int f, int w, int h) { thread.setSurfaceSize(w, h); }
+    public void surfaceChanged(SurfaceHolder holder, int f, int w, int h) { 
+    	if(thread !=null)
+    	{
+    		thread.setSurfaceSize(w, h); 
+    	}
+    	surfaceWidth=w;
+    	surfaceHeight=h;
+    }
 
     public void surfaceDestroyed(SurfaceHolder holder) { 
         surfaceDone = false; 
@@ -181,10 +226,114 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     public MjpegView(Context context) { super(context); init(context); }    
     public void surfaceCreated(SurfaceHolder holder) { surfaceDone = true; }
     public void showFps(boolean b) { showFps = b; }
-    public void setSource(MjpegInputStream source) { mIn = source; startPlayback();}
+    private void setSource(MjpegInputStream source) { mIn = source; startPlayback();}
     public void setOverlayPaint(Paint p) { overlayPaint = p; }
     public void setOverlayTextColor(int c) { overlayTextColor = c; }
     public void setOverlayBackgroundColor(int c) { overlayBackgroundColor = c; }
     public void setOverlayPosition(int p) { ovlPos = p; }
     public void setDisplayMode(int s) { displayMode = s; }
+    
+    
+    
+    private static class MJpegInputStreamConnector implements Runnable
+    {
+
+    	MJpegInputStreamConnector(String url, ConnectionResponceHandler handler)
+    	{
+    		this.url=url;
+    		this.m_handler=handler.getNativeHandler();
+    	};
+    	 private String url= null;
+    	 private Handler m_handler=null;
+    	 private HttpResponse res= null;
+
+		public void run() {
+			// TODO Auto-generated method stub
+
+			if (url == null || m_handler == null)
+				throw new RuntimeException(
+						"MJpegInputStreamConnector started without thread or handler");
+
+			DefaultHttpClient httpclient = new DefaultHttpClient();
+			Message message;
+			try {
+				res = httpclient.execute(new HttpGet(URI.create(url)));
+				ReadedResponce rr = new ReadedResponce(res.getStatusLine()
+						.getStatusCode(), res.getEntity().getContent());
+				message = Message.obtain(m_handler, HttpConnection.DID_SUCCEED,
+						rr);
+			} catch (ClientProtocolException e) {
+				Log.e("", "", e);
+				message = Message
+						.obtain(m_handler, HttpConnection.DID_ERROR, e);
+			} catch (IOException e) {
+				Log.e("", "", e);
+				message = Message
+						.obtain(m_handler, HttpConnection.DID_ERROR, e);
+			}
+
+			m_handler.sendMessage(message);
+
+		}
+		        
+		        
+		        
+		        
+			
+    	
+    };
+   
+    
+    
+    private String url;
+    private boolean initializing=false;
+    
+    public void requestRead(String url) {
+    	this.url=url;
+    	initializing=true;
+    	MJpegInputStreamConnector r = new MJpegInputStreamConnector(url,openStreamHandler);
+    	Thread t = new Thread(r);
+    	t.start();
+    }
+    
+    
+    
+    ConnectionResponceHandler openStreamHandler= new ConnectionResponceHandler()
+    {
+
+		@Override
+		protected void onConnectionSuccessful(Object responce) {
+			// TODO Auto-generated method stub
+			 setSource(new MjpegInputStream((InputStream) responce));
+			 initializing=false;
+			 //view.setSource();
+			 setDisplayMode(MjpegView.SIZE_BEST_FIT);
+			 showFps(true);
+			 
+		}
+
+		@Override
+		protected void onDataPart(Object responce) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		protected void onConnectionUnsuccessful(int statusCode) {
+			// TODO Auto-generated method stub
+			if(initializing)
+				requestRead(url);
+			
+		}
+
+		@Override
+		protected void onConnectionFail(Exception e) {
+			// TODO Auto-generated method stub
+			if(initializing)
+				requestRead(url);
+		}
+    	
+    };
+    
+    
 }

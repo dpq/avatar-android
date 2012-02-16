@@ -5,17 +5,13 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
+
 import java.util.Properties;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 public class MjpegInputStream extends DataInputStream {
     private final byte[] SOI_MARKER = { (byte) 0xFF, (byte) 0xD8 };
@@ -24,50 +20,9 @@ public class MjpegInputStream extends DataInputStream {
     private final static int HEADER_MAX_LENGTH = 100;
     private final static int FRAME_MAX_LENGTH = 60000 + HEADER_MAX_LENGTH;
     private int mContentLength = -1;
+  //private static Socket socket;
 	
-    private static Runnable r = new Runnable()
-    {
 
-		public void run() {
-			// TODO Auto-generated method stub
-			DefaultHttpClient httpclient = new DefaultHttpClient();		
-	        try {
-	            res = httpclient.execute(new HttpGet(URI.create(url)));
-	        } catch (ClientProtocolException e) {
-	        	Log.e("","",e);
-	        } catch (IOException e) {
-	        	Log.e("","",e);
-	        }
-		}
-    	
-    };
-    
-    private static String url;
-    private static HttpResponse res= null;
-    
-    public static MjpegInputStream read(String url) {
-    	MjpegInputStream.url=url;
-
-    	Thread t = new Thread(r);
-    	t.start();
-    	try {
-			t.join();
-		} catch (InterruptedException e) {
-		}
-         try {
-			return new MjpegInputStream(res.getEntity().getContent());
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			Log.e("","",e);
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			Log.e("","",e);
-			
-		}				
-
-        return null;
-    }
 	
     public MjpegInputStream(InputStream in) { super(new BufferedInputStream(in, FRAME_MAX_LENGTH)); }
 	

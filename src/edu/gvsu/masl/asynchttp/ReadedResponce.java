@@ -1,15 +1,15 @@
 package edu.gvsu.masl.asynchttp;
 
-class ReadedResponce {
+public class ReadedResponce {
 	private int status;
-	private String text;
+	private Object data;
 	
 	
 	
-	ReadedResponce (int status, String text)
+	public ReadedResponce (int status, Object data)
 	{
 		this.status=status;
-		this.text=text;
+		this.setData(data);
 	}
 
 
@@ -26,13 +26,15 @@ class ReadedResponce {
 
 
 
-	public String getText() {
-		return text;
+
+
+	public Object getData() {
+		return data;
 	}
 
 
 
-	public void setText(String text) {
-		this.text = text;
+	public void setData(Object data) {
+		this.data = data;
 	}
 }

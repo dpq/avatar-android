@@ -3,5 +3,27 @@
 
     <string name="hello">Hello World, Test1Activity!</string>
     <string name="app_name">Avatar prototype v0.2</string>
-
+	<string name="control1">1</string>
+	<string name="control2">2</string>
+	<string name="control3">3</string>
+	<string name="control4">4</string>
+	<string name="control5">5</string>
+	<string name="control6">6</string>
+	<string name="control7">7</string>
+	<string name="control8">8</string>
+	<string name="control9">9</string>
+	<string name="btnstartstoptext">Start|stop</string>
+	<string name="btnsendlinktext">Send link</string>
+	<string name="sendLinkDlgButtonOk">Ok</string>
+	<string name="sendLinkDlgButtonCancel">Cancel</string>
+	<string name="sendLinkDlgHeader">Enter invite options</string>
+	<string name="sendLinkDlgEmail">Enter email</string>
+	<string name="sendLinkDlgExpires">Select expiration date</string>
+	<string name="toastNoWifi">No wifi connection available. Please enable wifi!</string>
+	<string name="toastInviteOk">Invite sent successfully, waiting for commands.</string>
+	<string name="toastInviteFail">Invite sending failed with message \r %s</string>
+	<string name="toastInviteHz">Unknown server responce. Possibly fail</string>
+	<string name="toastInviteServerRefuse">"Server returned %d, try again later"</string>
+	<string name="toastInviteFailNoConnection">Invite sending failed with message \r %s</string>
+	
 </resources>

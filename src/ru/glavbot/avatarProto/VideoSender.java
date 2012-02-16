@@ -1,32 +1,28 @@
 package ru.glavbot.avatarProto;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+//import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Date;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import ru.glavbot.avatarProto.R;
+//import java.text.SimpleDateFormat;
+//import java.util.List;
 
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.ErrorCallback;
 import android.hardware.Camera.PreviewCallback;
-import android.hardware.Camera.Size;
-import android.os.Environment;
+//import android.hardware.Camera.Size;
+//import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -68,6 +64,7 @@ public class VideoSender extends Thread{
 	        	boolean isRunning = false;
 	        	Socket socket = null;
 	        	private int counter = 0;
+	        	private String hostname; 
 	        	
 	        	private void processFrame(Message msg)
 	        	{
@@ -82,47 +79,36 @@ public class VideoSender extends Thread{
 					YuvImage img = new YuvImage(data.getData(),ImageFormat.NV21,PREVIEW_WIDTH,PREVIEW_HEIGHT,null);
 					
 					ByteArrayOutputStream os= new ByteArrayOutputStream();
-					//ByteArrayOutputStream s = new ByteArrayOutputStream();
-					boolean result=	img.compressToJpeg(new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1), 50, os);
-					/*if(!result)
-					{
-						Log.w("","cast failed!");
-					}
-					else
-					{
-						Log.w("","cast succeed!");
-					}*/
+					
+					/*boolean result=	*/img.compressToJpeg(new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1), 50, os);
+				
 					Date d2 = new Date();
 					Date d1=data.d;
 					Log.v("",String.format("time to convert: %d", d2.getTime()-d1.getTime()));
 					data.unlock();
-/*
-					Bitmap b =BitmapFactory.decodeByteArray(os.toByteArray(), 0, os.toByteArray().length);
-					Bitmap b1=Bitmap.createBitmap(PREVIEW_WIDTH,PREVIEW_HEIGHT,b.getConfig());
-					int width = 
-					for(int i =0; i< b.getWidth();i++)
-						for(int j = 0; j<b.getHeight();j++)
-						{
-							b1.setPixel(i, j, b.getPixel(b.getWidth()-i, j));
-						}
-                        
-*/
-					
-					
+
 					String s =String.format(
 							"--boundarydonotcross"+eol+
 							"Content-Type: image/jpeg"+eol+
 							"Content-Length: %d"+eol+eol,os.size());
 					try {
 						OutputStream socketOutputStream = socket.getOutputStream();
+						socketOutputStream.flush();
 						socketOutputStream.write(s.getBytes());
 						socketOutputStream.write(os.toByteArray());
 						socketOutputStream.write(eol.getBytes());
+						socketOutputStream.flush();
 					Date d3 = new Date();
 					Log.v("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
 					Log.v("",String.format("time total: %d", d3.getTime()-d1.getTime()));
 					
-					} catch (IOException e) {
+					} 
+					catch (SocketException se)
+					{
+						Log.e("","",se);
+						initializeSocket(hostname);
+					}
+					catch (IOException e) {
 						// TODO Auto-generated catch block
 						Log.e("","",e);
 						
@@ -139,7 +125,7 @@ public class VideoSender extends Thread{
 	        	private void initializeSocket(String hostname)
 	        	{
 	        		
-						// TODO Auto-generated method stub
+	        			this.hostname=hostname;
 						InetAddress addr=null;
 						try {
 							addr = InetAddress.getByName(hostname);
@@ -180,6 +166,10 @@ public class VideoSender extends Thread{
 	        		}
 	        		socket = null;
 					isRunning=false;
+					if(mChildHandler.hasMessages(PROCESS_FRAME))
+					{
+						mChildHandler.removeMessages(PROCESS_FRAME);
+					}
 			
 	        	}
 	        	
@@ -279,7 +269,7 @@ public class VideoSender extends Thread{
 	 }*/
 
 	 /** Create a File for saving an image or video */
-	 private File getOutputMediaFile(int type){
+/*	 private File getOutputMediaFile(int type){
 	     // To be safe, you should check that the SDCard is mounted
 	     // using Environment.getExternalStorageState() before doing this.
 		 File mediaStorageDir;
@@ -322,7 +312,7 @@ public class VideoSender extends Thread{
 	     File mediaFile=new File(filename);
 	     return mediaFile;
 	 }
-	
+	*/
 	 private static final int NUM_FRAMES=15;
 	 private Handler mChildHandler=null;
 	 
@@ -362,7 +352,7 @@ public class VideoSender extends Thread{
 		p.setPreviewFormat (ImageFormat.NV21);
 		p.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		p.setPreviewFrameRate(NUM_FRAMES);
-		List<Size> mSupportedPreviewSizes = p.getSupportedPreviewSizes();
+	//	List<Size> mSupportedPreviewSizes = p.getSupportedPreviewSizes();
 		//p.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		camera.setParameters(p);
 		
