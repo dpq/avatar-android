@@ -206,9 +206,12 @@ public class AudioSender extends Thread{
 
 				private void stopRecord() {
 					mChildHandler.removeMessages(PROCESS_AUDIO);
-					recorder.stop();
-					recorder.release();
-					recorder=null;
+					if(recorder!=null)
+					{
+						recorder.stop();
+						recorder.release();
+						recorder=null;
+					}
 					try {
 						if(socket!=null)
 						socket.close();

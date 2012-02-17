@@ -144,8 +144,15 @@ public class VideoSender extends Thread{
 							isRunning=true;
 							OutputStream s = socket.getOutputStream();
 							String ident = "ava-"+((AvatarMainActivity) context).getSession_token();
-							s.write(ident.getBytes());
-							
+							String header = String.format(
+							"POST /restreamer?oid=%s HTTP/1.1"+eol
+							+"Server: %s:%d"+eol
+							+"User-Agent: avatar/0.2"+eol
+							+"Content-Type: multipart/x-mixed-replace; boundary=--boundarydonotcross"+eol
+							+eol
+							+eol
+							, ident,hostname,SERVER_VIDEO_PORT);
+							s.write(header.getBytes());
 						} 
 						catch (Exception e) {
 							// TODO Auto-generated catch block
@@ -318,13 +325,13 @@ public class VideoSender extends Thread{
 	 
 	 public Handler getVideoHandler(){return mChildHandler;};
 	 
-	 private static final String eol = System.getProperty("line.separator"); 
+	 private static final String eol = "\r\n"; //for http should be so //System.getProperty("line.separator"); 
 	 
 	 private static final int INITIALIZE_VIDEO_SOCKET=0;
 	 private static final int PROCESS_FRAME=1;
 	 private static final int CLOSE_VIDEO_SOCKET=2;
 	 
-	 private static final int SERVER_VIDEO_PORT = 10000;
+	 private static final int SERVER_VIDEO_PORT = 80;
 	    
 	// private Thread senderThread= null;
 	 
