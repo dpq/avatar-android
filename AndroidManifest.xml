@@ -12,17 +12,21 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.RECORD_AUDIO" />
+	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
     
  	<uses-feature android:name="android.hardware.camera" />
  	<uses-feature android:name="android.hardware.camera.autofocus" />
  	<uses-feature android:name="android.hardware.audio.low_latency"/>
+ 	<uses-feature android:name="android.hardware.usb.accessory" />
+ 	
   <!--   <uses-permission android:name="android.permission.WAKE_LOCK" /> -->
     
     
     <application
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name" >
+        android:label="@string/app_name" 
+        android:debuggable="true">
         <activity
             android:name=".AvatarMainActivity"
             android:label="@string/app_name"

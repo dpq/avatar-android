@@ -70,6 +70,7 @@ public class AvatarMainActivity extends Activity {
      private MjpegView videoView;
      private VideoSender videoSender;
      private AudioSender audioSender;
+     private AudioReceiver audioReceiver;
      private VideoReceiver videoReceiver;
  
      private static final int SEND_CONTROL_LINK_DIALOG = 1001;
@@ -90,7 +91,9 @@ public class AvatarMainActivity extends Activity {
      private static final String MODE_PARAM = "mode";
      private static final String MODE_PARAM_VALUE = "read";
    //  private static final int SERVER_VIDEO_PORT = 10000;
-     private static final int SERVER_AUDIO_PORT = 10002;
+     private static final int SERVER_AUDIO_PORT_OUT = 10002;
+     private static final int SERVER_AUDIO_PORT_IN = 10003;
+     
 
      
      
@@ -183,7 +186,8 @@ public class AvatarMainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
         videoSender = new VideoSender(this, cameraPreview);
-        audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT);
+        audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_OUT);
+        audioReceiver= new AudioReceiver(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_IN);
         network = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         isNetworkAvailable=inf.isConnected();
@@ -242,6 +246,7 @@ public class AvatarMainActivity extends Activity {
     	runCommands();
     	videoSender.startCamera();
     	audioSender.startVoice();
+    	audioReceiver.startVoice();
     	videoReceiver.startReceiveVideo();
     	
     }
@@ -266,6 +271,7 @@ public class AvatarMainActivity extends Activity {
     	//stopPlayer();
     	videoReceiver.setToken(session_token);
     	audioSender.setToken(session_token);
+    	audioReceiver.setToken(session_token);
     	startListeningNetwork();
     	if(isRunning)
     	{
@@ -622,7 +628,9 @@ public class AvatarMainActivity extends Activity {
 	{
 			hitTheLights();
 		     videoSender.stopCamera();
+		     videoReceiver.stopReceiveVideo();
 		     audioSender.stopVoice();
+		     audioReceiver.stopVoice();
 	}
 	/*
 	 *     Каждая строка может содержать в себе JSON-список (далее “пакет”) с одним или более из следующих полей: left, right, yaw, pitch, wave, hangup.
@@ -718,6 +726,7 @@ public class AvatarMainActivity extends Activity {
 		getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putString(SHARED_PREFS_TOKEN, session_token).apply();
 		videoReceiver.setToken(session_token);
 		audioSender.setToken(session_token);
+		audioReceiver.setToken(session_token);
 	}
 
 }

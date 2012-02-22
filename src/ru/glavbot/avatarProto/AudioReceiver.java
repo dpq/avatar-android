@@ -1,40 +1,42 @@
 package ru.glavbot.avatarProto;
- 
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.Thread;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 import android.app.Activity;
 import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder.AudioSource;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
-public class AudioSender extends Thread{
+public class AudioReceiver extends Thread {
 
 	private final String host;
 	private final int port;
 	private String token;
 	
 	
-    AudioRecord recorder = null;
+	AudioTrack player = null;
     private static final int sampleRate = 44100;
     private static final int CHUNK_SIZE = 320*2;
-    
+    private Activity owner; 
       
-    Object sync= new Object();
     
+    
+    Object sync= new Object();
 	
-	
-	protected AudioSender(Activity base,String host,int port)
+	protected AudioReceiver(Activity base,String host,int port)
 	{
 		this.host=host;
 		this.port=port;
+		owner=base;
 		start();
 		try {
 			synchronized(sync)
@@ -50,14 +52,21 @@ public class AudioSender extends Thread{
 	
 	public void startVoice()
 	{
+		AudioManager audiomanager = (AudioManager) owner.getSystemService(Activity.AUDIO_SERVICE);
+		audiomanager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+		audiomanager.setSpeakerphoneOn(true);
 		Message msg = mChildHandler.obtainMessage(START_AUDIO);
 		mChildHandler.sendMessage(msg);
 	}
 	
 	public void stopVoice()
 	{
+		AudioManager audiomanager = (AudioManager) owner.getSystemService(Activity.AUDIO_SERVICE);
+		audiomanager.setSpeakerphoneOn(false);
+		audiomanager.setMode(AudioManager.MODE_NORMAL);
 		Message msg = mChildHandler.obtainMessage(STOP_AUDIO);
 		mChildHandler.sendMessage(msg);
+
 	}
 	
 	Handler mChildHandler;
@@ -66,13 +75,13 @@ public class AudioSender extends Thread{
 	protected static final int PROCESS_AUDIO = 1;
 	private static final int STOP_AUDIO=2;
 
-    private volatile boolean isRecording = false;
+    private volatile boolean isPlaying = false;
 
 	
 	 public void run() {
 
-		 synchronized(sync){
-		 
+		 	synchronized(sync)
+		 	{
 	        Looper.prepare();
 	        
 	        mChildHandler = new Handler() {
@@ -91,13 +100,13 @@ public class AudioSender extends Thread{
 	            	switch (msg.what)
 	            	{
 	            		case START_AUDIO:
-	            			startRecord();
+	            			startPlay();
 	            			break;
 	            		case PROCESS_AUDIO:
-	            			doRecord();
+	            			doPlay();
 	            			break;
 	            		case STOP_AUDIO:
-	            			stopRecord();
+	            			stopPlay();
 	            			break;
 	            		default:
 	            			throw new RuntimeException("Unknown command to video writer thread");
@@ -108,15 +117,15 @@ public class AudioSender extends Thread{
 
 
 
-				private void startRecord() {
+				private void startPlay() {
 
-					bufferSize =AudioRecord.getMinBufferSize(sampleRate,
+					bufferSize =AudioTrack.getMinBufferSize(sampleRate,
 			                        AudioFormat.CHANNEL_CONFIGURATION_MONO,
 			                        AudioFormat.ENCODING_PCM_16BIT);
-				     recorder = new AudioRecord(AudioSource.VOICE_COMMUNICATION, sampleRate,
-				                    AudioFormat.CHANNEL_CONFIGURATION_MONO,
-				                    AudioFormat.ENCODING_PCM_16BIT, bufferSize);
-				      
+					player = new AudioTrack( AudioManager.STREAM_VOICE_CALL , sampleRate,
+				                    AudioFormat.CHANNEL_OUT_MONO,
+				                    AudioFormat.ENCODING_PCM_16BIT, bufferSize,AudioTrack.MODE_STREAM);
+
 				        
 				     InetAddress addr=null;
 						try {
@@ -151,22 +160,31 @@ public class AudioSender extends Thread{
 							String ident = "ava-"+getToken();
 							try {
 								if(s!=null)
-								{
 									s.write(ident.getBytes());
-									s.flush();
-								}
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								Log.e("","",e);
 								
 							}
 							
-							isRecording=(socket!=null);
+							isPlaying=(socket!=null);
 							
-						if(isRecording)
+						if(isPlaying)
 						{
-							recorder.startRecording();
+							player.play();
+							//recorder.startRecording();
 							audioData= new byte[CHUNK_SIZE];
+							/*int qt = 1;
+							while (qt>0)
+							{
+								try {
+									qt=socket.getInputStream().read(audioData);
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									Log.e("","",e);
+									qt=-1;
+								}
+							}*/
 							Message msg = mChildHandler.obtainMessage(PROCESS_AUDIO);
 							mChildHandler.sendMessage(msg);
 						}
@@ -175,13 +193,13 @@ public class AudioSender extends Thread{
 
 
 
-				private void stopRecord() {
+				private void stopPlay() {
 					mChildHandler.removeMessages(PROCESS_AUDIO);
-					if(recorder!=null)
+					if(player!=null)
 					{
-						recorder.stop();
-						recorder.release();
-						recorder=null;
+						player.stop();
+						player.release();
+						player=null;
 					}
 					try {
 						if(socket!=null)
@@ -190,25 +208,28 @@ public class AudioSender extends Thread{
 						Log.e("","",e);
 					}
 					socket=null;
-					isRecording=false;
-					
+					isPlaying=false;
+
 				}
 
 
 
 
-				private void doRecord() {
-					if(isRecording)
+				private void doPlay() {
+					if(isPlaying)
 					{
-						int bytes_read=recorder.read(audioData, 0, CHUNK_SIZE);
-						if(bytes_read>0)
-						{
-							try {
-								socket.getOutputStream().write(audioData,0,bytes_read);
-								socket.getOutputStream().flush();
-							} catch (IOException e) {
-								Log.e("","",e);
+						try {
+						int bytes_read=socket.getInputStream().read(audioData, 0, CHUNK_SIZE);
+						//recorder.read();
+							if(bytes_read>0)
+							{
+								player.write(audioData,0,bytes_read);
+								//socket.getOutputStream().write(audioData,0,bytes_read);
+								//socket.getOutputStream().flush();
+							
 							}
+						} catch (IOException e) {
+							Log.e("","",e);
 						}
 						
 						Message msg = mChildHandler.obtainMessage(PROCESS_AUDIO);
@@ -222,8 +243,8 @@ public class AudioSender extends Thread{
 
 	        };
 	        sync.notifyAll();
-		 }
-	        
+		 	}
+	       
 	        Looper.loop();
 	    }
 
@@ -234,6 +255,5 @@ public class AudioSender extends Thread{
 	public void setToken(String token) {
 		this.token = token;
 	};
-	
 	
 }

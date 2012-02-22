@@ -43,7 +43,10 @@ public class VideoSender extends Thread{
 	private HandlerBuffer[] dataBuff;
 	private static final int PREVIEW_WIDTH=320;
 	private static final int PREVIEW_HEIGHT=240;
+	private static final int NUM_FRAMES=30;
+	private static final int NUM_BUFFERS=5; 
 	
+	Object sync= new Object();
 	
 	VideoSender (final Context context, SurfaceView preview/*, VideoView foreignStream*/)
 	{
@@ -53,10 +56,22 @@ public class VideoSender extends Thread{
 		
 
 		start();
+		try {
+			synchronized(sync)
+			{
+				sync.wait();
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			Log.e("","",e);
+			
+		}
 	}
 
 	 public void run() {
 
+		 synchronized(sync)
+		 {
 	        Looper.prepare();
 	        
 	        mChildHandler = new Handler() {
@@ -82,9 +97,9 @@ public class VideoSender extends Thread{
 					
 					/*boolean result=	*/img.compressToJpeg(new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1), 50, os);
 				
-					Date d2 = new Date();
-					Date d1=data.d;
-					Log.v("",String.format("time to convert: %d", d2.getTime()-d1.getTime()));
+					//Date d2 = new Date();
+					//Date d1=data.d;
+					//Log.v("",String.format("time to convert: %d", d2.getTime()-d1.getTime()));
 					data.unlock();
 
 					String s =String.format(
@@ -98,9 +113,9 @@ public class VideoSender extends Thread{
 						socketOutputStream.write(os.toByteArray());
 						socketOutputStream.write(eol.getBytes());
 						socketOutputStream.flush();
-					Date d3 = new Date();
-					Log.v("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
-					Log.v("",String.format("time total: %d", d3.getTime()-d1.getTime()));
+					//Date d3 = new Date();
+					//Log.v("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
+					//Log.v("",String.format("time total: %d", d3.getTime()-d1.getTime()));
 					
 					} 
 					catch (SocketException se)
@@ -114,7 +129,7 @@ public class VideoSender extends Thread{
 						
 					}
 					counter++;
-					if(counter>15)
+					if(counter>NUM_FRAMES)
 					{
 						System.gc();
 						counter = 0;
@@ -141,6 +156,8 @@ public class VideoSender extends Thread{
 						try {
 							socket = new Socket(addr, SERVER_VIDEO_PORT);
 							socket.setKeepAlive(true);
+							socket.setTcpNoDelay(true);
+							socket.setSoTimeout(100000);
 							isRunning=true;
 							OutputStream s = socket.getOutputStream();
 							String ident = "ava-"+((AvatarMainActivity) context).getSession_token();
@@ -200,7 +217,9 @@ public class VideoSender extends Thread{
 					
 	            }
 	        };
-
+	        sync.notifyAll();
+		 }
+	        
 	        Looper.loop();
 	    };
 
@@ -267,8 +286,8 @@ public class VideoSender extends Thread{
 	     camera.setDisplayOrientation(result);
 	 }
 
-	 public static final int MEDIA_TYPE_IMAGE = 1;
-	 public static final int MEDIA_TYPE_VIDEO = 2;
+//	 public static final int MEDIA_TYPE_IMAGE = 1;
+//	 public static final int MEDIA_TYPE_VIDEO = 2;
 
 	 /** Create a file Uri for saving an image or video */
 /*	 private static Uri getOutputMediaFileUri(int type){
@@ -320,7 +339,7 @@ public class VideoSender extends Thread{
 	     return mediaFile;
 	 }
 	*/
-	 private static final int NUM_FRAMES=15;
+
 	 private Handler mChildHandler=null;
 	 
 	 public Handler getVideoHandler(){return mChildHandler;};
@@ -332,9 +351,6 @@ public class VideoSender extends Thread{
 	 private static final int CLOSE_VIDEO_SOCKET=2;
 	 
 	 private static final int SERVER_VIDEO_PORT = 80;
-	    
-	// private Thread senderThread= null;
-	 
 	 
 	 
 	protected void  finalize()
@@ -351,7 +367,8 @@ public class VideoSender extends Thread{
 			
 		}
 	}
-	 
+
+	
 	private void setupCamera(Camera camera)
 	{
 		Camera.Parameters p = camera.getParameters();
@@ -364,7 +381,7 @@ public class VideoSender extends Thread{
 		camera.setParameters(p);
 		
 		int size = PREVIEW_WIDTH*PREVIEW_HEIGHT*ImageFormat.getBitsPerPixel(ImageFormat.NV21);
-		for(int i = 0; i<NUM_FRAMES;i++)
+		for(int i = 0; i<NUM_BUFFERS;i++)
 		{
 			camera.addCallbackBuffer(new byte[size]);
 		}
