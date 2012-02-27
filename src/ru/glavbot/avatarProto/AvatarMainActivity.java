@@ -3,6 +3,8 @@ package ru.glavbot.avatarProto;
 
 
 import java.util.Calendar;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -197,9 +199,16 @@ public class AvatarMainActivity extends Activity {
       //  final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
       // this.mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
       //  this.mWakeLock.acquire();
+        
+        stpe = new ScheduledThreadPoolExecutor(1);  
+          stpe.scheduleAtFixedRate(new Runnable() {  
+            public void run() {  
+                    System.gc();
+            }  
+        },0, 1,TimeUnit.SECONDS);  
 
     }
-    
+    ScheduledThreadPoolExecutor stpe;
     boolean isListeningNetwork=false;
 
     BroadcastReceiver networkStateListener = new  BroadcastReceiver() {
@@ -272,6 +281,7 @@ public class AvatarMainActivity extends Activity {
     	videoReceiver.setToken(session_token);
     	audioSender.setToken(session_token);
     	audioReceiver.setToken(session_token);
+    	videoSender.setToken(session_token);
     	startListeningNetwork();
     	if(isRunning)
     	{
@@ -574,27 +584,58 @@ public class AvatarMainActivity extends Activity {
 	
 	public void doYaw(int value)
 	{
+		
 		if(value>0)
 		{
-			drawColor(yawUp,yawDown,value);
+			drawColor(yawUp,yawDown,255);
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 
 		}
 		else
+		if(value<0)
 		{
-			drawColor(yawDown,yawUp,-value);
+			drawColor(yawDown,yawUp,255);
+			value= -value;
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 		}
+		else
+		if(value==0)
+		{
+			drawColor(yawDown,yawUp,0);
+			wave.setBackgroundColor(0);
+			
+		}
+		wave.invalidate();
+		
+
 	}
 	public void doPitch(int value)
 	{
 		if(value>0)
 		{
-			drawColor(pitchLeft,pitchRight,value);
+			drawColor(pitchLeft,pitchRight,255);
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 
 		}
 		else
+		if(value<0)
 		{
-			drawColor(pitchRight,pitchLeft,-value);
+			drawColor(pitchRight,pitchLeft,255);
+			value= -value;
+			long color = 0xff000000+(value<<16)+(value<<8)+value;
+			wave.setBackgroundColor((int)color);
 		}
+		else
+		if(value==0)
+		{
+			drawColor(pitchRight,pitchLeft,0);
+			wave.setBackgroundColor(0);
+			
+		}
+
 	}
 	public void doWave(boolean value)
 	{
@@ -727,6 +768,7 @@ public class AvatarMainActivity extends Activity {
 		videoReceiver.setToken(session_token);
 		audioSender.setToken(session_token);
 		audioReceiver.setToken(session_token);
+		videoSender.setToken(session_token);
 	}
 
 }

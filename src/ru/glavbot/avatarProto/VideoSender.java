@@ -45,15 +45,20 @@ public class VideoSender extends Thread{
 	private static final int PREVIEW_HEIGHT=240;
 	private static final int NUM_FRAMES=30;
 	private static final int NUM_BUFFERS=5; 
+	private String token;
 	
 	Object sync= new Object();
 	
-	VideoSender (final Context context, SurfaceView preview/*, VideoView foreignStream*/)
+	
+	
+	
+	
+	VideoSender (final Context context, SurfaceView preview)
 	{
 		this.context=context;
 		this.preview=preview;
 		//this.foreignStream=foreignStream;
-		
+		//this.setToken(token);
 
 		start();
 		try {
@@ -83,9 +88,11 @@ public class VideoSender extends Thread{
 	        	
 	        	private void processFrame(Message msg)
 	        	{
+	        		boolean reconnect=false;
 	        		if((!isRunning)||(socket == null)||(!socket.isConnected()))
 	        		{
 	        			Log.e("senderThread.processFrame","Sending video to uninitialized socket");
+	        			reconnect=true;
 	        		}
 	        		else
 	        		{
@@ -94,6 +101,8 @@ public class VideoSender extends Thread{
 					YuvImage img = new YuvImage(data.getData(),ImageFormat.NV21,PREVIEW_WIDTH,PREVIEW_HEIGHT,null);
 					
 					ByteArrayOutputStream os= new ByteArrayOutputStream();
+					//Bitmap m;
+					
 					
 					/*boolean result=	*/img.compressToJpeg(new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1), 50, os);
 				
@@ -108,32 +117,34 @@ public class VideoSender extends Thread{
 							"Content-Length: %d"+eol+eol,os.size());
 					try {
 						OutputStream socketOutputStream = socket.getOutputStream();
-						socketOutputStream.flush();
+						//socketOutputStream.flush();
 						socketOutputStream.write(s.getBytes());
 						socketOutputStream.write(os.toByteArray());
 						socketOutputStream.write(eol.getBytes());
 						socketOutputStream.flush();
+						
 					//Date d3 = new Date();
 					//Log.v("",String.format("time to send: %d", d3.getTime()-d2.getTime()));
 					//Log.v("",String.format("time total: %d", d3.getTime()-d1.getTime()));
 					
 					} 
-					catch (SocketException se)
-					{
-						Log.e("","",se);
-						initializeSocket(hostname);
-					}
 					catch (IOException e) {
 						// TODO Auto-generated catch block
 						Log.e("","",e);
+						reconnect=true;
+						
 						
 					}
-					counter++;
+					/*counter++;
 					if(counter>NUM_FRAMES)
 					{
 						System.gc();
 						counter = 0;
-					}
+					}*/
+	        		}
+	        		if(isRunning&&reconnect)
+	        		{
+	        			initializeSocket(hostname);
 	        		}
 	        	}
 	        	
@@ -156,24 +167,26 @@ public class VideoSender extends Thread{
 						try {
 							socket = new Socket(addr, SERVER_VIDEO_PORT);
 							socket.setKeepAlive(true);
-							socket.setTcpNoDelay(true);
+							//socket.setTcpNoDelay(true);
 							socket.setSoTimeout(100000);
 							isRunning=true;
 							OutputStream s = socket.getOutputStream();
-							String ident = "ava-"+((AvatarMainActivity) context).getSession_token();
-							String header = String.format(
+							String ident = "ava-"+token;
+							String header = /*String.format(
 							"POST /restreamer?oid=%s HTTP/1.1"+eol
 							+"Server: %s:%d"+eol
 							+"User-Agent: avatar/0.2"+eol
 							+"Content-Type: multipart/x-mixed-replace; boundary=--boundarydonotcross"+eol
 							+eol
 							+eol
-							, ident,hostname,SERVER_VIDEO_PORT);
+							, */ident/*,hostname,SERVER_VIDEO_PORT)*/;
 							s.write(header.getBytes());
 						} 
 						catch (Exception e) {
 							// TODO Auto-generated catch block
 							Log.e(this.getClass().getName(),this.toString(),e);
+							
+							this.obtainMessage(INITIALIZE_VIDEO_SOCKET).sendToTarget();
 							isRunning=false;
 						}
 			
@@ -350,7 +363,7 @@ public class VideoSender extends Thread{
 	 private static final int PROCESS_FRAME=1;
 	 private static final int CLOSE_VIDEO_SOCKET=2;
 	 
-	 private static final int SERVER_VIDEO_PORT = 80;
+	 private static final int SERVER_VIDEO_PORT = 10000;
 	 
 	 
 	protected void  finalize()
@@ -548,4 +561,12 @@ public class VideoSender extends Thread{
 		}
 		return null;
 	}
+
+public String getToken() {
+	return token;
+}
+
+public void setToken(String token) {
+	this.token = token;
+}
 }

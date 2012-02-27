@@ -48,16 +48,19 @@ public class AudioSender extends Thread{
 		}
 	}
 	
+	private boolean isRunning=false;
 	public void startVoice()
 	{
 		Message msg = mChildHandler.obtainMessage(START_AUDIO);
 		mChildHandler.sendMessage(msg);
+		isRunning=true;
 	}
 	
 	public void stopVoice()
 	{
 		Message msg = mChildHandler.obtainMessage(STOP_AUDIO);
 		mChildHandler.sendMessage(msg);
+		isRunning=false;
 	}
 	
 	Handler mChildHandler;
@@ -65,6 +68,8 @@ public class AudioSender extends Thread{
 	private static final int START_AUDIO=0;
 	protected static final int PROCESS_AUDIO = 1;
 	private static final int STOP_AUDIO=2;
+	protected static final int AUDIO_OUT_ERROR = -2;
+	protected static final int MAX_SEND_BUFFER = 32768;
 
     private volatile boolean isRecording = false;
 
@@ -117,7 +122,7 @@ public class AudioSender extends Thread{
 				                    AudioFormat.CHANNEL_CONFIGURATION_MONO,
 				                    AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 				      
-				        
+				      boolean error=false;  
 				     InetAddress addr=null;
 						try {
 							addr = InetAddress.getByName(host);
@@ -129,6 +134,7 @@ public class AudioSender extends Thread{
 						catch (Exception e) {
 							// TODO Auto-generated catch block
 							Log.e("","",e);
+							error=true;
 						}
 						
 						OutputStream s;
@@ -139,12 +145,15 @@ public class AudioSender extends Thread{
 								socket.setKeepAlive(true);
 								socket.setTcpNoDelay(true);
 								socket.setSoTimeout(100000);
+								socket.setSendBufferSize(MAX_SEND_BUFFER);
 							
 								s = socket.getOutputStream();
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								Log.e("","",e);
 								s=null;
+								error=true;
+							//	errorHandler.obtainMessage(AUDIO_OUT_ERROR,e).sendToTarget();
 							}
 							
 							
@@ -158,6 +167,8 @@ public class AudioSender extends Thread{
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								Log.e("","",e);
+								error=true;
+								//errorHandler.obtainMessage(START_AUDIO,e).sendToTarget();
 								
 							}
 							
@@ -169,7 +180,18 @@ public class AudioSender extends Thread{
 							audioData= new byte[CHUNK_SIZE];
 							Message msg = mChildHandler.obtainMessage(PROCESS_AUDIO);
 							mChildHandler.sendMessage(msg);
+						//	mChildHandler.removeMessages(START_AUDIO);
 						}
+						else
+						{
+							error=true;
+						}
+						
+						if(error)
+						{
+							errorHandler.obtainMessage(AUDIO_OUT_ERROR).sendToTarget();
+						}
+						
 				}
 
 
@@ -198,6 +220,7 @@ public class AudioSender extends Thread{
 
 
 				private void doRecord() {
+					boolean reconnect = false;
 					if(isRecording)
 					{
 						int bytes_read=recorder.read(audioData, 0, CHUNK_SIZE);
@@ -208,12 +231,23 @@ public class AudioSender extends Thread{
 								socket.getOutputStream().flush();
 							} catch (IOException e) {
 								Log.e("","",e);
+								reconnect=true;
 							}
 						}
 						
 						Message msg = mChildHandler.obtainMessage(PROCESS_AUDIO);
 						mChildHandler.sendMessage(msg);
 					}
+					else
+					{
+						reconnect=true;
+						
+					}
+					if(reconnect)
+					{
+						errorHandler.obtainMessage(AUDIO_OUT_ERROR).sendToTarget();
+					}
+					
 				}
 
 
@@ -234,6 +268,25 @@ public class AudioSender extends Thread{
 	public void setToken(String token) {
 		this.token = token;
 	};
-	
+	private Handler errorHandler = new Handler()
+    {
+    	@Override
+    	 public void handleMessage(Message msg) {
+            	
+            	switch (msg.what)
+            	{
+            		case AUDIO_OUT_ERROR:
+            			/*if(isRecording)
+            			{*/
+            				stopVoice();
+            				startVoice();
+            			/*}*/
+            			break;
+            		default:
+            			throw new RuntimeException("Unknown command to incoming video error handler");
+            	};
+				
+            }
+    };
 	
 }
