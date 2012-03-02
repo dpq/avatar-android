@@ -173,14 +173,7 @@ public class AvatarMainActivity extends Activity {
 			
 		});
 		
-		/*webView = (WebView) findViewById(R.id.webview);
-
-		webView.getSettings().setJavaScriptEnabled(true);
-		webView.getSettings().setAllowFileAccess(true);
-		webView.getSettings().setPluginsEnabled(true);
-		webView.getSettings().setSupportZoom(true);
-		webView.getSettings().setAppCacheEnabled(true);
-		*/
+		
 		videoView= (MjpegView)findViewById(R.id.videoView);
 		
 		videoReceiver = new VideoReceiver(videoView,"http://dev.glavbot.ru/restreamer?oid=%s");
@@ -190,16 +183,8 @@ public class AvatarMainActivity extends Activity {
         videoSender = new VideoSender(this, cameraPreview);
         audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_OUT);
         audioReceiver= new AudioReceiver(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_IN);
-        network = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        isNetworkAvailable=inf.isConnected();
-        //senderThread.start();
-        /* This code together with the one in onDestroy() 
-         * will make the screen be always on until this Activity gets destroyed. */
-      //  final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-      // this.mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
-      //  this.mWakeLock.acquire();
         
+
         stpe = new ScheduledThreadPoolExecutor(1);  
           stpe.scheduleAtFixedRate(new Runnable() {  
             public void run() {  
@@ -211,16 +196,43 @@ public class AvatarMainActivity extends Activity {
     ScheduledThreadPoolExecutor stpe;
     boolean isListeningNetwork=false;
 
+    private void checkForNetwork()
+    {
+    	network = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+      // boolean oldNetworkAvailable = isNetworkAvailable;
+        isNetworkAvailable=inf.isConnected();
+        processNetworkState();
+
+        
+        	
+    }
+    
+    private void processNetworkState()
+    {
+    	
+        if(isNetworkAvailable&&isRunning)
+        {
+        	turnAllOn();
+        }
+        else
+        {
+        	turnAllOff();
+        	
+        }
+    }
+    
+    
     BroadcastReceiver networkStateListener = new  BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(BroadcastReceiver.class.getSimpleName(), "action: "
                     + intent.getAction());
-            //isNetworkAvailable =!intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, true);
-            NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-            isNetworkAvailable=inf.isConnected();
-
+            int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,-1);
+            isNetworkAvailable =state == WifiManager.WIFI_STATE_ENABLED;
+            //checkForNetwork();
+            processNetworkState();
         }
 
     };
@@ -229,7 +241,7 @@ public class AvatarMainActivity extends Activity {
     	if(!isListeningNetwork)
     	{
     		IntentFilter filter = new IntentFilter();
-    		filter.addAction("android.intent.action.SERVICE_STATE");
+    		filter.addAction("android.net.wifi.WIFI_STATE_CHANGED");
     		this.registerReceiver(networkStateListener, filter);
     		isListeningNetwork=true;
     	}
@@ -245,19 +257,27 @@ public class AvatarMainActivity extends Activity {
     
     private void turnAllOff()
     {
-    	doHangup();
-        ConnectionManager.getInstance().stopCurrent();
-        videoReceiver.stopReceiveVideo();
+    	if(turnedOn)
+    	{
+    		doHangup();
+    		
+    		//videoReceiver.stopReceiveVideo();
+    		turnedOn=false;
+    	}
     }
     
+    boolean turnedOn=false;
     private void turnAllOn()
     {
-    	runCommands();
-    	videoSender.startCamera();
-    	audioSender.startVoice();
-    	audioReceiver.startVoice();
-    	videoReceiver.startReceiveVideo();
-    	
+    	if(!turnedOn)
+    	{
+    		runCommands();
+    		videoSender.startCamera();
+    		audioSender.startVoice();
+    		audioReceiver.startVoice();
+    		videoReceiver.startReceiveVideo();
+    		turnedOn=true;
+    	}
     }
 
     @Override
@@ -282,8 +302,9 @@ public class AvatarMainActivity extends Activity {
     	audioSender.setToken(session_token);
     	audioReceiver.setToken(session_token);
     	videoSender.setToken(session_token);
+    	checkForNetwork();
     	startListeningNetwork();
-    	if(isRunning)
+    	if(isRunning&&isNetworkAvailable)
     	{
     		turnAllOn();
     	}
@@ -522,38 +543,23 @@ public class AvatarMainActivity extends Activity {
 	
 	public void doLeft(int value)
 	{
-		//TextView active,passive;
+		drawDirection(leftEngineForward,leftEngineBackward,value);
 		
-		if(value>0)
-		{
-			drawColor(leftEngineForward,leftEngineBackward,255);
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-
-		}
-		else
-			if(value<0)	
-		{
-			drawColor(leftEngineBackward,leftEngineForward,255);
-			value= -value;
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-		}
-		else
-			if(value==0)
-			{
-				drawColor(leftEngineBackward,leftEngineForward,0);
-				wave.setBackgroundColor(0);
-				
-			}
-		wave.invalidate();
 	}
 
 	public void doRight(int value)
 	{
+		drawDirection(rightEngineForward,rightEngineBackward,value);
+	}
+	
+
+
+
+	public void drawDirection(TextView left, TextView right,int value)
+	{
 		if(value>0)
 		{
-			drawColor(rightEngineForward,rightEngineBackward,255);
+			drawColor(left,right,255);
 			long color = 0xff000000+(value<<16)+(value<<8)+value;
 			wave.setBackgroundColor((int)color);
 
@@ -561,7 +567,7 @@ public class AvatarMainActivity extends Activity {
 		else
 		if(value<0)
 		{
-			drawColor(rightEngineBackward,rightEngineForward,255);
+			drawColor(right,left,255);
 			value= -value;
 			long color = 0xff000000+(value<<16)+(value<<8)+value;
 			wave.setBackgroundColor((int)color);
@@ -569,79 +575,31 @@ public class AvatarMainActivity extends Activity {
 		else
 		if(value==0)
 		{
-			drawColor(rightEngineBackward,rightEngineForward,0);
+			drawColor(right,left,0);
 			wave.setBackgroundColor(0);
 			
 		}
 		wave.invalidate();
 	}
 	
-
-
-
-	
-	
-	
 	public void doYaw(int value)
 	{
 		
-		if(value>0)
-		{
-			drawColor(yawUp,yawDown,255);
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-
-		}
-		else
-		if(value<0)
-		{
-			drawColor(yawDown,yawUp,255);
-			value= -value;
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-		}
-		else
-		if(value==0)
-		{
-			drawColor(yawDown,yawUp,0);
-			wave.setBackgroundColor(0);
-			
-		}
-		wave.invalidate();
+		drawDirection(yawUp,yawDown,value);
 		
 
 	}
 	public void doPitch(int value)
 	{
-		if(value>0)
-		{
-			drawColor(pitchLeft,pitchRight,255);
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-
-		}
-		else
-		if(value<0)
-		{
-			drawColor(pitchRight,pitchLeft,255);
-			value= -value;
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-		}
-		else
-		if(value==0)
-		{
-			drawColor(pitchRight,pitchLeft,0);
-			wave.setBackgroundColor(0);
-			
-		}
+		drawDirection(pitchLeft,pitchRight,value);
+		
 
 	}
-	public void doWave(boolean value)
-	{
-		wave.setBackgroundColor(value?0xffffffff:0xff000000);
-		wave.invalidate();
-	}
+	//public void doWave(boolean value)
+	//{
+	//	/*wave.setBackgroundColor(value?0xffffffff:0xff000000);
+	//	wave.invalidate();*/
+	//}
 	public void hitTheLights()
 	{
 		leftEngineForward.setBackgroundColor(0xff000000);
@@ -668,6 +626,7 @@ public class AvatarMainActivity extends Activity {
 	public void doHangup()
 	{
 			hitTheLights();
+			ConnectionManager.getInstance().stopCurrent();
 		     videoSender.stopCamera();
 		     videoReceiver.stopReceiveVideo();
 		     audioSender.stopVoice();
@@ -692,7 +651,7 @@ public class AvatarMainActivity extends Activity {
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 			parceJson((String)responce);
-			if(isRunning)
+			if(turnedOn)
 			{
 				hitTheLights();
 				runCommands();
@@ -708,7 +667,7 @@ public class AvatarMainActivity extends Activity {
 		@Override
 		protected void onConnectionFail(Exception e) {
 		//	Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
-			if(isRunning)
+			if(turnedOn)
 			{
 				hitTheLights();
 				runCommands();

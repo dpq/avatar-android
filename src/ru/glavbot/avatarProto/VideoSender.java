@@ -193,6 +193,7 @@ public class VideoSender extends Thread{
 	        	}
 	        	private void closeSocket()
 	        	{
+	        		
 	        		if(socket!=null)
 	        		{
 	        			try {
@@ -206,6 +207,10 @@ public class VideoSender extends Thread{
 					if(mChildHandler.hasMessages(PROCESS_FRAME))
 					{
 						mChildHandler.removeMessages(PROCESS_FRAME);
+					}
+					if(mChildHandler.hasMessages(INITIALIZE_VIDEO_SOCKET))
+					{
+						mChildHandler.removeMessages(INITIALIZE_VIDEO_SOCKET);
 					}
 			
 	        	}

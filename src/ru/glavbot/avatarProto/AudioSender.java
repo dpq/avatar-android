@@ -24,7 +24,7 @@ public class AudioSender extends Thread{
 	
     AudioRecord recorder = null;
     private static final int sampleRate = 44100;
-    private static final int CHUNK_SIZE = 320*2;
+    private static final int CHUNK_SIZE = 640*2;
     
       
     Object sync= new Object();
@@ -51,16 +51,29 @@ public class AudioSender extends Thread{
 	private boolean isRunning=false;
 	public void startVoice()
 	{
+
+		isRunning=true;
+		internalStart();
+	}
+	
+	protected void internalStart()
+	{
 		Message msg = mChildHandler.obtainMessage(START_AUDIO);
 		mChildHandler.sendMessage(msg);
-		isRunning=true;
 	}
+	
 	
 	public void stopVoice()
 	{
+
+		isRunning=false;
+		internalStop();
+	}
+	
+	protected void internalStop()
+	{
 		Message msg = mChildHandler.obtainMessage(STOP_AUDIO);
 		mChildHandler.sendMessage(msg);
-		isRunning=false;
 	}
 	
 	Handler mChildHandler;
@@ -189,6 +202,13 @@ public class AudioSender extends Thread{
 						
 						if(error)
 						{
+							try {
+								Thread.sleep(1000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								Log.e("","",e);
+								
+							}
 							errorHandler.obtainMessage(AUDIO_OUT_ERROR).sendToTarget();
 						}
 						
@@ -199,6 +219,7 @@ public class AudioSender extends Thread{
 
 				private void stopRecord() {
 					mChildHandler.removeMessages(PROCESS_AUDIO);
+					mChildHandler.removeMessages(START_AUDIO);
 					if(recorder!=null)
 					{
 						recorder.stop();
@@ -245,6 +266,13 @@ public class AudioSender extends Thread{
 					}
 					if(reconnect)
 					{
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							Log.e("","",e);
+							
+						}
 						errorHandler.obtainMessage(AUDIO_OUT_ERROR).sendToTarget();
 					}
 					
@@ -276,11 +304,11 @@ public class AudioSender extends Thread{
             	switch (msg.what)
             	{
             		case AUDIO_OUT_ERROR:
-            			/*if(isRecording)
-            			{*/
-            				stopVoice();
-            				startVoice();
-            			/*}*/
+            			if(isRecording)
+            			{
+            				internalStop();
+            				internalStart();
+            			}
             			break;
             		default:
             			throw new RuntimeException("Unknown command to incoming video error handler");

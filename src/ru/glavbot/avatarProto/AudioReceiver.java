@@ -52,6 +52,13 @@ public class AudioReceiver extends Thread {
 	
 	public void startVoice()
 	{
+		isRecording=true;
+		internalStart();
+
+	}
+	
+	protected void internalStart()
+	{
 		AudioManager audiomanager = (AudioManager) owner.getSystemService(Activity.AUDIO_SERVICE);
 		audiomanager.setMode(AudioManager.MODE_IN_COMMUNICATION);
 		audiomanager.setSpeakerphoneOn(true);
@@ -61,14 +68,18 @@ public class AudioReceiver extends Thread {
 	
 	public void stopVoice()
 	{
+		isRecording=false;
+		internalStop();
+	}
+	
+	protected void internalStop()
+	{
 		AudioManager audiomanager = (AudioManager) owner.getSystemService(Activity.AUDIO_SERVICE);
 		audiomanager.setSpeakerphoneOn(false);
 		audiomanager.setMode(AudioManager.MODE_NORMAL);
 		Message msg = mChildHandler.obtainMessage(STOP_AUDIO);
 		mChildHandler.sendMessage(msg);
-
 	}
-	
 	Handler mChildHandler;
 	
 	private static final int START_AUDIO=0;
@@ -78,6 +89,7 @@ public class AudioReceiver extends Thread {
 	protected static final int MAX_RCV_BUFFER = 32768;
 
     private volatile boolean isPlaying = false;
+    private  boolean isRecording = false;
 
 	
 	 public void run() {
@@ -102,13 +114,13 @@ public class AudioReceiver extends Thread {
 	            	switch (msg.what)
 	            	{
 	            		case START_AUDIO:
-	            			//startPlay();
+	            			startPlay();
 	            			break;
 	            		case PROCESS_AUDIO:
-	            			//doPlay();
+	            			doPlay();
 	            			break;
 	            		case STOP_AUDIO:
-	            			//stopPlay();
+	            			stopPlay();
 	            			break;
 	            		default:
 	            			throw new RuntimeException("Unknown command to video writer thread");
@@ -157,17 +169,31 @@ public class AudioReceiver extends Thread {
 								// TODO Auto-generated catch block
 								Log.e("","",e);
 								s=null;
+								try {
+									Thread.sleep(1000);
+								} catch (InterruptedException e1) {
+									// TODO Auto-generated catch block
+									Log.e("","",e1);
+									
+								}
 								errorHandler.obtainMessage(AUDIO_IN_ERROR).sendToTarget();
 							}
 							
 							
-							String ident = "ava-"+getToken();
+							String ident = "web-"+getToken();
 							try {
 								if(s!=null)
 									s.write(ident.getBytes());
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								Log.e("","",e);
+								try {
+									Thread.sleep(1000);
+								} catch (InterruptedException e1) {
+									// TODO Auto-generated catch block
+									Log.e("","",e1);
+									
+								}
 								errorHandler.obtainMessage(AUDIO_IN_ERROR).sendToTarget();
 								
 							}
@@ -200,6 +226,7 @@ public class AudioReceiver extends Thread {
 
 				private void stopPlay() {
 					mChildHandler.removeMessages(PROCESS_AUDIO);
+					mChildHandler.removeMessages(START_AUDIO);
 					if(player!=null)
 					{
 						player.stop();
@@ -251,6 +278,13 @@ public class AudioReceiver extends Thread {
 					
 					if(reconnect)
 					{
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							Log.e("","",e);
+							
+						}
 						errorHandler.obtainMessage(AUDIO_IN_ERROR).sendToTarget();
 					}
 				}
@@ -282,11 +316,11 @@ public class AudioReceiver extends Thread {
             	switch (msg.what)
             	{
             	case AUDIO_IN_ERROR:
-            		/*	if(isRecording)
-            			{*/
-            				stopVoice();
-            				startVoice();
-            		/*	}*/
+            			if(isRecording)
+            			{
+            				internalStop();
+            				internalStart();
+            			}
             			break;
             		default:
             			throw new RuntimeException("Unknown command to incoming video error handler");
