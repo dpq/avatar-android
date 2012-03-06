@@ -132,7 +132,12 @@ public class VideoSender extends Thread{
 						// TODO Auto-generated catch block
 						Log.e("","",e);
 						reconnect=true;
-						
+						try {
+							if (socket != null)
+								socket.close();
+						} catch (IOException e1) {
+							Log.e("", "", e1);
+						}
 						
 					}
 					/*counter++;
@@ -144,6 +149,13 @@ public class VideoSender extends Thread{
 	        		}
 	        		if(isRunning&&reconnect)
 	        		{
+	        			try {
+							Thread.sleep(10000);
+						} catch (InterruptedException e1) {
+							// TODO Auto-generated catch block
+							Log.e("","",e1);
+							
+						}
 	        			initializeSocket(hostname);
 	        		}
 	        	}
@@ -151,6 +163,7 @@ public class VideoSender extends Thread{
 	        	private void initializeSocket(String hostname)
 	        	{
 	        		
+	        			boolean success=true;
 	        			this.hostname=hostname;
 						InetAddress addr=null;
 						try {
@@ -158,12 +171,16 @@ public class VideoSender extends Thread{
 						} catch (UnknownHostException e) {
 							// TODO Auto-generated catch block
 							Log.e("","",e);
+							success=false;
 							
 						}
 						catch (Exception e) {
 							// TODO Auto-generated catch block
 							Log.e("","",e);
+							success=false;
 						}
+						if(success)
+						{
 						try {
 							socket = new Socket(addr, SERVER_VIDEO_PORT);
 							socket.setKeepAlive(true);
@@ -185,10 +202,30 @@ public class VideoSender extends Thread{
 						catch (Exception e) {
 							// TODO Auto-generated catch block
 							Log.e(this.getClass().getName(),this.toString(),e);
+							success=false;
+
 							
-							this.obtainMessage(INITIALIZE_VIDEO_SOCKET).sendToTarget();
+						}
+	        			}
+						if(!success)
+						{
+							try {
+								if (socket != null)
+									socket.close();
+							} catch (IOException e1) {
+								Log.e("", "", e1);
+							}
+							try {
+								Thread.sleep(10000);
+							} catch (InterruptedException e1) {
+								// TODO Auto-generated catch block
+								Log.e("","",e1);
+								
+							}
+							this.obtainMessage(INITIALIZE_VIDEO_SOCKET,0,0,AvatarMainActivity.SERVER_AUTHORITY).sendToTarget();
 							isRunning=false;
 						}
+	        	
 			
 	        	}
 	        	private void closeSocket()
@@ -489,13 +526,13 @@ public class VideoSender extends Thread{
 			// TODO Auto-generated method stub
 			if(frontCamera!=null)
 			{
-				try {
-					frontCamera.setPreviewDisplay(null);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					Log.e("","",e);
-					
-				}
+			//	try {
+			//		frontCamera.setPreviewDisplay(null);
+			//	} catch (IOException e) {
+			//		// TODO Auto-generated catch block
+			//		Log.e("","",e);
+			//		
+			//	}
 			}
 		}
 		};

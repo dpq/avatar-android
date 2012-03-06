@@ -79,8 +79,9 @@ public class HttpConnection implements Runnable {
 		//handler.sendMessage(Message.obtain(handler, HttpConnection.DID_START));
 		httpClient = new DefaultHttpClient();
 		HttpConnectionParams.setSoTimeout(httpClient.getParams(), timeout);
+		HttpResponse response = null;
 		try {
-			HttpResponse response = null;
+			
 			switch (method) {
 			case GET:
 				response = httpClient.execute(new HttpGet(url));
@@ -103,6 +104,20 @@ public class HttpConnection implements Runnable {
 		} catch (Exception e) {
 			handler.sendMessage(Message.obtain(handler,
 					HttpConnection.DID_ERROR, e));
+			if(response!=null)
+			{
+				try {
+					response.getEntity().getContent().close();
+				} catch (IllegalStateException e1) {
+					// TODO Auto-generated catch block
+					Log.e("","",e1);
+					
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					Log.e("","",e1);
+					
+				}
+			}
 		}
 		ConnectionManager.getInstance().didComplete(this);
 	}
@@ -135,6 +150,8 @@ public class HttpConnection implements Runnable {
 		}
 		} catch (Exception e) {
 			Log.e("", "", e);
+			br.close();
+			responce.getEntity().getContent().close();
 			handler.sendMessage(Message.obtain(handler,
 					HttpConnection.DID_ERROR, e));
 		}

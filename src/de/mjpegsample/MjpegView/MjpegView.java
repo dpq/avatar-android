@@ -94,22 +94,31 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     Paint p = new Paint();
     String fps = "";
     
-    public class MjpegViewThread extends Thread {
-        public void run() {
-            while (mRun&&(!interrupted())) {
-                try {
-                        Bitmap  bm = mIn.readMjpegFrame();
-                        Handler h =drawerThread.getChildHandler();
-                        h.removeMessages(DrawerThread.RUN);
-                        h.obtainMessage(DrawerThread.RUN, bm).sendToTarget();
-                       // System.gc();
-                } catch (IOException e) { 
-                	errorHandler.obtainMessage(VIDEO_IN_ERROR,e).sendToTarget();
-                	Log.e("", "", e);
-                }
-           }
-       } 
-    }
+	public class MjpegViewThread extends Thread {
+		public void run() {
+			try {
+				while (mRun && (!interrupted())) {
+
+					Bitmap bm = mIn.readMjpegFrame();
+					Handler h = drawerThread.getChildHandler();
+					h.removeMessages(DrawerThread.RUN);
+					h.obtainMessage(DrawerThread.RUN, bm).sendToTarget();
+					// System.gc();
+				}
+			} catch (IOException e) {
+				try {
+					mIn.close();
+					mIn = null;
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					Log.e("", "", e1);
+
+				}
+				errorHandler.obtainMessage(VIDEO_IN_ERROR, e).sendToTarget();
+				Log.e("", "", e);
+			}
+		}
+	}
 
     private void init(Context context) {
         SurfaceHolder holder = getHolder();
@@ -163,8 +172,11 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
             	
             	if(thread!=null)
             	{
-            		thread.interrupt();
-            		thread.join();
+            		if(thread.isAlive())
+            		{
+            			thread.interrupt();
+            			thread.join();
+            		}
             		Log.d("",thread.isAlive()?"alive":"dead");
             		thread=null;
             	}
@@ -235,12 +247,21 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 				Log.e("", "", e);
 				message = Message
 						.obtain(m_handler, HttpConnection.DID_ERROR, e);
+				
 			} catch (IOException e) {
 				Log.e("", "", e);
 				message = Message
 						.obtain(m_handler, HttpConnection.DID_ERROR, e);
 			}
 
+			if(message.what!=HttpConnection.DID_SUCCEED)
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				Log.e("","",e1);
+				
+			}
 			m_handler.sendMessage(message);
 
 		}
