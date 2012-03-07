@@ -284,7 +284,7 @@ public class AudioSender extends Thread{
 						{
 							
 							try {
-								int i;
+								/*int i;
 								floatOutput.reset();
 								is.reset();
 								
@@ -297,10 +297,10 @@ public class AudioSender extends Thread{
 										break;
 									} 
 
-								}
+								}*/
 								
 								
-								socket.getOutputStream().write(floatOutput.toByteArray(),0,i*(SIZEOF_FLOAT/SIZEOF_SHORT));
+								socket.getOutputStream().write(audioData/*floatOutput.toByteArray()*/,0,bytes_read/*i*(SIZEOF_FLOAT/SIZEOF_SHORT)*/);
 								socket.getOutputStream().flush();
 							} catch (IOException e) {
 								Log.e("","",e);

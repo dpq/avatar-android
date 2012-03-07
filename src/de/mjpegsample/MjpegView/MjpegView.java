@@ -9,11 +9,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import ru.glavbot.asyncHttpRequest.ConnectionManager;
+import ru.glavbot.asyncHttpRequest.ConnectionRequest;
+import ru.glavbot.asyncHttpRequest.ProcessAsyncRequestResponceProrotype;
 
 
-import edu.gvsu.masl.asynchttp.ConnectionResponceHandler;
-import edu.gvsu.masl.asynchttp.HttpConnection;
-import edu.gvsu.masl.asynchttp.ReadedResponce;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -107,8 +107,11 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 				}
 			} catch (IOException e) {
 				try {
-					mIn.close();
-					mIn = null;
+					if(mIn!=null)
+					{
+						mIn.close();
+						mIn = null;
+					}
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					Log.e("", "", e1);
@@ -215,19 +218,30 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     public void setDisplayMode(int s) { displayMode = s; }
     
     
-    
+    /*
     private static class MJpegInputStreamConnector implements Runnable
     {
 
     	MJpegInputStreamConnector(String url, ConnectionResponceHandler handler)
     	{
-    		this.url=url;
+    		this.url=URI.create(url);
     		this.m_handler=handler.getNativeHandler();
     	};
-    	 private String url= null;
+    	 private URI url= null;
     	 private Handler m_handler=null;
     	 private HttpResponse res= null;
 
+    	 private static DefaultHttpClient httpClient=null;
+    	 
+    	 private DefaultHttpClient getDefaultHttpClient()
+    	 {
+    		 if(httpClient==null)
+    		 {
+    			 httpClient = new DefaultHttpClient();
+    		 }
+    		 return httpClient;
+    	 }
+    	 
 		public void run() {
 			// TODO Auto-generated method stub
 
@@ -235,23 +249,24 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 				throw new RuntimeException(
 						"MJpegInputStreamConnector started without thread or handler");
 
-			DefaultHttpClient httpclient = new DefaultHttpClient();
+			DefaultHttpClient client= getDefaultHttpClient();
+			//httpclient.
 			Message message;
 			try {
-				res = httpclient.execute(new HttpGet(URI.create(url)));
-				ReadedResponce rr = new ReadedResponce(res.getStatusLine()
-						.getStatusCode(), res.getEntity().getContent());
+				res = client.execute(new HttpGet(url));
+				AsyncRequestResponce rr = new AsyncRequestResponce(res.getStatusLine()
+						.getStatusCode(), res.getEntity().getContent(),Thread.currentThread(),null);
 				message = Message.obtain(m_handler, HttpConnection.DID_SUCCEED,
 						rr);
 			} catch (ClientProtocolException e) {
 				Log.e("", "", e);
 				message = Message
-						.obtain(m_handler, HttpConnection.DID_ERROR, e);
+						.obtain(m_handler, HttpConnection.DID_ERROR, new AsyncRequestResponce(600, null,Thread.currentThread(),e));
 				
 			} catch (IOException e) {
 				Log.e("", "", e);
 				message = Message
-						.obtain(m_handler, HttpConnection.DID_ERROR, e);
+						.obtain(m_handler, HttpConnection.DID_ERROR, new AsyncRequestResponce(600, null,Thread.currentThread(),e));
 			}
 
 			if(message.what!=HttpConnection.DID_SUCCEED)
@@ -267,22 +282,26 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 		}
     };
    
-    
+    */
     
     private String url;
     private boolean initializing=false;
+    private ConnectionManager manager = new ConnectionManager();
     
     public void requestRead(String url) {
     	this.url=url;
     	initializing=true;
-    	MJpegInputStreamConnector r = new MJpegInputStreamConnector(url,openStreamHandler);
+    	/*MJpegInputStreamConnector r = new MJpegInputStreamConnector(url,openStreamHandler);
     	Thread t = new Thread(r);
-    	t.start();
+    	t.start();*/
+		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, url);
+		req.setAnswerProcessor(openStreamHandler);
+		manager.push(req);
     }
     
     
     
-    ConnectionResponceHandler openStreamHandler= new ConnectionResponceHandler()
+    ProcessAsyncRequestResponceProrotype openStreamHandler= new ProcessAsyncRequestResponceProrotype()
     {
 
 		@Override
@@ -296,11 +315,6 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 			 
 		}
 
-		@Override
-		protected void onDataPart(Object responce) {
-			// TODO Auto-generated method stub
-			
-		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
@@ -311,7 +325,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 
 		@Override
-		protected void onConnectionFail(Exception e) {
+		protected void onConnectionFail(Throwable e) {
 			// TODO Auto-generated method stub
 			if(initializing)
 				requestRead(url);

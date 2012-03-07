@@ -6,7 +6,7 @@ import java.util.Date;
 public class HandlerBuffer {
 
 	private byte[] data;
-	Date d;
+	//Date d;
 	private volatile boolean locked;
 	HandlerBuffer(int size)
 	{
@@ -26,9 +26,8 @@ public class HandlerBuffer {
 		return data;
 	}
 	public void setData(byte[] data) {
-		 d = new Date();
-		 System.arraycopy(data, 0,this.data , 0, data.length);
-	
-		// = data;
+		
+		 System.arraycopy(data, 0,this.data , 0, this.data.length);
+
 	}
 }

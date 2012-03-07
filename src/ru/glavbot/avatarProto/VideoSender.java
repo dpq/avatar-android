@@ -8,7 +8,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 //import java.text.SimpleDateFormat;
 //import java.util.List;
 
@@ -49,7 +52,7 @@ public class VideoSender extends Thread{
 	
 	Object sync= new Object();
 	
-	
+	ArrayList<byte[]> buffers;
 	
 	
 	
@@ -59,7 +62,15 @@ public class VideoSender extends Thread{
 		this.preview=preview;
 		//this.foreignStream=foreignStream;
 		//this.setToken(token);
-
+		
+		buffers= new ArrayList<byte[]>();
+		int size = PREVIEW_WIDTH*PREVIEW_HEIGHT*ImageFormat.getBitsPerPixel(ImageFormat.NV21);
+		for(int i = 0; i<NUM_BUFFERS;i++)
+		{
+			buffers.add(new byte[size]);
+		}
+		dataBuff= new HandlerBuffer[]{new HandlerBuffer(size),new HandlerBuffer(size)};
+		
 		start();
 		try {
 			synchronized(sync)
@@ -431,21 +442,22 @@ public class VideoSender extends Thread{
 		p.setPreviewFormat (ImageFormat.NV21);
 		p.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		p.setPreviewFrameRate(NUM_FRAMES);
+		//p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+		//List<String> l = p.getSupportedColorEffects();
+		//p.setColorEffect(Camera.Parameters.EFFECT_SEPIA);
+		//if(p.is)
 	//	List<Size> mSupportedPreviewSizes = p.getSupportedPreviewSizes();
 		//p.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		camera.setParameters(p);
 		
-		int size = PREVIEW_WIDTH*PREVIEW_HEIGHT*ImageFormat.getBitsPerPixel(ImageFormat.NV21);
+		// reuse
 		for(int i = 0; i<NUM_BUFFERS;i++)
 		{
-			camera.addCallbackBuffer(new byte[size]);
+			camera.addCallbackBuffer(buffers.get(i));
 		}
-		dataBuff= new HandlerBuffer[2];
-		
-		dataBuff[0]=new HandlerBuffer(size);
-		dataBuff[1]=new HandlerBuffer(size);
-		
-		//int format = p.getPictureFormat();
+		dataBuff[0].unlock();
+		dataBuff[1].unlock();
+
 		camera.setPreviewCallbackWithBuffer(new PreviewCallback()
 		{
 
@@ -559,6 +571,7 @@ public class VideoSender extends Thread{
 		if(frontCamera!=null)
 		{
 			frontCamera.stopPreview();
+			
 			preview.setVisibility(View.INVISIBLE);
 			releaseCamera();
 		}

@@ -2,6 +2,9 @@ package ru.glavbot.avatarProto;
 
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -10,14 +13,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.mjpegsample.MjpegView.MjpegView;
+import ru.glavbot.asyncHttpRequest.ConnectionManager;
+import ru.glavbot.asyncHttpRequest.ConnectionRequest;
+import ru.glavbot.asyncHttpRequest.ProcessAsyncRequestResponceProrotype;
 import ru.glavbot.avatarProto.R;
 
 //import com.ryong21.R;
 
-import edu.gvsu.masl.asynchttp.ConnectionManager;
-import edu.gvsu.masl.asynchttp.ConnectionResponceHandler;
-import edu.gvsu.masl.asynchttp.HttpConnection;
-import android.app.Activity;
+
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -33,6 +37,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -55,7 +60,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 
-public class AvatarMainActivity extends Activity {
+public class AvatarMainActivity extends AccessoryProcessor {
     /** Called when the activity is first created. */
 	 private  TextView leftEngineForward;
 	 private  TextView leftEngineBackward;
@@ -106,25 +111,50 @@ public class AvatarMainActivity extends Activity {
      
  	WebView webView;
  	ConnectivityManager network;
+ 	ConnectionManager protocolManager;
  	boolean isNetworkAvailable=false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+        .detectDiskReads()
+        .detectDiskWrites()
+        .detectNetwork()   // or .detectAll() for all detectable problems
+        .penaltyLog()
+        .build());
+        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+        .detectLeakedSqlLiteObjects()
+        .detectLeakedClosableObjects()
+        .penaltyLog()
+        .penaltyDeath()
+        .build());
+
+        protocolManager= new ConnectionManager();
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
                                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.main);
+        
         leftEngineForward= (TextView)findViewById(R.id.LeftEngineForward);
+        leftEngineForward.setVisibility(View.GONE);
    	 	leftEngineBackward= (TextView)findViewById(R.id.LeftEngineBackward);
+   	 	leftEngineBackward.setVisibility(View.GONE);
      	rightEngineForward= (TextView)findViewById(R.id.RightEngineForward);
+     	rightEngineForward.setVisibility(View.GONE);
      	rightEngineBackward= (TextView)findViewById(R.id.RightEngineBackward);
+     	rightEngineBackward.setVisibility(View.GONE);
      	yawUp= (TextView)findViewById(R.id.YawUp);
+     	yawUp.setVisibility(View.GONE);
      	yawDown= (TextView)findViewById(R.id.YawDown);
+     	yawDown.setVisibility(View.GONE);
      	pitchLeft= (TextView)findViewById(R.id.PitchLeft);
+     	pitchLeft.setVisibility(View.GONE);
      	pitchRight= (TextView)findViewById(R.id.PitchRight);
+     	pitchRight.setVisibility(View.GONE);
      	wave= (TextView)findViewById(R.id.Wave);
+     	wave.setVisibility(View.GONE);
     	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
     	startButton= (ToggleButton)findViewById(R.id.StartButton);
     	sendLinkButton = (Button)findViewById(R.id.SendLinkButton);
@@ -457,13 +487,15 @@ public class AvatarMainActivity extends Activity {
 					.appendQueryParameter(EMAIL_PARAM, email)
 					.appendQueryParameter(TTL_PARAM, String.format("%d", ttl));
 			Uri uri = builder.build();
-			HttpConnection connection = new HttpConnection(
-					shareConnectionHandler);
-			connection.get(uri.toString());
+			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
+			req.setAnswerProcessor(shareConnectionResponce);
+			protocolManager.push(req);
 		}
 	}
 	
-	ConnectionResponceHandler shareConnectionHandler = new ConnectionResponceHandler()
+	
+	
+	ProcessAsyncRequestResponceProrotype shareConnectionResponce = new ProcessAsyncRequestResponceProrotype()
 	{
 
 		@Override
@@ -499,16 +531,10 @@ public class AvatarMainActivity extends Activity {
 		}
 
 		@Override
-		protected void onConnectionFail(Exception e) {
+		protected void onConnectionFail(Throwable e) {
 			// TODO Auto-generated method stub
 			Toast.makeText(AvatarMainActivity.this,getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()) , Toast.LENGTH_LONG).show();
 		
-		}
-
-		@Override
-		protected void onDataPart(Object responce) {
-			// TODO Auto-generated method stub
-			
 		}
 		
 	};
@@ -523,9 +549,12 @@ public class AvatarMainActivity extends Activity {
 		.appendQueryParameter(TOKEN_PARAM, session_token)
 		.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
 		Uri uri=builder.build();
-		HttpConnection connection = new HttpConnection(cmdConnectionHandler);
-		connection.setPollingMode(true);
-		connection.get(uri.toString());
+		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
+		req.setAnswerProcessor(cmdConnectionResponse);
+		req.setProgressProcessor(cmdConnectionResponse);
+		req.setReadAll(false);
+		protocolManager.push(req);
+		
 	}
 	
 
@@ -626,7 +655,7 @@ public class AvatarMainActivity extends Activity {
 	public void doHangup()
 	{
 			hitTheLights();
-			ConnectionManager.getInstance().stopCurrent();
+			protocolManager.stopCurrent();
 		     videoSender.stopCamera();
 		     videoReceiver.stopReceiveVideo();
 		     audioSender.stopVoice();
@@ -645,7 +674,7 @@ public class AvatarMainActivity extends Activity {
 	В случае наличия в пакете команды hangup цвета всех площадок сбрасываются в #000000 и дальнейшее ожидание ввода не производится (можно закрыть сокет).
 */
 	
-	ConnectionResponceHandler cmdConnectionHandler = new ConnectionResponceHandler()
+	ProcessAsyncRequestResponceProrotype cmdConnectionResponse = new ProcessAsyncRequestResponceProrotype()
 	{
 
 		@Override
@@ -665,7 +694,7 @@ public class AvatarMainActivity extends Activity {
 		}
 
 		@Override
-		protected void onConnectionFail(Exception e) {
+		protected void onConnectionFail(Throwable e) {
 		//	Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
 			if(turnedOn)
 			{
@@ -673,25 +702,42 @@ public class AvatarMainActivity extends Activity {
 				runCommands();
 			}
 		}
-
+		
+		ByteArrayOutputStream s = new ByteArrayOutputStream(10);
+		DataOutputStream ds = new DataOutputStream(s);
+		byte[] error={90,90,0,90,0,90,0};
 		protected void parceJson(Object responce)
 		{
+			JSONObject r;
+			/*{a:N1, b:N2, c:N3, sa:M1, sb:M2, sc:M3, h:A }*/
 			try
 			{
-				JSONObject r = new JSONObject((String)responce);
-				if (r.has("left"))
+				try{
+				r = new JSONObject((String)responce);
+				}catch(JSONException e)
 				{
-					doLeft(r.getInt("left"));
+					Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
+					return;
+					//sendCommand(error);
+					//Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
 				}
-				if (r.has("right"))
-				{
-					doRight(r.getInt("right"));
-				}
-				if (r.has("yaw"))
-				{
-					doYaw(r.getInt("yaw"));
-				}
-				if (r.has("pitch"))
+				
+					s.reset();
+					ds.writeByte(r.getInt("h"));
+					ds.writeByte(r.getInt("a"));
+					ds.writeShort(r.getInt("sa"));
+					ds.writeByte(r.getInt("b"));
+					ds.writeShort(r.getInt("sb"));
+					ds.writeByte(r.getInt("c"));
+					ds.writeShort(r.getInt("sc"));
+					
+					
+					
+					
+					
+					sendCommand(s.toByteArray());
+				
+				/*if (r.has("pitch"))
 				{
 					doPitch(r.getInt("pitch"));
 				}
@@ -699,12 +745,19 @@ public class AvatarMainActivity extends Activity {
 				if(r.has("hangup"))
 				{	
 					startButton.toggle();
-				}
+				}*/
 				
 			}
 			catch(JSONException e)
 			{
 				Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
+				//sendCommand(error);
+				//Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
+			}
+			catch(IOException e)
+			{
+				Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
+				sendCommand(error);
 				//Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
 			}
 		}
