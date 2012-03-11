@@ -1,8 +1,8 @@
 package ru.glavbot.asyncHttpRequest;
 
-import java.io.BufferedReader;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
+
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -20,13 +20,13 @@ import org.apache.http.params.HttpConnectionParams;
 import android.os.AsyncTask;
 import android.util.Log;
 
-class ConnectionRunner extends AsyncTask<ConnectionRequest,AsyncRequestResponse,AsyncRequestResponse> {
+abstract class AbstractConnectionRunner extends AsyncTask<ConnectionRequest,AsyncRequestResponse,AsyncRequestResponse> {
 
 	ConnectionRequest request=null;
 	
 	ConnectionManager owner;
 	
-	ConnectionRunner(ConnectionManager owner)
+	AbstractConnectionRunner(ConnectionManager owner)
 	{
 		this.owner=owner;
 		if (owner==null)
@@ -62,7 +62,7 @@ class ConnectionRunner extends AsyncTask<ConnectionRequest,AsyncRequestResponse,
 				response = client.execute(new HttpDelete(request.getUrl()));
 				break;
 			}
-			asyncResponce=processResponce(response,request.shouldReadAll());
+			asyncResponce=processResponce(response);
 		} catch (Exception e) {
 			
 
@@ -87,8 +87,8 @@ class ConnectionRunner extends AsyncTask<ConnectionRequest,AsyncRequestResponse,
 		return asyncResponce;
 	}
 
-	private AsyncRequestResponse processResponce(HttpResponse responce, boolean readAll) throws IllegalStateException,
-	IOException {
+	protected abstract AsyncRequestResponse processResponce(HttpResponse responce/*, boolean readAll*/) throws IllegalStateException,
+	IOException;/* {
 			BufferedReader br = new BufferedReader(new InputStreamReader(responce.getEntity()
 					.getContent()));
 			String line, result = "";
@@ -117,7 +117,7 @@ class ConnectionRunner extends AsyncTask<ConnectionRequest,AsyncRequestResponse,
 					rr = new AsyncRequestResponse(AsyncRequestResponse.STATUS_INTERNAL_ERROR,null,e);
 			}
 			return rr;
-	}
+	}*/
 	
 	@Override
 	protected void onProgressUpdate (AsyncRequestResponse... values)

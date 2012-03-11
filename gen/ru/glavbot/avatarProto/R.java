@@ -27,18 +27,16 @@ public final class R {
         public static final int Wave=0x7f070009;
         public static final int YawDown=0x7f070006;
         public static final int YawUp=0x7f070005;
-        public static final int buttonCancel=0x7f070018;
-        public static final int buttonOk=0x7f070017;
-        public static final int datePickerValidToDate=0x7f070014;
+        public static final int buttonCancel=0x7f070016;
+        public static final int buttonOk=0x7f070015;
         public static final int editTextEmail=0x7f070011;
-        public static final int layout_buttons=0x7f070016;
+        public static final int layout_buttons=0x7f070014;
         public static final int layout_email=0x7f07000f;
         public static final int layout_root=0x7f07000e;
-        public static final int layout_timeout=0x7f070013;
         public static final int relativeLayout1=0x7f070000;
+        public static final int seekBarLength=0x7f070013;
         public static final int text_email=0x7f070010;
         public static final int text_timeout=0x7f070012;
-        public static final int timePickerValidToTime=0x7f070015;
         public static final int videoView=0x7f07000c;
     }
     public static final class layout {

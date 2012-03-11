@@ -96,7 +96,7 @@ public class VideoSender extends Thread{
 	        	Socket socket = null;
 	        	private int counter = 0;
 	        	private String hostname; 
-	        	
+	        	Rect imgRect = new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1); 
 	        	private void processFrame(Message msg)
 	        	{
 	        		boolean reconnect=false;
@@ -115,7 +115,8 @@ public class VideoSender extends Thread{
 					//Bitmap m;
 					
 					
-					/*boolean result=	*/img.compressToJpeg(new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1), 50, os);
+					/*boolean result=	*/img.compressToJpeg(imgRect, 50, os);
+					
 				
 					//Date d2 = new Date();
 					//Date d1=data.d;
@@ -442,6 +443,7 @@ public class VideoSender extends Thread{
 		p.setPreviewFormat (ImageFormat.NV21);
 		p.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		p.setPreviewFrameRate(NUM_FRAMES);
+		p.setSceneMode(Camera.Parameters.SCENE_MODE_ACTION);
 		//p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
 		//List<String> l = p.getSupportedColorEffects();
 		//p.setColorEffect(Camera.Parameters.EFFECT_SEPIA);

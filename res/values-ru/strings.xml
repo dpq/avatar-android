@@ -7,7 +7,7 @@
 	<string name="sendLinkDlgButtonOk">Ok</string>
 	<string name="sendLinkDlgButtonCancel">Отмена</string>
 	<string name="sendLinkDlgEmail">Введите email получателя ссылки</string>
-	<string name="sendLinkDlgExpires">Укажите срок действия ссылки</string>
+	<string name="sendLinkDlgExpires">Укажите срок действия ссылки, сейчас %d ч.</string>
 	<string name="toastNoWifi">Не найдено активных Wifi - соединений. Включите пожалуйста Wifi!</string>
 	<string name="toastInviteOk">Приглашение успешно выслано, ожидаем пока зайдут по ссылке.</string>
 	<string name="toastInviteFail">Неудача отправки приглашения! Ошибка: \r %s</string>

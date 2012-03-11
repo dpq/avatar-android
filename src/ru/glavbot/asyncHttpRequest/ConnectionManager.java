@@ -7,7 +7,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 public class ConnectionManager {
 	private ArrayList<ConnectionRequest> queue = new ArrayList<ConnectionRequest>();
 
-	private ConnectionRunner runner=null;
+	private AbstractConnectionRunner runner=null;
 	public void push(ConnectionRequest request) {
 		queue.add(request);
 		if (runner==null)
@@ -22,7 +22,24 @@ public class ConnectionManager {
 		
 		if (!queue.isEmpty()) {
 			ConnectionRequest next = queue.get(0);
-			runner = new ConnectionRunner(this);
+			{
+				switch(next.getProcessingType())
+				{
+				case ConnectionRequest.READ_ALL:
+					runner = new ReadAllConnectionRunner(this);
+					break;
+				case ConnectionRequest.READ_STRINGS_ONE_BY_ONE:
+					runner = new ReadStringsConnectionRunner(this);
+					break;
+				case ConnectionRequest.RETURN_REQUEST_ENTITY:
+					runner = new ReturnEntityConnectionRunner(this);
+					break;
+				default:
+					throw new RuntimeException("ConnectionManager::startNext: wrong request type!");
+				}
+			//runner = new AbstractConnectionRunner(this);
+			
+			}
 			runner.execute(next);
 		}
 	}

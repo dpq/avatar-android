@@ -11,12 +11,20 @@ public class ConnectionRequest  {
 		public static final int PUT = 2;
 		public static final int DELETE = 3;
 
+		public static final int READ_ALL = 0;
+		public static final int READ_STRINGS_ONE_BY_ONE = 1;
+		public static final int RETURN_REQUEST_ENTITY = 2;
+		
+		
+		
+		
 		private String url;
 		private int method;
 		private String data;
 
+		private int processingType=0;
+		
 		private int timeout = 10000;
-		private boolean readAll=true;
 		private IProcessAsyncRequestResponse progressProcessor=null;
 		private IProcessAsyncRequestResponse answerProcessor=null;
 	
@@ -44,15 +52,6 @@ public class ConnectionRequest  {
 		public void setTimeout(int timeout) {
 			this.timeout = timeout;
 		}
-
-		public boolean shouldReadAll() {
-			return readAll;
-		}
-
-		public void setReadAll(boolean readAll) {
-			this.readAll = readAll;
-		}
-
 
 
 
@@ -113,6 +112,16 @@ public class ConnectionRequest  {
 
 		public void setAnswerProcessor(IProcessAsyncRequestResponse answerProcessor) {
 			this.answerProcessor = answerProcessor;
+		}
+
+
+		public int getProcessingType() {
+			return processingType;
+		}
+
+
+		public void setProcessingType(int processingType) {
+			this.processingType = processingType;
 		}
 
 

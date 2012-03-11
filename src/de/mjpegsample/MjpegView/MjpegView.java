@@ -100,9 +100,12 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 				while (mRun && (!interrupted())) {
 
 					Bitmap bm = mIn.readMjpegFrame();
-					Handler h = drawerThread.getChildHandler();
-					h.removeMessages(DrawerThread.RUN);
-					h.obtainMessage(DrawerThread.RUN, bm).sendToTarget();
+					if(bm!=null)
+					{
+						Handler h = drawerThread.getChildHandler();
+						h.removeMessages(DrawerThread.RUN);
+						h.obtainMessage(DrawerThread.RUN, bm).sendToTarget();
+					}
 					// System.gc();
 				}
 			} catch (IOException e) {
@@ -295,6 +298,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     	Thread t = new Thread(r);
     	t.start();*/
 		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, url);
+		req.setProcessingType(ConnectionRequest.RETURN_REQUEST_ENTITY);
 		req.setAnswerProcessor(openStreamHandler);
 		manager.push(req);
     }
@@ -368,18 +372,25 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
         }
          
          
-        private Bitmap makeFpsOverlay(Paint p, String text) {
+        private void /*Bitmap*/ makeFpsOverlay(Paint p, String text) {
             Rect b = new Rect();
             p.getTextBounds(text, 0, text.length(), b);
             int bwidth  = b.width()+2;
             int bheight = b.height()+2;
-            Bitmap bm = Bitmap.createBitmap(bwidth, bheight, Bitmap.Config.ARGB_8888);
-            Canvas c = new Canvas(bm);
+            if(ovl==null||(ovl.getHeight()!=bheight)||(ovl.getWidth()!=bwidth))
+            {
+            	if(ovl!=null)
+            	{
+            		ovl.recycle();
+            	}
+            	ovl = Bitmap.createBitmap(bwidth, bheight, Bitmap.Config.ARGB_8888);
+            }
+            Canvas c = new Canvas(ovl);
             p.setColor(overlayBackgroundColor);
             c.drawRect(0, 0, bwidth, bheight, p);
             p.setColor(overlayTextColor);
             c.drawText(text, -b.left+1, (bheight/2)-((p.ascent()+p.descent())/2)+1, p);
-            return bm;        	 
+          //  return bm;        	 
         }
 
 
@@ -432,7 +443,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
    		                                {
 	   		                                destRect = destRect(frame.getWidth(),frame.getHeight());
 	   		                                c.drawBitmap(frame, null, destRect, p);
-	   		                                
+	   		                                frame.recycle();
 	   		                                if(showFps) {
 	   		                                    p.setXfermode(mode);
 	   		                                    if(ovl != null) {
@@ -446,7 +457,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 	   		                                        fps = String.valueOf(frameCounter)+"fps";
 	   		                                        frameCounter = 0; 
 	   		                                        start = System.currentTimeMillis();
-   		                                        	ovl = makeFpsOverlay(overlayPaint, fps);
+   		                                        	makeFpsOverlay(overlayPaint, fps);
    		                                   		}
    		                                	}
    		                                }

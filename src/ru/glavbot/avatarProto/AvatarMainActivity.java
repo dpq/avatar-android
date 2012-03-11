@@ -6,8 +6,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+//import java.util.concurrent.ScheduledThreadPoolExecutor;
+//import java.util.concurrent.TimeUnit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,6 +54,7 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -215,15 +216,15 @@ public class AvatarMainActivity extends AccessoryProcessor {
         audioReceiver= new AudioReceiver(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_IN);
         
 
-        stpe = new ScheduledThreadPoolExecutor(1);  
+        /*stpe = new ScheduledThreadPoolExecutor(1);  
           stpe.scheduleAtFixedRate(new Runnable() {  
             public void run() {  
                     System.gc();
             }  
-        },0, 1,TimeUnit.SECONDS);  
+        },0, 1,TimeUnit.SECONDS);  */
 
     }
-    ScheduledThreadPoolExecutor stpe;
+   // ScheduledThreadPoolExecutor stpe;
     boolean isListeningNetwork=false;
 
     private void checkForNetwork()
@@ -354,8 +355,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
     
 	EditText emailET;
-	DatePicker timeoutD;
-	TimePicker timeoutT;
+	//DatePicker timeoutD;
+	//TimePicker timeoutT;
+	SeekBar timeSelect;
+	TextView textTimeout;
 	@Override
 	protected Dialog  onCreateDialog(int id)
 	{
@@ -371,19 +374,43 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				View layout = inflater.inflate(R.layout.send_invite_dialog,
 				                               (ViewGroup) findViewById(R.id.layout_root));
 
-
+				
 				builder = new AlertDialog.Builder(this);
 				builder.setView(layout);
 				builder.setTitle(R.string.sendLinkDlgHeader);
 				alertDialog = builder.create();
 				emailET = (EditText) layout.findViewById(R.id.editTextEmail);
-				timeoutD = (DatePicker) layout.findViewById(R.id.datePickerValidToDate);
-				timeoutD.setCalendarViewShown(false);
-				timeoutD.setSpinnersShown(true);
+				textTimeout = (TextView)layout.findViewById(R.id.text_timeout);
+				//timeoutD = (DatePicker) layout.findViewById(R.id.datePickerValidToDate);
+				//timeoutD.setCalendarViewShown(false);
+				//timeoutD.setSpinnersShown(true);
 				
 			
-				timeoutT= (TimePicker) layout.findViewById(R.id.timePickerValidToTime);
-				timeoutT.setIs24HourView(true);
+				//timeoutT= (TimePicker) layout.findViewById(R.id.timePickerValidToTime);
+				//timeoutT.setIs24HourView(true);
+				timeSelect= (SeekBar) layout.findViewById(R.id.seekBarLength);
+				timeSelect.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+					
+					public void onStopTrackingTouch(SeekBar seekBar) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					public void onStartTrackingTouch(SeekBar seekBar) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					public void onProgressChanged(SeekBar seekBar, int progress,
+							boolean fromUser) {
+						// TODO Auto-generated method stub
+						textTimeout.setText(getResources().getString(R.string.sendLinkDlgExpires,progress+1));
+					}
+				});
+				textTimeout.setText(getResources().getString(R.string.sendLinkDlgExpires,1));
+				//timeSelect.setProgress(1);
+				//timeSelect.setProgress(0);
+				
 				Button buttonOk = (Button)layout.findViewById(R.id.buttonOk);
 				Button buttonCancel = (Button)layout.findViewById(R.id.buttonCancel);
 				buttonOk.setOnClickListener(new OnClickListener(){
@@ -391,10 +418,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					public void onClick(View v) {
 
 						setEmail(emailET.getText().toString());
-						long cur = Calendar.getInstance().getTimeInMillis();
-						long dateTo = timeoutD.getCalendarView().getDate();
-						long timeTo = timeoutT.getCurrentHour()*1000*60*60+timeoutT.getCurrentMinute()*1000*60;
-						long ttl = ((dateTo+timeTo) - cur)/1000;
+						//long cur = Calendar.getInstance().getTimeInMillis();
+						//long dateTo = timeoutD.getCalendarView().getDate();
+						//long timeTo = timeoutT.getCurrentHour()*1000*60*60+timeoutT.getCurrentMinute()*1000*60;
+						long ttl = (timeSelect.getProgress()+1)*60*60;
 						if(ttl<0){ttl=0;}
 						try{
 							setTtl((int) ttl);
@@ -435,9 +462,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				//timeoutD.setMinDate(c.getTimeInMillis()-10000);
 				//timeoutD.setMaxDate(c.getTimeInMillis()+((long)(Integer.MAX_VALUE-60*60*24))*1000);
 				c.add(Calendar.DAY_OF_YEAR, 1);				
-				timeoutD.updateDate(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
-				timeoutT.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
-				timeoutT.setCurrentMinute(c.get(Calendar.MINUTE));
+				//timeoutD.updateDate(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
+				//timeoutT.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
+				//timeoutT.setCurrentMinute(c.get(Calendar.MINUTE));
 				
 				
 			}
@@ -489,6 +516,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			Uri uri = builder.build();
 			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
 			req.setAnswerProcessor(shareConnectionResponce);
+			req.setProcessingType(ConnectionRequest.READ_ALL);
 			protocolManager.push(req);
 		}
 	}
@@ -552,7 +580,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
 		req.setAnswerProcessor(cmdConnectionResponse);
 		req.setProgressProcessor(cmdConnectionResponse);
-		req.setReadAll(false);
+		req.setProcessingType(ConnectionRequest.READ_STRINGS_ONE_BY_ONE);
 		protocolManager.push(req);
 		
 	}
@@ -679,7 +707,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
-			parceJson((String)responce);
+			//parceJson((String)responce);
 			if(turnedOn)
 			{
 				hitTheLights();

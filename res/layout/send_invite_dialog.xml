@@ -39,12 +39,18 @@
               android:textColor="#FFF"
               android:text="@string/sendLinkDlgExpires"
               />
-	<LinearLayout android:id="@+id/layout_timeout"
+	    			<SeekBar
+		    android:id="@+id/seekBarLength"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content" 
+		    android:max="23"
+		    />
+	<!-- <LinearLayout android:id="@+id/layout_timeout"
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="fill_parent"
               android:gravity="left"
-              >
+              >-->
 
     	<!--<EditText
         	android:id="@+id/editTextTimeout"
@@ -53,7 +59,7 @@
         	android:inputType="numberDecimal"
          >
     	</EditText>-->
-    	<DatePicker
+    	<!-- <DatePicker
     	    android:id="@+id/datePickerValidToDate"
     	    android:layout_width="wrap_content"
     	    android:layout_height="wrap_content" 
@@ -62,8 +68,8 @@
 		    android:id="@+id/timePickerValidToTime"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content" 
-		    android:layout_weight="0.4"/>
-	</LinearLayout>
+		    android:layout_weight="0.4"/> -->
+	<!--  </LinearLayout>-->
 		<LinearLayout android:id="@+id/layout_buttons"
               android:orientation="horizontal"
               android:layout_width="fill_parent"
