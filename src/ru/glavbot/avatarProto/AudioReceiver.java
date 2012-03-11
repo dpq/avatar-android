@@ -251,7 +251,7 @@ public class AudioReceiver extends Thread {
 
 				private void stopPlay() {
 					mChildHandler.removeMessages(PROCESS_AUDIO);
-					mChildHandler.removeMessages(START_AUDIO);
+				//	mChildHandler.removeMessages(START_AUDIO);
 					if (player != null) {
 						player.stop();
 						player.release();
@@ -283,11 +283,25 @@ public class AudioReceiver extends Thread {
 						// {
 						// DataInputStream s =new DataInputStream( new
 						// ByteArrayInputStream(audioData));
-						int i;
 						try {
+							socket.getOutputStream().write(' ');
+						} catch (IOException e3) {
+							// TODO Auto-generated catch block
+							Log.e("","",e3);
+							reconnect = true;
+						}
+						
+						
+						
+						int i;
+					/*	try {
 							do {
+								if((!reconnect)&&(!socket.isConnected()))
+								{
+									reconnect = true;
+								}
 							} while ((floatStream.available() < CHUNK_SIZE_FLOAT)
-									|| isInterrupted());
+									&& (!isInterrupted())&&(!reconnect));
 						} catch (IOException e2) {
 							// TODO Auto-generated catch block
 							Log.e("", "", e2);
@@ -299,7 +313,12 @@ public class AudioReceiver extends Thread {
 								Log.e("", "", e1);
 							}
 
+						}*/
+						if((!reconnect)&&(!socket.isConnected()))
+						{
+							reconnect = true;
 						}
+						
 						if (!reconnect) {
 							for (i = 0; i < CHUNK_SIZE_BASE; i++) {
 								try {
@@ -378,6 +397,7 @@ public class AudioReceiver extends Thread {
 			switch (msg.what) {
 			case AUDIO_IN_ERROR:
 				if (isRecording) {
+					mChildHandler.removeMessages(START_AUDIO);
 					internalStop();
 					internalStart();
 				}

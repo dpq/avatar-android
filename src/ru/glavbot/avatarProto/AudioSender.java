@@ -254,7 +254,7 @@ public class AudioSender extends Thread{
 
 				private void stopRecord() {
 					mChildHandler.removeMessages(PROCESS_AUDIO);
-					mChildHandler.removeMessages(START_AUDIO);
+					//mChildHandler.removeMessages(START_AUDIO);
 					if(recorder!=null)
 					{
 						recorder.stop();
@@ -313,6 +313,13 @@ public class AudioSender extends Thread{
 								}
 							}
 						}
+						
+						
+						if((!reconnect)&&(!socket.isConnected()))
+						{
+							reconnect = true;
+						}
+						
 						if(!reconnect)
 						{
 							Message msg = mChildHandler.obtainMessage(PROCESS_AUDIO);
@@ -366,6 +373,7 @@ public class AudioSender extends Thread{
             		case AUDIO_OUT_ERROR:
             			if(isRecording)
             			{
+            				mChildHandler.removeMessages(START_AUDIO);
             				internalStop();
             				internalStart();
             			}
