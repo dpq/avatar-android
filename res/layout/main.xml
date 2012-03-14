@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-        <TextView
+    <!--     <TextView
             android:id="@+id/LeftEngineForward"
             style = "@style/ControlButton" 
             android:layout_toRightOf="@+id/LeftEngineBackward"
@@ -67,7 +67,7 @@
             android:layout_alignParentTop="true"
             android:text="@string/control9" 
             android:background="#000000"/>
-
+-->
                           <ToggleButton
                               android:id="@+id/StartButton"
                               android:layout_width="wrap_content"
@@ -98,11 +98,13 @@
 							android:id="@+id/videoView" 
 							android:layout_height="wrap_content"
 							android:layout_marginTop="10dip"
-							android:layout_below="@+id/LeftEngineForward"
 							android:keepScreenOn="true"
 							android:layout_centerHorizontal="true" 
+							android:layout_alignParentTop="true"
 							android:layout_above="@+id/CameraPreview"
-							/>  <!-- android:layout_below="@+id/webview" -->
+							/>
+							<!-- android:layout_below="@+id/LeftEngineForward" -->
+							  <!-- android:layout_below="@+id/webview" -->
                           <SurfaceView
                               android:id="@+id/CameraPreview"
                               android:layout_width="24px"

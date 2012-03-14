@@ -62,23 +62,36 @@ abstract class AbstractConnectionRunner extends AsyncTask<ConnectionRequest,Asyn
 				response = client.execute(new HttpDelete(request.getUrl()));
 				break;
 			}
-			asyncResponce=processResponce(response);
+			int rcode=response.getStatusLine().getStatusCode();
+			if(rcode>=200&&rcode<300)
+			{
+				asyncResponce=processResponce(response);
+			}
+			else
+			{
+				asyncResponce = new AsyncRequestResponse(rcode,null,null);
+				try {
+					response.getEntity().consumeContent();
+				} catch (IOException e1) {
+					Log.e("","",e1);
+				}
+			}
 		} catch (Exception e) {
 			
 
 			if(response!=null)
 			{
 				try {
-					response.getEntity().getContent().close();
+					//response.getEntity().getContent().close();
+					response.getEntity().consumeContent();
 					
-				} catch (IllegalStateException e1) {
+				} /*catch (IllegalStateException e1) {
 					// TODO Auto-generated catch block
 					Log.e("","",e1);
 					
-				} catch (IOException e1) {
+				}*/ catch (IOException e1) {
 					// TODO Auto-generated catch block
 					Log.e("","",e1);
-					
 				}
 			}
 			asyncResponce= new AsyncRequestResponse(AsyncRequestResponse.STATUS_INTERNAL_ERROR,null,e);
@@ -88,37 +101,7 @@ abstract class AbstractConnectionRunner extends AsyncTask<ConnectionRequest,Asyn
 	}
 
 	protected abstract AsyncRequestResponse processResponce(HttpResponse responce/*, boolean readAll*/) throws IllegalStateException,
-	IOException;/* {
-			BufferedReader br = new BufferedReader(new InputStreamReader(responce.getEntity()
-					.getContent()));
-			String line, result = "";
-			AsyncRequestResponse  rr=null;
-			try {
-				while (((line = br.readLine()) != null)&&!isCancelled())
-				{
-	
-					if(!readAll)
-					{
-						publishProgress(new AsyncRequestResponse(AsyncRequestResponse.STATUS_PROGRESS,line,null ));
-					}
-					else
-					{
-						result += line;
-					}
-				}
-				if(readAll)
-				{
-					 rr = new AsyncRequestResponse(responce.getStatusLine().getStatusCode(),result ,null);
-				}
-			} catch (Exception e) {
-					Log.e("", "", e);
-					br.close();
-					responce.getEntity().getContent().close();
-					rr = new AsyncRequestResponse(AsyncRequestResponse.STATUS_INTERNAL_ERROR,null,e);
-			}
-			return rr;
-	}*/
-	
+	IOException;
 	@Override
 	protected void onProgressUpdate (AsyncRequestResponse... values)
 	{

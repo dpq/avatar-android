@@ -20,10 +20,10 @@ public class ReturnEntityConnectionRunner extends AbstractConnectionRunner {
 		AsyncRequestResponse  rr=null;
 		try {
 			
-			 rr = new AsyncRequestResponse(responce.getStatusLine().getStatusCode(),responce.getEntity().getContent() ,null);
+			 rr = new AsyncRequestResponse(responce.getStatusLine().getStatusCode(),responce.getEntity() ,null);
 		} catch (Exception e) {
 				Log.e("", "", e);
-				responce.getEntity().getContent().close();
+				responce.getEntity().consumeContent();
 				rr = new AsyncRequestResponse(AsyncRequestResponse.STATUS_INTERNAL_ERROR,null,e);
 		}
 		return rr;

@@ -31,7 +31,7 @@ public class AccessoryProcessor extends Activity {
 	private UsbAccessory mAccessory;
 	private ParcelFileDescriptor mFileDescriptor;
 	private FileInputStream mInputStream;
-	private FileOutputStream mOutputStream;
+	protected FileOutputStream mOutputStream;
 	
 	
 	

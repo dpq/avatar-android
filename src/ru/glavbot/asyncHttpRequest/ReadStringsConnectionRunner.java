@@ -23,6 +23,8 @@ public class ReadStringsConnectionRunner extends AbstractConnectionRunner {
 				.getContent()));
 		String line;
 		AsyncRequestResponse  rr=null;
+		//int code = responce.getStatusLine().getStatusCode();
+		//if(code>0)
 		try {
 			while (((line = br.readLine()) != null)&&!isCancelled())
 			{
@@ -32,7 +34,7 @@ public class ReadStringsConnectionRunner extends AbstractConnectionRunner {
 		} catch (Exception e) {
 				Log.e("", "", e);
 				br.close();
-				responce.getEntity().getContent().close();
+				responce.getEntity().consumeContent();
 				rr = new AsyncRequestResponse(AsyncRequestResponse.STATUS_INTERNAL_ERROR,null,e);
 		}
 		return rr;

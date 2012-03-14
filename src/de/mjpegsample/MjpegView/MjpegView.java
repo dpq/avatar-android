@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
@@ -311,7 +312,17 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 			// TODO Auto-generated method stub
-			 setSource(new MjpegInputStream((InputStream) responce));
+			 try {
+				setSource(new MjpegInputStream((HttpEntity) responce));
+			} catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				Log.e("","",e);
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				Log.e("","",e);
+				
+			}
 			 initializing=false;
 			 //view.setSource();
 			 setDisplayMode(MjpegView.SIZE_BEST_FIT);

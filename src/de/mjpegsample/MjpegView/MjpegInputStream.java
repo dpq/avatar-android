@@ -8,6 +8,8 @@ import java.io.InputStream;
 
 import java.util.Properties;
 
+import org.apache.http.HttpEntity;
+
 
 
 import android.graphics.Bitmap;
@@ -36,7 +38,10 @@ public class MjpegInputStream extends DataInputStream {
 		}
 	}
     
-    public MjpegInputStream(InputStream in) { super(new BufferedInputStream(in, FRAME_MAX_LENGTH)); 
+	HttpEntity ent=null;
+	
+    public MjpegInputStream(HttpEntity in) throws IllegalStateException, IOException { super(new BufferedInputStream(in.getContent(), FRAME_MAX_LENGTH)); 
+    	ent=in;
     	dataIn.mark(FRAME_MAX_LENGTH);
     	headerIn.mark(HEADER_MAX_LENGTH);
     }
@@ -77,6 +82,11 @@ public class MjpegInputStream extends DataInputStream {
         	skipBytes(bytesToSkip);
         	return null;
         }
+        else if(headerLen<=0)
+        {
+        	return null;
+        }
+        
         //reset();
        // byte[] header = new byte[headerLen];
         System.arraycopy(emptySpace, 0, header, 0, HEADER_MAX_LENGTH);
@@ -94,10 +104,16 @@ public class MjpegInputStream extends DataInputStream {
         return BitmapFactory.decodeStream(dataIn);
     }
     
-   /* @Override
-    public void Close()
+    @Override
+    public void close() throws IOException
     {
-    	
-    }*/
+    	super.close();
+    	if(ent!=null)
+    	{
+    		ent.consumeContent();
+    		ent = null;
+    	}
+    		
+    }
     
 }

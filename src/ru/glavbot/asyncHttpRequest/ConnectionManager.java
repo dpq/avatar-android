@@ -49,9 +49,8 @@ public class ConnectionManager {
 		{
 			
 			runner.cancel(true);
-			
-				runner=null;
-				queue.remove(0);
+			runner=null;
+			queue.remove(0);
 			
 			//else
 			//	throw new RuntimeException("Running task considered immortal. Kill it by throwing your tab into the trash");

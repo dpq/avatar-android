@@ -169,11 +169,17 @@ public class AudioSender extends Thread{
 						OutputStream s;
 						
 							try {
+								if(socket!=null)
+								{
+									socket.close();
+									socket=null;
+								}
+								
 								socket = new Socket(addr, port);
 							
 								socket.setKeepAlive(true);
-								socket.setTcpNoDelay(true);
-								socket.setSoTimeout(100000);
+								//socket.setTcpNoDelay(true);
+								socket.setSoTimeout(10000);
 								socket.setSendBufferSize(MAX_SEND_BUFFER);
 							
 								s = socket.getOutputStream();

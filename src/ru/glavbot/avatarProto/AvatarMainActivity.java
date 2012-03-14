@@ -4,10 +4,7 @@ package ru.glavbot.avatarProto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Calendar;
-//import java.util.concurrent.ScheduledThreadPoolExecutor;
-//import java.util.concurrent.TimeUnit;
+//import java.io.IOException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,10 +15,6 @@ import ru.glavbot.asyncHttpRequest.ConnectionRequest;
 import ru.glavbot.asyncHttpRequest.ProcessAsyncRequestResponceProrotype;
 import ru.glavbot.avatarProto.R;
 
-//import com.ryong21.R;
-
-
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -31,7 +24,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -40,8 +32,8 @@ import android.os.Bundle;
 import android.os.StrictMode;
 
 import android.util.Log;
-import android.view.LayoutInflater;
 
+import android.view.LayoutInflater;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -52,27 +44,18 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 
 public class AvatarMainActivity extends AccessoryProcessor {
+	
+	boolean DEBUG=true;
     /** Called when the activity is first created. */
-	 private  TextView leftEngineForward;
-	 private  TextView leftEngineBackward;
-     private  TextView rightEngineForward;
-     private  TextView rightEngineBackward;
-     private  TextView yawUp;
-     private  TextView yawDown;
-     private  TextView pitchLeft;
-     private  TextView pitchRight;
-     private  TextView wave;
-     private  ToggleButton startButton;
+     private ToggleButton startButton;
      private Button sendLinkButton;
      private SurfaceView cameraPreview;
      private MjpegView videoView;
@@ -98,7 +81,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String TOKEN_PARAM = "token";
      private static final String MODE_PARAM = "mode";
      private static final String MODE_PARAM_VALUE = "read";
-   //  private static final int SERVER_VIDEO_PORT = 10000;
+
      private static final int SERVER_AUDIO_PORT_OUT = 10002;
      private static final int SERVER_AUDIO_PORT_IN = 10003;
      
@@ -108,16 +91,22 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private  String email;
      private  String session_token;
      private  int  ttl;
-     private boolean isRunning=false;
+     private boolean turnedOn=false;
      
- 	WebView webView;
- 	ConnectivityManager network;
- 	ConnectionManager protocolManager;
+ 	private WebView webView;
+ 	private ConnectivityManager network;
+ 	private ConnectionManager protocolManager;
+ 	private RoboDriver driver;
  	boolean isNetworkAvailable=false;
 
+ 	
+
+ 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (DEBUG) {
+
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
         .detectDiskReads()
         .detectDiskWrites()
@@ -130,32 +119,15 @@ public class AvatarMainActivity extends AccessoryProcessor {
         .penaltyLog()
         .penaltyDeath()
         .build());
-
+        }
         protocolManager= new ConnectionManager();
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
-                                WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        
+		
         setContentView(R.layout.main);
         
-        leftEngineForward= (TextView)findViewById(R.id.LeftEngineForward);
-        leftEngineForward.setVisibility(View.GONE);
-   	 	leftEngineBackward= (TextView)findViewById(R.id.LeftEngineBackward);
-   	 	leftEngineBackward.setVisibility(View.GONE);
-     	rightEngineForward= (TextView)findViewById(R.id.RightEngineForward);
-     	rightEngineForward.setVisibility(View.GONE);
-     	rightEngineBackward= (TextView)findViewById(R.id.RightEngineBackward);
-     	rightEngineBackward.setVisibility(View.GONE);
-     	yawUp= (TextView)findViewById(R.id.YawUp);
-     	yawUp.setVisibility(View.GONE);
-     	yawDown= (TextView)findViewById(R.id.YawDown);
-     	yawDown.setVisibility(View.GONE);
-     	pitchLeft= (TextView)findViewById(R.id.PitchLeft);
-     	pitchLeft.setVisibility(View.GONE);
-     	pitchRight= (TextView)findViewById(R.id.PitchRight);
-     	pitchRight.setVisibility(View.GONE);
-     	wave= (TextView)findViewById(R.id.Wave);
-     	wave.setVisibility(View.GONE);
+        videoView= (MjpegView)findViewById(R.id.videoView);
     	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
     	startButton= (ToggleButton)findViewById(R.id.StartButton);
     	sendLinkButton = (Button)findViewById(R.id.SendLinkButton);
@@ -170,7 +142,6 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				{
 					Toast.makeText(AvatarMainActivity.this, R.string.toastNoWifi, Toast.LENGTH_LONG).show();
 				}
-				
 			}
     		
     	});
@@ -178,78 +149,40 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				// TODO Auto-generated method stub
-				
-				if(isChecked/*&&(!isRunning)*/)
+				if(isChecked)
 				{
 					if(isNetworkAvailable)
 					{
-						isRunning=true;
-						turnAllOn();
+						setCurrentState(STATE_ON);
 					}
 					else
 					{
 						Toast.makeText(AvatarMainActivity.this, R.string.toastNoWifi, Toast.LENGTH_LONG).show();
 						buttonView.toggle();
 					}
-					//startPlayer();
 				}
 				else
-				if(isRunning)
-				{
-					isRunning=false;
-					turnAllOff();
-				}
+					setCurrentState(STATE_OFF);
 			}
-			
 		});
 		
-		
-		videoView= (MjpegView)findViewById(R.id.videoView);
-		
 		videoReceiver = new VideoReceiver(videoView,"http://dev.glavbot.ru/restreamer?oid=%s");
-		
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        
         videoSender = new VideoSender(this, cameraPreview);
         audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_OUT);
         audioReceiver= new AudioReceiver(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_IN);
-        
-
-        /*stpe = new ScheduledThreadPoolExecutor(1);  
-          stpe.scheduleAtFixedRate(new Runnable() {  
-            public void run() {  
-                    System.gc();
-            }  
-        },0, 1,TimeUnit.SECONDS);  */
-
+        driver= new RoboDriver(this);
     }
-   // ScheduledThreadPoolExecutor stpe;
     boolean isListeningNetwork=false;
 
-    private void checkForNetwork()
-    {
-    	network = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo inf = network.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-      // boolean oldNetworkAvailable = isNetworkAvailable;
-        isNetworkAvailable=inf.isConnected();
-        processNetworkState();
-
-        
-        	
-    }
-    
     private void processNetworkState()
     {
-    	
-        if(isNetworkAvailable&&isRunning)
+        if(isNetworkAvailable)
         {
-        	turnAllOn();
+        	setCurrentState(Math.abs(currentState));
         }
         else
         {
-        	turnAllOff();
-        	
+        	setCurrentState(-Math.abs(currentState));
         }
     }
     
@@ -262,7 +195,6 @@ public class AvatarMainActivity extends AccessoryProcessor {
                     + intent.getAction());
             int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,-1);
             isNetworkAvailable =state == WifiManager.WIFI_STATE_ENABLED;
-            //checkForNetwork();
             processNetworkState();
         }
 
@@ -286,35 +218,121 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	}
     }  
     
-    private void turnAllOff()
+    private void disableAll()
     {
-    	if(turnedOn)
-    	{
-    		doHangup();
-    		
-    		//videoReceiver.stopReceiveVideo();
-    		turnedOn=false;
-    	}
+    	stopCommands();
+    	stopStreaming();
     }
     
-    boolean turnedOn=false;
-    private void turnAllOn()
+    boolean isRunning=false;
+    private void doResume()
     {
-    	if(!turnedOn)
-    	{
-    		runCommands();
-    		videoSender.startCamera();
-    		audioSender.startVoice();
-    		audioReceiver.startVoice();
-    		videoReceiver.startReceiveVideo();
-    		turnedOn=true;
-    	}
+    	setCurrentState(currentState);
     }
+   
+ 	protected static final int STATE_ON=1;
+ 	protected static final int STATE_OFF=0;
+ 	protected static final int STATE_ON_NO_NETWORK=-1;
+ 	protected static final int STATE_ENABLED=2;
+ 	protected static final int STATE_ENABLED_NO_NETWORK=-2;
+ 	
+ 	protected int currentState=0;
+ 	
+ 	protected void setCurrentState(int newState)
+ 	{
+ 		int prevState=currentState;
+ 		currentState= newState;
+ 		switch(newState)
+ 		{
+ 			case STATE_OFF:
+ 				disableAll();
+ 				break;
+ 			case STATE_ENABLED:
+ 				runStreaming();
+ 			case STATE_ON:
+ 				runCommands();
+ 				if(prevState>currentState)
+ 				{
+ 					stopStreaming();
+ 				}
+ 				break;
+ 			case STATE_ENABLED_NO_NETWORK:
+ 				stopStreaming();
+ 			case STATE_ON_NO_NETWORK:
+ 				stopCommands();
+ 				break;
 
+ 		}
+
+ 		
+ 		
+ 	}
+ 	boolean commandsRunning = false;
+	protected void runCommands()
+	{
+		if(!commandsRunning)
+		{
+			Uri.Builder builder = new Uri.Builder();
+			builder.scheme(SERVER_SCHEME).authority(SERVER_AUTHORITY).path(CMD_PATH)
+			.appendQueryParameter(TOKEN_PARAM, session_token)
+			.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
+			Uri uri=builder.build();
+			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
+			req.setAnswerProcessor(cmdConnectionResponse);
+			req.setProgressProcessor(cmdConnectionResponse);
+			req.setProcessingType(ConnectionRequest.READ_STRINGS_ONE_BY_ONE);
+			protocolManager.push(req);
+			commandsRunning=true;
+		}
+	}
+	
+	protected void stopCommands()
+	{
+		if(commandsRunning)
+		{
+			protocolManager.stopCurrent();
+			commandsRunning=false;
+		}
+	}
+	protected void reRunCommands()
+	{
+		if(currentState>STATE_OFF)
+		{
+			commandsRunning=false;	
+			runCommands();
+		}
+	}
+	
+    
+	boolean streamsRunning=false;
+	public void stopStreaming()
+	{
+		if(streamsRunning)
+		{
+			videoSender.stopCamera();
+			videoReceiver.stopReceiveVideo();
+			audioSender.stopVoice();
+			audioReceiver.stopVoice();
+			streamsRunning=false;
+		}
+	}
+    
+	protected void runStreaming()
+    {
+		if(!streamsRunning)
+		{
+			videoSender.startCamera();
+			audioSender.startVoice();
+			audioReceiver.startVoice();
+			videoReceiver.startReceiveVideo();
+			streamsRunning=true;
+		}
+    }
+    
     @Override
     protected void onPause() {
         super.onPause();
-       turnAllOff();
+       disableAll();
        stopListeningNetwork();
     }
 
@@ -328,35 +346,25 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	email=prefs.getString(SHARED_PREFS_EMAIL, null);
     	ttl=prefs.getInt(SHARED_PREFS_TTL, 0);
     	session_token = prefs.getString( SHARED_PREFS_TOKEN, null);
-    	//stopPlayer();
     	videoReceiver.setToken(session_token);
     	audioSender.setToken(session_token);
     	audioReceiver.setToken(session_token);
     	videoSender.setToken(session_token);
-    	checkForNetwork();
     	startListeningNetwork();
-    	if(isRunning&&isNetworkAvailable)
-    	{
-    		turnAllOn();
-    	}
-
+   		doResume();
     }
 	
     
     @Override
     public void onDestroy() {
-       // this.mWakeLock.release();
-    	turnAllOff();
+    	disableAll();
     	stopListeningNetwork();
         super.onDestroy();
-    //    releaseMediaRecorder();
-
     }
 
     
 	EditText emailET;
-	//DatePicker timeoutD;
-	//TimePicker timeoutT;
+
 	SeekBar timeSelect;
 	TextView textTimeout;
 	@Override
@@ -374,32 +382,19 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				View layout = inflater.inflate(R.layout.send_invite_dialog,
 				                               (ViewGroup) findViewById(R.id.layout_root));
 
-				
 				builder = new AlertDialog.Builder(this);
 				builder.setView(layout);
 				builder.setTitle(R.string.sendLinkDlgHeader);
 				alertDialog = builder.create();
 				emailET = (EditText) layout.findViewById(R.id.editTextEmail);
 				textTimeout = (TextView)layout.findViewById(R.id.text_timeout);
-				//timeoutD = (DatePicker) layout.findViewById(R.id.datePickerValidToDate);
-				//timeoutD.setCalendarViewShown(false);
-				//timeoutD.setSpinnersShown(true);
-				
-			
-				//timeoutT= (TimePicker) layout.findViewById(R.id.timePickerValidToTime);
-				//timeoutT.setIs24HourView(true);
+
 				timeSelect= (SeekBar) layout.findViewById(R.id.seekBarLength);
 				timeSelect.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 					
-					public void onStopTrackingTouch(SeekBar seekBar) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void onStopTrackingTouch(SeekBar seekBar) {}
 					
-					public void onStartTrackingTouch(SeekBar seekBar) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void onStartTrackingTouch(SeekBar seekBar) {}
 					
 					public void onProgressChanged(SeekBar seekBar, int progress,
 							boolean fromUser) {
@@ -408,8 +403,6 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					}
 				});
 				textTimeout.setText(getResources().getString(R.string.sendLinkDlgExpires,1));
-				//timeSelect.setProgress(1);
-				//timeSelect.setProgress(0);
 				
 				Button buttonOk = (Button)layout.findViewById(R.id.buttonOk);
 				Button buttonCancel = (Button)layout.findViewById(R.id.buttonCancel);
@@ -418,9 +411,6 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					public void onClick(View v) {
 
 						setEmail(emailET.getText().toString());
-						//long cur = Calendar.getInstance().getTimeInMillis();
-						//long dateTo = timeoutD.getCalendarView().getDate();
-						//long timeTo = timeoutT.getCurrentHour()*1000*60*60+timeoutT.getCurrentMinute()*1000*60;
 						long ttl = (timeSelect.getProgress()+1)*60*60;
 						if(ttl<0){ttl=0;}
 						try{
@@ -429,12 +419,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						{
 							Log.e("AvatarMainActivity", "AlertDialog.buttonOk.onClick", e);
 							setTtl(0);
-								
 						}
-
 						shareRobot();
 						alertDialog.dismiss();
-						if(isRunning)
+						if(turnedOn)
 						{
 							startButton.toggle();
 						}
@@ -451,25 +439,6 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		return d;
 	}
 
-	@Override
-	protected void onPrepareDialog (int id, Dialog dialog) 
-	{
-		switch (id)
-		{
-			case SEND_CONTROL_LINK_DIALOG:
-			{
-				final Calendar c = Calendar.getInstance();
-				//timeoutD.setMinDate(c.getTimeInMillis()-10000);
-				//timeoutD.setMaxDate(c.getTimeInMillis()+((long)(Integer.MAX_VALUE-60*60*24))*1000);
-				c.add(Calendar.DAY_OF_YEAR, 1);				
-				//timeoutD.updateDate(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
-				//timeoutT.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
-				//timeoutT.setCurrentMinute(c.get(Calendar.MINUTE));
-				
-				
-			}
-		};
-	}
 
 	public String getEmail() {
 		return email;
@@ -566,174 +535,46 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		}
 		
 	};
-	
 
 	
-
-	protected void runCommands()
+/*	public void doHangup()
 	{
-		Uri.Builder builder = new Uri.Builder();
-		builder.scheme(SERVER_SCHEME).authority(SERVER_AUTHORITY).path(CMD_PATH)
-		.appendQueryParameter(TOKEN_PARAM, session_token)
-		.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
-		Uri uri=builder.build();
-		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
-		req.setAnswerProcessor(cmdConnectionResponse);
-		req.setProgressProcessor(cmdConnectionResponse);
-		req.setProcessingType(ConnectionRequest.READ_STRINGS_ONE_BY_ONE);
-		protocolManager.push(req);
-		
-	}
-	
-
-	
-	public void drawColor(TextView active,TextView passive,int value)
-	{
-		long lvalue=value;
-		long color = 0xff000000+(lvalue<<16)+(lvalue<<8)+lvalue;
-		active.setBackgroundColor( (int)color);
-		passive.setBackgroundColor(0xff000000);
-		active.invalidate();
-		passive.invalidate();
-	}
-	
-	
-	public void doLeft(int value)
-	{
-		drawDirection(leftEngineForward,leftEngineBackward,value);
-		
-	}
-
-	public void doRight(int value)
-	{
-		drawDirection(rightEngineForward,rightEngineBackward,value);
-	}
-	
+			stopCommands();
+			stopStreaming();
+	}*/
 
 
-
-	public void drawDirection(TextView left, TextView right,int value)
-	{
-		if(value>0)
-		{
-			drawColor(left,right,255);
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-
-		}
-		else
-		if(value<0)
-		{
-			drawColor(right,left,255);
-			value= -value;
-			long color = 0xff000000+(value<<16)+(value<<8)+value;
-			wave.setBackgroundColor((int)color);
-		}
-		else
-		if(value==0)
-		{
-			drawColor(right,left,0);
-			wave.setBackgroundColor(0);
-			
-		}
-		wave.invalidate();
-	}
-	
-	public void doYaw(int value)
-	{
-		
-		drawDirection(yawUp,yawDown,value);
-		
-
-	}
-	public void doPitch(int value)
-	{
-		drawDirection(pitchLeft,pitchRight,value);
-		
-
-	}
-	//public void doWave(boolean value)
-	//{
-	//	/*wave.setBackgroundColor(value?0xffffffff:0xff000000);
-	//	wave.invalidate();*/
-	//}
-	public void hitTheLights()
-	{
-		leftEngineForward.setBackgroundColor(0xff000000);
-		leftEngineForward.invalidate();
-		leftEngineBackward.setBackgroundColor(0xff000000);
-		leftEngineBackward.invalidate();
-		rightEngineForward.setBackgroundColor(0xff000000);
-		rightEngineForward.invalidate();
-		rightEngineBackward.setBackgroundColor(0xff000000);
-		rightEngineBackward.invalidate();
-		yawUp.setBackgroundColor(0xff000000);
-		yawUp.invalidate();
-		yawDown.setBackgroundColor(0xff000000);
-		yawDown.invalidate();
-		pitchLeft.setBackgroundColor(0xff000000);
-		pitchLeft.invalidate();
-		pitchRight.setBackgroundColor(0xff000000);
-		pitchRight.invalidate();
-		wave.setBackgroundColor(0xff000000);
-		wave.invalidate();
-
-	}
-	
-	public void doHangup()
-	{
-			hitTheLights();
-			protocolManager.stopCurrent();
-		     videoSender.stopCamera();
-		     videoReceiver.stopReceiveVideo();
-		     audioSender.stopVoice();
-		     audioReceiver.stopVoice();
-	}
-	/*
-	 *      ажда€ строка может содержать в себе JSON-список (далее УпакетФ) с одним или более из следующих полей: left, right, yaw, pitch, wave, hangup.
-    left, right, yaw, pitch принимают значени€ от -255 до 255; каждой команде соответствуют две площадки размером 1х1см на активити приложени€. ќбработка этих полей идет по одинаковой схеме: если значение пол€ n >= 0, погасить вторую площадку и установить цвет первой площадки в #nnnnnn; в противном случае погасить первую площадку и установить цвет второй площадки в #nnnnnn.
-
-	 оманда ѕерва€ площадка ¬тора€ площадка
-	left	#1				#2
-	right	#3				#4
-	yaw		#5				#6
-	pitch	#7				#8
-	 оманда wave обрабатываетс€ иначе: в случае ее наличи€ в пакете нужно установить цвет площадки #9 в #FFFFFF, в случае ее отсутстви€ - в #000000.
-	¬ случае наличи€ в пакете команды hangup цвета всех площадок сбрасываютс€ в #000000 и дальнейшее ожидание ввода не производитс€ (можно закрыть сокет).
-*/
-	
 	ProcessAsyncRequestResponceProrotype cmdConnectionResponse = new ProcessAsyncRequestResponceProrotype()
 	{
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
-			//parceJson((String)responce);
-			if(turnedOn)
-			{
-				hitTheLights();
-				runCommands();
-				//startButton.toggle();
-			}
+			reRunCommands();
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
-			runCommands();
+			reRunCommands();
 		}
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
-		//	Toast.makeText(AvatarMainActivity.this, String.format("Connection failed with message %s!",e.getMessage()), Toast.LENGTH_LONG).show();
-			if(turnedOn)
-			{
-				hitTheLights();
-				runCommands();
-			}
+			reRunCommands();
+			driver.reset();
+
 		}
 		
-		ByteArrayOutputStream s = new ByteArrayOutputStream(10);
+		/*ByteArrayOutputStream s = new ByteArrayOutputStream(10);
 		DataOutputStream ds = new DataOutputStream(s);
-		byte[] error={90,90,0,90,0,90,0};
+		byte[] error={90,90,0,90,0,90,0};*/
+		private static final String CMD_SLEEP="sleep";
+		private static final String CMD_DIR="dir";
+		private static final String CMD_OMEGA="omega";
+		private static final String CMD_VOMEGA="head";
+		
+		
+		
+		
 		protected void parceJson(Object responce)
 		{
 			JSONObject r;
@@ -744,13 +585,30 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				r = new JSONObject((String)responce);
 				}catch(JSONException e)
 				{
-					Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
+					Log.v("ConnectionResponceHandler", "parceJson", e);
 					return;
-					//sendCommand(error);
-					//Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
 				}
 				
-					s.reset();
+				if(r.has(CMD_SLEEP))
+				{
+					int sleep=r.getInt(CMD_SLEEP);
+					if(sleep==0)
+					{
+						setCurrentState(STATE_ENABLED);
+					}
+					else
+					{
+						setCurrentState(STATE_ON);
+					}
+				}
+				if(r.has(CMD_DIR)&&r.has(CMD_OMEGA)&&r.has(CMD_VOMEGA))
+				{
+					driver.setNewDirection(r.getInt(CMD_DIR), r.getDouble(CMD_OMEGA),r.getDouble(CMD_VOMEGA));
+					Log.v("cmd", (String)responce);
+				}
+				
+				
+				/*	s.reset();
 					ds.writeByte(r.getInt("h"));
 					ds.writeByte(r.getInt("a"));
 					ds.writeShort(r.getInt("sa"));
@@ -758,36 +616,19 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					ds.writeShort(r.getInt("sb"));
 					ds.writeByte(r.getInt("c"));
 					ds.writeShort(r.getInt("sc"));
-					
-					
-					
-					
-					
-					sendCommand(s.toByteArray());
-				
-				/*if (r.has("pitch"))
-				{
-					doPitch(r.getInt("pitch"));
-				}
-				//doWave(r.has("wave"));
-				if(r.has("hangup"))
-				{	
-					startButton.toggle();
-				}*/
+					sendCommand(s.toByteArray());*/
 				
 			}
 			catch(JSONException e)
 			{
 				Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
-				//sendCommand(error);
-				//Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
+
 			}
-			catch(IOException e)
+		/*	catch(IOException e)
 			{
 				Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
 				sendCommand(error);
-				//Toast.makeText(Test1Activity.this, "Unknown server responce. Possibly fail", Toast.LENGTH_LONG).show();
-			}
+			}*/
 		}
 		
 		@Override
@@ -810,5 +651,4 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		audioReceiver.setToken(session_token);
 		videoSender.setToken(session_token);
 	}
-
 }
