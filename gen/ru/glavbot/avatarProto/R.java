@@ -11,32 +11,56 @@ public final class R {
     public static final class attr {
     }
     public static final class drawable {
-        public static final int ic_launcher=0x7f020000;
-        public static final int platform_view=0x7f020001;
+        public static final int button_pause=0x7f020000;
+        public static final int button_play=0x7f020001;
+        public static final int button_stop=0x7f020002;
+        public static final int gb_logo_big=0x7f020003;
+        public static final int ic_launcher=0x7f020004;
+        public static final int icon_error=0x7f020005;
+        public static final int icon_ok=0x7f020006;
+        public static final int icon_warning=0x7f020007;
+        public static final int invite_button=0x7f020008;
+        public static final int invite_button_proto=0x7f020009;
+        public static final int invite_button_proto_blue_3=0x7f02000a;
+        public static final int invite_button_proto_green=0x7f02000b;
+        public static final int platform_view=0x7f02000c;
+        public static final int start_button_image=0x7f02000d;
     }
     public static final class id {
-        public static final int CameraPreview=0x7f070004;
-        public static final int SendLinkButton=0x7f070002;
-        public static final int StartButton=0x7f070001;
-        public static final int buttonCancel=0x7f07000d;
-        public static final int buttonOk=0x7f07000c;
-        public static final int editTextEmail=0x7f070008;
-        public static final int layout_buttons=0x7f07000b;
-        public static final int layout_email=0x7f070006;
-        public static final int layout_root=0x7f070005;
-        public static final int relativeLayout1=0x7f070000;
-        public static final int seekBarLength=0x7f07000a;
-        public static final int text_email=0x7f070007;
-        public static final int text_timeout=0x7f070009;
-        public static final int videoView=0x7f070003;
+        public static final int CameraPreview=0x7f070009;
+        public static final int ImageViewLogo=0x7f070002;
+        public static final int RelativeLayoutButtons=0x7f070007;
+        public static final int ResumeButton=0x7f070004;
+        public static final int SendLinkButton=0x7f070003;
+        public static final int StartButton=0x7f070008;
+        public static final int StopButton=0x7f07000a;
+        public static final int buttonCancel=0x7f070013;
+        public static final int buttonOk=0x7f070012;
+        public static final int editTextEmail=0x7f07000e;
+        public static final int frameLayoutMain=0x7f070000;
+        public static final int frameLayoutRun=0x7f070005;
+        public static final int imageViewErrLevel=0x7f070015;
+        public static final int layout_buttons=0x7f070011;
+        public static final int layout_email=0x7f07000c;
+        public static final int layout_root=0x7f07000b;
+        public static final int relativeLayoutStart=0x7f070001;
+        public static final int seekBarLength=0x7f070010;
+        public static final int textViewText=0x7f070016;
+        public static final int text_email=0x7f07000d;
+        public static final int text_timeout=0x7f07000f;
+        public static final int toast_layout_root=0x7f070014;
+        public static final int videoView=0x7f070006;
     }
     public static final class layout {
         public static final int main=0x7f030000;
         public static final int send_invite_dialog=0x7f030001;
+        public static final int toast_layout=0x7f030002;
     }
     public static final class string {
         public static final int app_name=0x7f050001;
-        public static final int btnsendlinktext=0x7f05000c;
+        public static final int btncanceltext=0x7f05000c;
+        public static final int btnresumesessiontext=0x7f05000e;
+        public static final int btnsendlinktext=0x7f05000d;
         public static final int btnstartstoptext=0x7f05000b;
         public static final int control1=0x7f050002;
         public static final int control2=0x7f050003;
@@ -48,17 +72,17 @@ public final class R {
         public static final int control8=0x7f050009;
         public static final int control9=0x7f05000a;
         public static final int hello=0x7f050000;
-        public static final int sendLinkDlgButtonCancel=0x7f05000e;
-        public static final int sendLinkDlgButtonOk=0x7f05000d;
-        public static final int sendLinkDlgEmail=0x7f050010;
-        public static final int sendLinkDlgExpires=0x7f050011;
-        public static final int sendLinkDlgHeader=0x7f05000f;
-        public static final int toastInviteFail=0x7f050014;
-        public static final int toastInviteFailNoConnection=0x7f050017;
-        public static final int toastInviteHz=0x7f050015;
-        public static final int toastInviteOk=0x7f050013;
-        public static final int toastInviteServerRefuse=0x7f050016;
-        public static final int toastNoWifi=0x7f050012;
+        public static final int sendLinkDlgButtonCancel=0x7f050010;
+        public static final int sendLinkDlgButtonOk=0x7f05000f;
+        public static final int sendLinkDlgEmail=0x7f050012;
+        public static final int sendLinkDlgExpires=0x7f050013;
+        public static final int sendLinkDlgHeader=0x7f050011;
+        public static final int toastInviteFail=0x7f050016;
+        public static final int toastInviteFailNoConnection=0x7f050019;
+        public static final int toastInviteHz=0x7f050017;
+        public static final int toastInviteOk=0x7f050015;
+        public static final int toastInviteServerRefuse=0x7f050018;
+        public static final int toastNoWifi=0x7f050014;
     }
     public static final class style {
         public static final int ControlButton=0x7f060000;

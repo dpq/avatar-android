@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/relativeLayout1"
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/frameLayoutMain"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="fill_parent"
+    android:gravity="bottom" 
+    android:keepScreenOn="true" >
 
     <!--     <TextView
             android:id="@+id/LeftEngineForward"
@@ -67,23 +69,47 @@
             android:layout_alignParentTop="true"
             android:text="@string/control9" 
             android:background="#000000"/>
--->
-                          <ToggleButton
-                              android:id="@+id/StartButton"
-                              android:layout_width="wrap_content"
-                              android:layout_height="wrap_content"
-                              android:layout_alignParentBottom="true"
-                              android:layout_alignParentLeft="true"
-                              android:layout_alignParentRight="true"
-                              android:text="@string/btnstartstoptext" />
+-->                              	 	<RelativeLayout android:id="@+id/relativeLayoutStart"
+    				android:layout_width="fill_parent"
+    				android:layout_height="fill_parent" >
 
+					<ImageView android:id="@+id/ImageViewLogo"
+					    android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_alignParentTop="true"
+                        android:scaleType="fitCenter"
+                        android:background="@drawable/gb_logo_big"
+					    />
+ 	    
+ 	    
+ 	    
                           <Button
                               android:id="@+id/SendLinkButton"
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"
-                              android:layout_above="@+id/StartButton"
-                              android:layout_centerHorizontal="true"
-                              android:text="@string/btnsendlinktext" />
+                         	  android:layout_centerHorizontal="true"
+                         	  android:textSize="36dip"
+                         	  android:textColor="#0000ff"
+                         	  android:layout_marginTop="100dip"
+                         	  android:layout_below="@+id/ImageViewLogo"
+                         	  android:layout_alignLeft="@+id/ImageViewLogo"
+                         	  android:layout_alignRight="@+id/ImageViewLogo"
+                              android:text="@string/btnsendlinktext"
+                              android:background="@drawable/invite_button" />
+                          <Button
+                              android:id="@+id/ResumeButton"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                         	  android:layout_centerHorizontal="true"
+                         	  android:textSize="36dip"
+                         	  android:textColor="#0000ff"
+                         	  android:layout_marginTop="100dip"
+                         	  android:layout_below="@+id/SendLinkButton"
+                         	  android:layout_alignLeft="@+id/ImageViewLogo"
+                         	  android:layout_alignRight="@+id/ImageViewLogo"
+                              android:text="@string/btnresumesessiontext"
+                              android:background="@drawable/invite_button" />
 						<!-- <WebView 
 							android:layout_width="fill_parent" 
 							android:id="@+id/webview" 
@@ -93,22 +119,55 @@
 							android:layout_centerHorizontal="true" 
 							android:layout_above="@+id/CameraPreview"
 							/> -->  
-							<de.mjpegsample.MjpegView.MjpegView
-							android:layout_width="fill_parent" 
-							android:id="@+id/videoView" 
-							android:layout_height="wrap_content"
-							android:layout_marginTop="10dip"
-							android:keepScreenOn="true"
-							android:layout_centerHorizontal="true" 
-							android:layout_alignParentTop="true"
-							android:layout_above="@+id/CameraPreview"
-							/>
+
 							<!-- android:layout_below="@+id/LeftEngineForward" -->
 							  <!-- android:layout_below="@+id/webview" -->
-                          <SurfaceView
-                              android:id="@+id/CameraPreview"
-                              android:layout_width="24px"
-                              android:layout_height="32px"
-							  android:layout_above="@+id/SendLinkButton"
-                              android:layout_centerHorizontal="true" />
+                          
     </RelativeLayout>
+    
+ 	<FrameLayout android:id="@+id/frameLayoutRun"
+    				android:layout_width="fill_parent"
+    				android:layout_height="fill_parent"
+    				android:gravity="bottom" >
+        		<de.mjpegsample.MjpegView.MjpegView
+							android:layout_width="fill_parent" 
+							android:id="@+id/videoView" 
+							android:layout_height="fill_parent"
+							android:layout_marginTop="10dip"
+							android:keepScreenOn="true"
+							/>
+ 	    
+ 	    		<RelativeLayout android:id="@+id/RelativeLayoutButtons"
+ 	       			android:orientation="horizontal"
+ 	        		android:gravity="bottom"
+ 	        		android:layout_width="fill_parent"
+ 	        		android:layout_height="fill_parent">
+ 	                          <ToggleButton
+                              android:id="@+id/StartButton"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:layout_alignParentLeft="true"
+                              android:textOn=""
+                              android:textOff=""
+                              android:textColor="#000000ff"
+                              android:layout_alignParentBottom="true" 
+                              android:background="@drawable/start_button_image"/>
+ 	                          
+ 	                          <SurfaceView
+                              android:id="@+id/CameraPreview"
+                              android:layout_width="24dip"
+                              android:layout_height="32dip"
+							  android:layout_centerHorizontal="true"
+							  android:layout_alignParentBottom="true" />
+ 	                          
+ 	                          <Button
+ 	                          	android:id="@+id/StopButton"
+                              	android:layout_width="wrap_content"
+                              	android:layout_height="wrap_content"
+                 				android:layout_alignParentRight="true"
+                 				android:layout_alignParentBottom="true"
+                 				android:background="@drawable/button_stop"
+                              	android:text="" />
+ 	    </RelativeLayout>
+    </FrameLayout>
+</FrameLayout>

@@ -13,7 +13,9 @@
 	<string name="control8">8</string>
 	<string name="control9">9</string>
 	<string name="btnstartstoptext">Start|stop</string>
-	<string name="btnsendlinktext">Send link</string>
+	<string name="btncanceltext">Сlose</string>
+	<string name="btnsendlinktext">Start new session</string>
+	<string name="btnresumesessiontext">Resume session</string>
 	<string name="sendLinkDlgButtonOk">Ok</string>
 	<string name="sendLinkDlgButtonCancel">Cancel</string>
 	<string name="sendLinkDlgHeader">Enter invite options</string>

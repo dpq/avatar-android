@@ -2,8 +2,8 @@ package ru.glavbot.avatarProto;
 
 
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
+//import java.io.ByteArrayOutputStream;
+//import java.io.DataOutputStream;
 //import java.io.IOException;
 
 import org.json.JSONException;
@@ -45,20 +45,29 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
+//import android.widget.Toast;
 import android.widget.ToggleButton;
 
 
 public class AvatarMainActivity extends AccessoryProcessor {
 	
+	
 	boolean DEBUG=true;
     /** Called when the activity is first created. */
      private ToggleButton startButton;
      private Button sendLinkButton;
+     private Button resumeButton;
+     private Button stopButton;
      private SurfaceView cameraPreview;
      private MjpegView videoView;
+     private FrameLayout frameLayoutRun;
+     private RelativeLayout relativeLayoutStart;
+     
+     
      private VideoSender videoSender;
      private AudioSender audioSender;
      private AudioReceiver audioReceiver;
@@ -76,7 +85,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String CMD_PATH = "cmd"; 
      private static final String MACADDR_PARAM = "macaddr";
      private static final String EMAIL_PARAM = "email";
-     //email: кому послать ссылку на использование робота?
+     //email: пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ?
      private static final String TTL_PARAM = "ttl";
      private static final String TOKEN_PARAM = "token";
      private static final String MODE_PARAM = "mode";
@@ -84,7 +93,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
      private static final int SERVER_AUDIO_PORT_OUT = 10002;
      private static final int SERVER_AUDIO_PORT_IN = 10003;
-     
+     ToastBuilder toastBuilder = new ToastBuilder(this);
 
      
      
@@ -93,7 +102,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private  int  ttl;
      private boolean turnedOn=false;
      
- 	private WebView webView;
+ //	private WebView webView;
  	private ConnectivityManager network;
  	private ConnectionManager protocolManager;
  	private RoboDriver driver;
@@ -130,6 +139,11 @@ public class AvatarMainActivity extends AccessoryProcessor {
         videoView= (MjpegView)findViewById(R.id.videoView);
     	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
     	startButton= (ToggleButton)findViewById(R.id.StartButton);
+    	stopButton=(Button)findViewById(R.id.SendLinkButton);
+    	relativeLayoutStart = (RelativeLayout)findViewById(R.id.relativeLayoutStart);
+    	frameLayoutRun = (FrameLayout)findViewById(R.id.frameLayoutRun);
+    	
+    	
     	sendLinkButton = (Button)findViewById(R.id.SendLinkButton);
     	sendLinkButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
@@ -140,11 +154,28 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				}
 				else
 				{
-					Toast.makeText(AvatarMainActivity.this, R.string.toastNoWifi, Toast.LENGTH_LONG).show();
+					toastBuilder.makeAndShowToast(R.string.toastNoWifi, ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 				}
 			}
     		
     	});
+    	resumeButton= (Button)findViewById(R.id.ResumeButton);
+    	resumeButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				if(isNetworkAvailable)
+				{
+					startButton.toggle();
+				}
+				else
+				{
+					toastBuilder.makeAndShowToast(R.string.toastNoWifi, ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
+				}
+			}
+    		
+    	});
+    	
+    	
 		startButton.setOnCheckedChangeListener(new OnCheckedChangeListener(){
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -157,14 +188,22 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					}
 					else
 					{
-						Toast.makeText(AvatarMainActivity.this, R.string.toastNoWifi, Toast.LENGTH_LONG).show();
+						toastBuilder.makeAndShowToast(R.string.toastNoWifi, ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 						buttonView.toggle();
 					}
 				}
 				else
-					setCurrentState(STATE_OFF);
+					setCurrentState(STATE_PAUSED);
 			}
 		});
+		stopButton = (Button)findViewById(R.id.StopButton);
+		stopButton.setOnClickListener(new OnClickListener(){
+
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				setCurrentState(STATE_OFF);
+			}});
+		
 		
 		videoReceiver = new VideoReceiver(videoView,"http://dev.glavbot.ru/restreamer?oid=%s");
         videoSender = new VideoSender(this, cameraPreview);
@@ -222,6 +261,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     {
     	stopCommands();
     	stopStreaming();
+    	setWelcomeScreen();
     }
     
     boolean isRunning=false;
@@ -230,13 +270,28 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	setCurrentState(currentState);
     }
    
- 	protected static final int STATE_ON=1;
+
  	protected static final int STATE_OFF=0;
- 	protected static final int STATE_ON_NO_NETWORK=-1;
- 	protected static final int STATE_ENABLED=2;
- 	protected static final int STATE_ENABLED_NO_NETWORK=-2;
+ 	protected static final int STATE_PAUSED=1;
+	protected static final int STATE_PAUSED_NO_NETWORK=-1;	
+ 	protected static final int STATE_ON=2;
+ 	protected static final int STATE_ON_NO_NETWORK=-2;
+ 	protected static final int STATE_ENABLED=3;
+ 	protected static final int STATE_ENABLED_NO_NETWORK=-3;
  	
  	protected int currentState=0;
+ 	
+ 	protected void setWelcomeScreen()
+ 	{
+ 		frameLayoutRun.setVisibility(View.GONE);
+ 		relativeLayoutStart.setVisibility(View.VISIBLE);
+ 	}
+ 	protected void setWorkerScreen()
+ 	{
+ 		frameLayoutRun.setVisibility(View.VISIBLE);
+ 		relativeLayoutStart.setVisibility(View.GONE);
+ 	}
+ 	
  	
  	protected void setCurrentState(int newState)
  	{
@@ -255,11 +310,19 @@ public class AvatarMainActivity extends AccessoryProcessor {
  				{
  					stopStreaming();
  				}
+ 			case STATE_PAUSED:
+ 				if(prevState>currentState)
+ 				{
+ 					stopStreaming();
+ 					stopCommands();
+ 				}
+ 				setWorkerScreen();
  				break;
  			case STATE_ENABLED_NO_NETWORK:
  				stopStreaming();
  			case STATE_ON_NO_NETWORK:
  				stopCommands();
+ 			case STATE_PAUSED_NO_NETWORK: 				
  				break;
 
  		}
@@ -387,6 +450,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				builder.setTitle(R.string.sendLinkDlgHeader);
 				alertDialog = builder.create();
 				emailET = (EditText) layout.findViewById(R.id.editTextEmail);
+				emailET.setText(getEmail());
 				textTimeout = (TextView)layout.findViewById(R.id.text_timeout);
 
 				timeSelect= (SeekBar) layout.findViewById(R.id.seekBarLength);
@@ -422,10 +486,11 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						}
 						shareRobot();
 						alertDialog.dismiss();
-						if(turnedOn)
+						/*if(turnedOn)
 						{
 							startButton.toggle();
-						}
+						}*/
+						setCurrentState(STATE_ON);
 						
 					}});
 				buttonCancel.setOnClickListener(new OnClickListener(){
@@ -505,18 +570,20 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				if(status.equalsIgnoreCase("ok"))
 				{
 					setSession_token(r.getString("token"));
-					Toast.makeText(AvatarMainActivity.this, R.string.toastInviteOk, Toast.LENGTH_LONG).show();
+					toastBuilder.makeAndShowToast(R.string.toastInviteOk, ToastBuilder.ICON_OK, ToastBuilder.LENGTH_LONG);
 					startButton.toggle();
 				}
 				else
 				{
-					Toast.makeText(AvatarMainActivity.this, getResources().getString(R.string.toastInviteFail, r.getString("message")), Toast.LENGTH_LONG).show();
+					toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFail, r.getString("message")), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
+					
 				}
 			}
 			catch(JSONException e)
 			{
 				Log.e("ConnectionResponceHandler", "onConnectionSuccessful", e);
-				Toast.makeText(AvatarMainActivity.this,R.string.toastInviteHz, Toast.LENGTH_LONG).show();
+				toastBuilder.makeAndShowToast(R.string.toastInviteHz, ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
+				
 				
 			}
 		}
@@ -524,14 +591,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
 			// TODO Auto-generated method stub
-			Toast.makeText(AvatarMainActivity.this,getResources().getString(R.string.toastInviteServerRefuse, statusCode), Toast.LENGTH_LONG).show();
+			toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
+			
 		}
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
 			// TODO Auto-generated method stub
-			Toast.makeText(AvatarMainActivity.this,getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()) , Toast.LENGTH_LONG).show();
-		
+			toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 		}
 		
 	};
