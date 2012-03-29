@@ -22,8 +22,8 @@ import android.util.Log;
 
 public class AudioSender extends Thread{
 
-	private final String host;
-	private final int port;
+	private String host;
+	private int port;
 	private String token;
 	
 	
@@ -40,12 +40,15 @@ public class AudioSender extends Thread{
       
     Object sync= new Object();
     
-	
-	
-	protected AudioSender(Activity base,String host,int port)
+	void setHostAndPort(String host, int port)
 	{
-		this.host=host;
-		this.port=port;
+		this.host = host;
+		this.port = port;
+	}
+	
+	
+	protected AudioSender(Activity base)
+	{
 		start();
 		try {
 			synchronized(sync)

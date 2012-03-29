@@ -33,6 +33,7 @@ import android.os.StrictMode;
 
 import android.util.Log;
 
+//import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.SurfaceView;
 import android.view.View;
@@ -40,17 +41,13 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.webkit.WebView;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 //import android.widget.Toast;
-import android.widget.ToggleButton;
 
 
 public class AvatarMainActivity extends AccessoryProcessor {
@@ -58,7 +55,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	
 	boolean DEBUG=true;
     /** Called when the activity is first created. */
-     private ToggleButton startButton;
+     private Button startButton;
+     private Button pauseButton;
+     private Button settingsButton;
      private Button sendLinkButton;
      private Button resumeButton;
      private Button stopButton;
@@ -74,25 +73,39 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private VideoReceiver videoReceiver;
  
      private static final int SEND_CONTROL_LINK_DIALOG = 1001;
+     private static final int CONFIGURE_SERVER_DIALOG = 1002;
+     
+     
      private static final String SHARED_PREFS = "RobotSharedPrefs";
      private static final String SHARED_PREFS_EMAIL = "email";
      private static final String SHARED_PREFS_TTL = "ttl";
-     private static final String SHARED_PREFS_TOKEN = "token";    
+     private static final String SHARED_PREFS_TOKEN = "token"; 
      
      private static final String SERVER_SCHEME = "http";    
-     static final String SERVER_AUTHORITY = "auth.glavbot.ru"; 
+
      private static final String SHARE_PATH = "share"; 
      private static final String CMD_PATH = "cmd"; 
+     private static final String RESTREAMER_PATH = "restreamer"; 
      private static final String MACADDR_PARAM = "macaddr";
      private static final String EMAIL_PARAM = "email";
+	 
      //email: ���� ������� ������ �� ������������� ������?
      private static final String TTL_PARAM = "ttl";
      private static final String TOKEN_PARAM = "token";
      private static final String MODE_PARAM = "mode";
      private static final String MODE_PARAM_VALUE = "read";
-
-     private static final int SERVER_AUDIO_PORT_OUT = 10002;
-     private static final int SERVER_AUDIO_PORT_IN = 10003;
+     
+     private static final String SERVER_AUTHORITY_PARAM = "serverAuthority";
+     private static final String SERVER_HTTP_PORT_PARAM = "serverHttpPort";
+     private static final String VIDEO_PORT_OUT_PARAM = "videoPortOut";
+     private static final String AUDIO_PORT_IN_PARAM = "audioPortIn";
+     private static final String AUDIO_PORT_OUT_PARAM = "audioPortOut";
+     
+     private String serverAuthority = "auth.glavbot.ru"; 
+     private String serverHttpPort = "1018";
+     private int videoPortOut = 10000;
+     private int audioPortIn = 10002;
+     private int audioPortOut = 10003;
      ToastBuilder toastBuilder = new ToastBuilder(this);
 
      
@@ -133,13 +146,49 @@ public class AvatarMainActivity extends AccessoryProcessor {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
-		
+
+        
+        
+        
         setContentView(R.layout.main);
         
         videoView= (MjpegView)findViewById(R.id.videoView);
     	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
-    	startButton= (ToggleButton)findViewById(R.id.StartButton);
-    	stopButton=(Button)findViewById(R.id.SendLinkButton);
+		settingsButton=(Button)findViewById(R.id.SettingsButton);
+		settingsButton.setOnClickListener(new OnClickListener() {
+			
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				showDialog(CONFIGURE_SERVER_DIALOG);
+			}
+		});
+    	startButton= (Button)findViewById(R.id.StartButton);
+
+		startButton.setOnClickListener(new OnClickListener(){
+
+			public void onClick(View v) {
+					if(isNetworkAvailable)
+					{
+						setCurrentState(STATE_ON);
+					}
+					else
+					{
+						toastBuilder.makeAndShowToast(R.string.toastNoWifi, ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
+					}
+			}
+		});
+		
+    	pauseButton= (Button)findViewById(R.id.PauseButton);
+	pauseButton.setOnClickListener(new OnClickListener(){
+
+		public void onClick(View v) {
+		setCurrentState(STATE_PAUSED);
+		}
+	});
+    	
+    	
+    	
+    	
     	relativeLayoutStart = (RelativeLayout)findViewById(R.id.relativeLayoutStart);
     	frameLayoutRun = (FrameLayout)findViewById(R.id.frameLayoutRun);
     	
@@ -165,7 +214,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				// TODO Auto-generated method stub
 				if(isNetworkAvailable)
 				{
-					startButton.toggle();
+					setCurrentState(STATE_ON);
 				}
 				else
 				{
@@ -176,26 +225,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	});
     	
     	
-		startButton.setOnCheckedChangeListener(new OnCheckedChangeListener(){
 
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				if(isChecked)
-				{
-					if(isNetworkAvailable)
-					{
-						setCurrentState(STATE_ON);
-					}
-					else
-					{
-						toastBuilder.makeAndShowToast(R.string.toastNoWifi, ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
-						buttonView.toggle();
-					}
-				}
-				else
-					setCurrentState(STATE_PAUSED);
-			}
-		});
 		stopButton = (Button)findViewById(R.id.StopButton);
 		stopButton.setOnClickListener(new OnClickListener(){
 
@@ -205,10 +235,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			}});
 		
 		
-		videoReceiver = new VideoReceiver(videoView,"http://dev.glavbot.ru/restreamer?oid=%s");
+		videoReceiver = new VideoReceiver(videoView);
         videoSender = new VideoSender(this, cameraPreview);
-        audioSender = new AudioSender(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_OUT);
-        audioReceiver= new AudioReceiver(this,SERVER_AUTHORITY,SERVER_AUDIO_PORT_IN);
+        audioSender = new AudioSender(this);
+        audioReceiver= new AudioReceiver(this);
         driver= new RoboDriver(this);
     }
     boolean isListeningNetwork=false;
@@ -222,6 +252,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         else
         {
         	setCurrentState(-Math.abs(currentState));
+        	driver.reset();
         }
     }
     
@@ -292,11 +323,26 @@ public class AvatarMainActivity extends AccessoryProcessor {
  		relativeLayoutStart.setVisibility(View.GONE);
  	}
  	
+ 	protected void showProperButton(int state)
+ 	{
+ 		if(Math.abs(state)>=STATE_ON)
+ 		{
+ 			startButton.setVisibility(View.GONE);
+ 			pauseButton.setVisibility(View.VISIBLE);
+ 		}
+ 		else
+ 		{
+ 			startButton.setVisibility(View.VISIBLE);
+ 			pauseButton.setVisibility(View.GONE);
+ 		}
+ 		
+ 	}
  	
  	protected void setCurrentState(int newState)
  	{
  		int prevState=currentState;
  		currentState= newState;
+ 		showProperButton(newState);
  		switch(newState)
  		{
  			case STATE_OFF:
@@ -308,6 +354,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  				runCommands();
  				if(prevState>currentState)
  				{
+ 					driver.reset();
  					stopStreaming();
  				}
  			case STATE_PAUSED:
@@ -315,6 +362,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  				{
  					stopStreaming();
  					stopCommands();
+ 					
  				}
  				setWorkerScreen();
  				break;
@@ -322,6 +370,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  				stopStreaming();
  			case STATE_ON_NO_NETWORK:
  				stopCommands();
+ 				
  			case STATE_PAUSED_NO_NETWORK: 				
  				break;
 
@@ -336,11 +385,12 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		if(!commandsRunning)
 		{
 			Uri.Builder builder = new Uri.Builder();
-			builder.scheme(SERVER_SCHEME).authority(SERVER_AUTHORITY).path(CMD_PATH)
+			builder.path(CMD_PATH)
 			.appendQueryParameter(TOKEN_PARAM, session_token)
 			.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
 			Uri uri=builder.build();
-			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
+			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
+			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
 			req.setAnswerProcessor(cmdConnectionResponse);
 			req.setProgressProcessor(cmdConnectionResponse);
 			req.setProcessingType(ConnectionRequest.READ_STRINGS_ONE_BY_ONE);
@@ -354,7 +404,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		if(commandsRunning)
 		{
 			protocolManager.stopCurrent();
+			driver.reset();
 			commandsRunning=false;
+			
 		}
 	}
 	protected void reRunCommands()
@@ -362,6 +414,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		if(currentState>STATE_OFF)
 		{
 			commandsRunning=false;	
+			driver.reset();
 			runCommands();
 		}
 	}
@@ -409,14 +462,34 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	email=prefs.getString(SHARED_PREFS_EMAIL, null);
     	ttl=prefs.getInt(SHARED_PREFS_TTL, 0);
     	session_token = prefs.getString( SHARED_PREFS_TOKEN, null);
+    	
+   
+
+        
+        serverAuthority = prefs.getString( SERVER_AUTHORITY_PARAM, "auth.glavbot.ru");
+        serverHttpPort = prefs.getString( SERVER_HTTP_PORT_PARAM, "8080");//"1017";
+        videoPortOut =prefs.getInt( VIDEO_PORT_OUT_PARAM, 10000);
+        audioPortIn = prefs.getInt( AUDIO_PORT_IN_PARAM, 10002);
+        audioPortOut = prefs.getInt( AUDIO_PORT_OUT_PARAM, 10003);
+    	
     	videoReceiver.setToken(session_token);
     	audioSender.setToken(session_token);
     	audioReceiver.setToken(session_token);
     	videoSender.setToken(session_token);
+    	setPortsAndHosts();
     	startListeningNetwork();
    		doResume();
     }
 	
+    public void setPortsAndHosts()
+    {
+    	videoReceiver.setAddress(serverAuthority, serverHttpPort);
+    	audioSender.setHostAndPort(serverAuthority, audioPortOut);
+    	audioReceiver.setHostAndPort(serverAuthority, audioPortIn);
+    	videoSender.setHostAndPort(serverAuthority, videoPortOut);
+    }
+    
+    
     
     @Override
     public void onDestroy() {
@@ -430,6 +503,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 	SeekBar timeSelect;
 	TextView textTimeout;
+	
+	
+	EditText editTextServer;
+	EditText editTextServerPort;
+	EditText editTextVideoOutPort;
+	EditText editTextAudioOutPort;
+	EditText editTextAudioInPort;
+	
 	@Override
 	protected Dialog  onCreateDialog(int id)
 	{
@@ -490,7 +571,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						{
 							startButton.toggle();
 						}*/
-						setCurrentState(STATE_ON);
+						//setCurrentState(STATE_ON);
 						
 					}});
 				buttonCancel.setOnClickListener(new OnClickListener(){
@@ -499,11 +580,116 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						alertDialog.cancel();
 					}});
 				d= alertDialog;
+				break;
+			}
+			case CONFIGURE_SERVER_DIALOG:
+			{
+				AlertDialog.Builder builder;
+				final AlertDialog alertDialog;
+
+				LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
+				View layout = inflater.inflate(R.layout.configure_server_dialog,
+				                               (ViewGroup) findViewById(R.id.layout_config_server_root));
+
+				builder = new AlertDialog.Builder(this);
+				builder.setView(layout);
+				builder.setTitle(R.string.configSrvDlgHeader);
+				alertDialog = builder.create();
+				
+				editTextServer=(EditText) layout.findViewById(R.id.editTextServer);
+				editTextServerPort=(EditText) layout.findViewById(R.id.editTextServerPort);
+				editTextVideoOutPort=(EditText) layout.findViewById(R.id.editTextVideoOutPort);
+				editTextAudioOutPort=(EditText) layout.findViewById(R.id.editTextAudioOutPort);
+				editTextAudioInPort=(EditText) layout.findViewById(R.id.editTextAudioInPort);
+
+				
+				
+				Button buttonOk = (Button)layout.findViewById(R.id.buttonOk);
+				Button buttonCancel = (Button)layout.findViewById(R.id.buttonCancel);
+				buttonOk.setOnClickListener(new OnClickListener(){
+
+					public void onClick(View v) {
+						
+						String s = editTextServer.getText().toString();
+						if(s.length()==0)
+						{
+							s = "dev.glavbot.ru";
+						}
+						serverAuthority=s;
+						s =editTextServerPort.getText().toString();
+						if(s.length()==0)
+						{
+							s = "8080";
+						}
+						serverHttpPort=s;
+						
+						s =editTextVideoOutPort.getText().toString();
+						if(s.length()==0)
+						{
+							s = "10000";
+						}
+						videoPortOut=Integer.decode(s);
+						s =editTextAudioInPort.getText().toString();
+						if(s.length()==0)
+						{
+							s = "10002";
+						}
+						audioPortIn=Integer.decode(s);
+						s =editTextAudioOutPort.getText().toString();
+						if(s.length()==0)
+						{
+							s = "10003";
+						}
+						audioPortOut=Integer.decode(s);
+						
+						SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
+						SharedPreferences.Editor  editor = prefs.edit();
+						editor.putString(SERVER_AUTHORITY_PARAM, serverAuthority);
+						editor.putString(SERVER_HTTP_PORT_PARAM, serverHttpPort);
+						editor.putInt(VIDEO_PORT_OUT_PARAM, videoPortOut);
+						editor.putInt(AUDIO_PORT_IN_PARAM, audioPortIn);
+						editor.putInt(AUDIO_PORT_OUT_PARAM, audioPortOut);
+				    	editor.apply();
+				    	setPortsAndHosts();
+				    	alertDialog.dismiss();
+						
+					}});
+				buttonCancel.setOnClickListener(new OnClickListener(){
+
+					public void onClick(View v) {
+						alertDialog.cancel();
+					}});
+				d= alertDialog;
+				break;
 			}
 		}
 		return d;
 	}
-
+/*
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+	    if (keyCode == KeyEvent.KEYCODE_MENU) {
+	    	if(currentState == STATE_OFF )
+	    	{
+	    		showDialog(CONFIGURE_SERVER_DIALOG);
+	    	}
+	    	return true;
+	    }
+	    return super.onKeyUp(keyCode, event);
+	}
+*/
+	
+	protected void onPrepareDialog (int id, Dialog dialog)
+	{
+		if(id==CONFIGURE_SERVER_DIALOG)
+		{
+			editTextServer.setText(serverAuthority);
+			editTextServerPort.setText(serverHttpPort);
+			editTextVideoOutPort.setText(String.format("%d", videoPortOut));
+			editTextAudioOutPort.setText(String.format("%d", audioPortOut));
+			editTextAudioInPort.setText(String.format("%d", audioPortIn));		
+		}
+	}
 
 	public String getEmail() {
 		return email;
@@ -542,13 +728,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			WifiInfo wifiInf = wifiMan.getConnectionInfo();
 			String macAddr = wifiInf.getMacAddress();
 			Uri.Builder builder = new Uri.Builder();
-			builder.scheme(SERVER_SCHEME).authority(SERVER_AUTHORITY)
-					.path(SHARE_PATH)
+			builder.path(SHARE_PATH)
 					.appendQueryParameter(MACADDR_PARAM, macAddr)
 					.appendQueryParameter(EMAIL_PARAM, email)
 					.appendQueryParameter(TTL_PARAM, String.format("%d", ttl));
 			Uri uri = builder.build();
-			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, uri.toString());
+		
+			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
+			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
 			req.setAnswerProcessor(shareConnectionResponce);
 			req.setProcessingType(ConnectionRequest.READ_ALL);
 			protocolManager.push(req);
@@ -571,7 +758,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				{
 					setSession_token(r.getString("token"));
 					toastBuilder.makeAndShowToast(R.string.toastInviteOk, ToastBuilder.ICON_OK, ToastBuilder.LENGTH_LONG);
-					startButton.toggle();
+					setCurrentState(STATE_ON);
+					//startButton.toggle();
 				}
 				else
 				{
@@ -627,7 +815,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionFail(Throwable e) {
 			reRunCommands();
-			driver.reset();
+			//driver.reset();
 
 		}
 		

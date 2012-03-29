@@ -1,7 +1,6 @@
 package ru.glavbot.avatarProto;
 
 import android.app.Activity;
-import android.app.Application;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -74,12 +73,12 @@ public class ToastBuilder {
 	private void init()
 	{
 		LayoutInflater inflater = owner.getLayoutInflater();
-		View layout = inflater.inflate(R.layout.toast_layout,
+		toastWindow = inflater.inflate(R.layout.toast_layout,
 		                               (ViewGroup) owner.findViewById(R.id.toast_layout_root));
 
-		iconView = (ImageView) layout.findViewById(R.id.imageViewErrLevel);
+		iconView = (ImageView) toastWindow.findViewById(R.id.imageViewErrLevel);
 		//image.setImageResource(R.drawable.android);
-		textView = (TextView) layout.findViewById(R.id.textViewText);
+		textView = (TextView) toastWindow.findViewById(R.id.textViewText);
 
 	}
 }

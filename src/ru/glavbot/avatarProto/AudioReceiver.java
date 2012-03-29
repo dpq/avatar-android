@@ -21,8 +21,8 @@ import android.util.Log;
 
 public class AudioReceiver extends Thread {
 
-	private final String host;
-	private final int port;
+	private String host;
+	private int port;
 	private String token;
 
 	AudioTrack player = null;
@@ -38,9 +38,14 @@ public class AudioReceiver extends Thread {
 
 	Object sync = new Object();
 
-	protected AudioReceiver(Activity base, String host, int port) {
+	void setHostAndPort(String host, int port)
+	{
 		this.host = host;
 		this.port = port;
+	}
+	
+	
+	protected AudioReceiver(Activity base) {
 		owner = base;
 		start();
 		try {

@@ -4,6 +4,7 @@
 	<string name="btnstartstoptext">Вкл|Выкл</string>
 	<string name="btnsendlinktext">Начать новую сессию</string>
 	<string name="btnresumesessiontext">Возобновить сессию</string>
+	<string name="btnsettingstext">Настройки сервера</string>
 	<string name="sendLinkDlgHeader">Введите параметры приглашения</string>
 	<string name="sendLinkDlgButtonOk">Ok</string>
 	<string name="sendLinkDlgButtonCancel">Отмена</string>
@@ -15,5 +16,10 @@
 	<string name="toastInviteHz">Сервер ответил неведомое. Ошибка протокола, скорее всего неудача отправки.</string>
 	<string name="toastInviteServerRefuse">"Сервер вернул %d, попробуйте позже"</string>
 	<string name="toastInviteFailNoConnection">Отправка приглашения неудачна! Ошибка соединения: \r %s</string>
-	
+	<string name="configSrvDlgServer">Сервер</string>
+	<string name="configSrvDlgHeader">Конфигурация сервера:</string>
+	<string name="configSrvDlgServerPort">Серверный http порт:</string>
+	<string name="configSrvDlgAudioOutPort">Порт исходящего аудиопотока:</string>
+	<string name="configSrvDlgAudioInPort">Порт входящего аудиопотока:</string>
+	<string name="configSrvDlgVideoOutPort">Порт исходящего видеопотока:</string>
 </resources>

@@ -8,10 +8,17 @@ public class VideoReceiver {
 	private String token;
 	private String address;
 	boolean isPlaying=false;
-	VideoReceiver(MjpegView view, String address)
+	
+	void setAddress(String host, String httpPort)
+	{
+		
+		this.address="http://"+host+":"+httpPort+"/restreamer?oid=%s";
+	}
+	
+	VideoReceiver(MjpegView view)
 	{
 		this.view=view;
-		this.address=address;
+		
 	}
 	public String getToken() {
 		return token;

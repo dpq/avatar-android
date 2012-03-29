@@ -91,7 +91,7 @@
                          	  android:layout_centerHorizontal="true"
                          	  android:textSize="36dip"
                          	  android:textColor="#0000ff"
-                         	  android:layout_marginTop="100dip"
+                         	  android:layout_marginTop="30dip"
                          	  android:layout_below="@+id/ImageViewLogo"
                          	  android:layout_alignLeft="@+id/ImageViewLogo"
                          	  android:layout_alignRight="@+id/ImageViewLogo"
@@ -104,13 +104,25 @@
                          	  android:layout_centerHorizontal="true"
                          	  android:textSize="36dip"
                          	  android:textColor="#0000ff"
-                         	  android:layout_marginTop="100dip"
+                         	  android:layout_marginTop="30dip"
                          	  android:layout_below="@+id/SendLinkButton"
                          	  android:layout_alignLeft="@+id/ImageViewLogo"
                          	  android:layout_alignRight="@+id/ImageViewLogo"
                               android:text="@string/btnresumesessiontext"
                               android:background="@drawable/invite_button" />
-						<!-- <WebView 
+						<Button
+                              android:id="@+id/SettingsButton"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                         	  android:layout_centerHorizontal="true"
+                         	  android:textSize="36dip"
+                         	  android:textColor="#0000ff"
+                         	  android:layout_marginTop="30dip"
+                         	  android:layout_below="@+id/ResumeButton"
+                         	  android:layout_alignLeft="@+id/ImageViewLogo"
+                         	  android:layout_alignRight="@+id/ImageViewLogo"
+                              android:text="@string/btnsettingstext"
+                              android:background="@drawable/invite_button" />						<!-- <WebView 
 							android:layout_width="fill_parent" 
 							android:id="@+id/webview" 
 							android:layout_height="wrap_content"
@@ -142,17 +154,22 @@
  	        		android:gravity="bottom"
  	        		android:layout_width="fill_parent"
  	        		android:layout_height="fill_parent">
- 	                          <ToggleButton
+ 	                          <Button
                               android:id="@+id/StartButton"
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"
                               android:layout_alignParentLeft="true"
-                              android:textOn=""
-                              android:textOff=""
                               android:textColor="#000000ff"
                               android:layout_alignParentBottom="true" 
-                              android:background="@drawable/start_button_image"/>
- 	                          
+                              android:background="@drawable/button_play"/>
+ 	                          <Button
+                              android:id="@+id/PauseButton"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:layout_alignParentLeft="true"
+                              android:textColor="#000000ff"
+                              android:layout_alignParentBottom="true" 
+                              android:background="@drawable/button_pause"/>
  	                          <SurfaceView
                               android:id="@+id/CameraPreview"
                               android:layout_width="24dip"
