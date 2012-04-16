@@ -8,8 +8,6 @@ import java.io.InputStream;
 
 import java.util.Properties;
 
-import org.apache.http.HttpEntity;
-
 
 
 import android.graphics.Bitmap;
@@ -25,26 +23,8 @@ public class MjpegInputStream extends DataInputStream {
   //private static Socket socket;
 	
 
-	private byte[] header = new byte[HEADER_MAX_LENGTH];
-	static private byte[] emptySpace= new byte[HEADER_MAX_LENGTH];
-	private byte[] frameData = new byte[FRAME_MAX_LENGTH];
-	private ByteArrayInputStream dataIn = new ByteArrayInputStream(frameData);
-	private ByteArrayInputStream headerIn = new ByteArrayInputStream(header);
-	private Properties props = new Properties();
-	static {
-		for (int i=0;i<HEADER_MAX_LENGTH;i++)
-		{
-			emptySpace[i]=(byte)0x10;
-		}
-	}
-    
-	HttpEntity ent=null;
 	
-    public MjpegInputStream(HttpEntity in) throws IllegalStateException, IOException { super(new BufferedInputStream(in.getContent(), FRAME_MAX_LENGTH)); 
-    	ent=in;
-    	dataIn.mark(FRAME_MAX_LENGTH);
-    	headerIn.mark(HEADER_MAX_LENGTH);
-    }
+    public MjpegInputStream(InputStream in) { super(new BufferedInputStream(in, FRAME_MAX_LENGTH)); }
 	
     private int getEndOfSeqeunce(DataInputStream in, byte[] sequence) throws IOException {
         int seqIndex = 0;
@@ -64,9 +44,9 @@ public class MjpegInputStream extends DataInputStream {
         return (end < 0) ? (-1) : (end - sequence.length);
     }
 
-    private int parseContentLength(/*byte[] headerBytes*/) throws IOException, NumberFormatException {
-        //ByteArrayInputStream headerIn = new ByteArrayInputStream(headerBytes);
-    	headerIn.reset();
+    private int parseContentLength(byte[] headerBytes) throws IOException, NumberFormatException {
+        ByteArrayInputStream headerIn = new ByteArrayInputStream(headerBytes);
+        Properties props = new Properties();
         props.load(headerIn);
         return Integer.parseInt(props.getProperty(CONTENT_LENGTH));
     }	
@@ -75,45 +55,24 @@ public class MjpegInputStream extends DataInputStream {
         mark(FRAME_MAX_LENGTH);
         int headerLen = getStartOfSequence(this, SOI_MARKER);
         reset();
-        if(headerLen>HEADER_MAX_LENGTH)
-        {
-        	
-        	int bytesToSkip=getEndOfSeqeunce(this, EOF_MARKER);
-        	skipBytes(bytesToSkip);
-        	return null;
-        }
-        else if(headerLen<=0)
-        {
-        	return null;
-        }
-        
-        //reset();
-       // byte[] header = new byte[headerLen];
-        System.arraycopy(emptySpace, 0, header, 0, HEADER_MAX_LENGTH);
-        readFully(header,0,headerLen);
+        byte[] header = new byte[headerLen];
+        readFully(header);
         try {
-            mContentLength = parseContentLength();
+            mContentLength = parseContentLength(header);
         } catch (NumberFormatException nfe) { 
-            mContentLength = getEndOfSeqeunce(this, EOF_MARKER)-headerLen; 
+            mContentLength = getEndOfSeqeunce(this, EOF_MARKER); 
         }
         reset();
-        //byte[] frameData = new byte[mContentLength];
+        byte[] frameData = new byte[mContentLength];
         skipBytes(headerLen);
-        readFully(frameData,0,mContentLength);
-        dataIn.reset();
-        return BitmapFactory.decodeStream(dataIn);
+        readFully(frameData);
+        return BitmapFactory.decodeStream(new ByteArrayInputStream(frameData));
     }
     
-    @Override
-    public void close() throws IOException
+   /* @Override
+    public void Close()
     {
-    	super.close();
-    	if(ent!=null)
-    	{
-    		ent.consumeContent();
-    		ent = null;
-    	}
-    		
-    }
+    	
+    }*/
     
 }

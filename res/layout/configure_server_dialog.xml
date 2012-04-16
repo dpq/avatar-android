@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/layout_config_server_root"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:padding="10dp"
+              >
+	<LinearLayout android:id="@+id/layout_server"
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:paddingTop="10dp"
+              android:paddingBottom="10dp"
+              >
+    	<TextView android:id="@+id/text_server"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="@string/configSrvDlgServer"
+              
+              />
+    	<EditText
+        	android:id="@+id/editTextServer"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="textEmailAddress" >
+
+        	<requestFocus />
+    	</EditText>
+	</LinearLayout>
+	    
+		<LinearLayout android:id="@+id/layout_server_port"
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:paddingTop="10dp"
+              android:paddingBottom="10dp"
+              >
+    	<TextView android:id="@+id/text_server_port"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="@string/configSrvDlgServerPort"
+              
+              />
+    	<EditText
+        	android:id="@+id/editTextServerPort"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="number"  >
+
+
+    	</EditText>
+	</LinearLayout>
+	
+	<LinearLayout android:id="@+id/layoutVideoOutPort"
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:paddingTop="10dp"
+              android:paddingBottom="10dp"
+              >
+    	<TextView android:id="@+id/textVideoOutPort"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="@string/configSrvDlgVideoOutPort"
+              
+              />
+    	<EditText
+        	android:id="@+id/editTextVideoOutPort"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="number"/>
+	</LinearLayout>
+	<LinearLayout android:id="@+id/layoutAudioOutPort"
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:paddingTop="10dp"
+              android:paddingBottom="10dp"
+              >
+    	<TextView android:id="@+id/textAudioOutPort"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="@string/configSrvDlgAudioOutPort"
+              
+              />
+    	<EditText
+        	android:id="@+id/editTextAudioOutPort"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="number"/>
+	</LinearLayout>		
+	
+	<LinearLayout android:id="@+id/layoutAudioInPort"
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:paddingTop="10dp"
+              android:paddingBottom="10dp"
+              >
+    	<TextView android:id="@+id/textAudioInPort"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="@string/configSrvDlgAudioInPort"
+              
+              />
+    	<EditText
+        	android:id="@+id/editTextAudioInPort"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="number"/>
+	</LinearLayout>
+	<LinearLayout android:id="@+id/layout_buttons"
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="10dp"
+            >
+			<Button
+		    android:id="@+id/buttonOk"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/sendLinkDlgButtonOk" />
+			<Button
+		    android:id="@+id/buttonCancel"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/sendLinkDlgButtonCancel" />
+	</LinearLayout>
+
+		
+
+</LinearLayout>

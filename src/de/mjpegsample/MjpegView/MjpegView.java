@@ -325,7 +325,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 			 initializing=false;
 			 //view.setSource();
-			 setDisplayMode(MjpegView.SIZE_FULLSCREEN);
+			 setDisplayMode(MjpegView.SIZE_BEST_FIT);
 			 showFps(true);
 			 
 		}

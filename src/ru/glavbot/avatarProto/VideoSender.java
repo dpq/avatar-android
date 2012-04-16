@@ -9,9 +9,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+
 //import java.text.SimpleDateFormat;
 //import java.util.List;
 
@@ -42,6 +40,9 @@ public class VideoSender extends Thread{
 	private Context context;
 	private SurfaceView preview;
 	private VideoView foreignStream;
+	private int port;
+	private String host;
+	
 	
 	private HandlerBuffer[] dataBuff;
 	private static final int PREVIEW_WIDTH=320;
@@ -54,6 +55,11 @@ public class VideoSender extends Thread{
 	
 	ArrayList<byte[]> buffers;
 	
+	void setHostAndPort(String host, int port)
+	{
+		this.host = host;
+		this.port = port;
+	}
 	
 	
 	VideoSender (final Context context, SurfaceView preview)
@@ -94,8 +100,8 @@ public class VideoSender extends Thread{
 
 	        	boolean isRunning = false;
 	        	Socket socket = null;
-	        	private int counter = 0;
-	        	private String hostname; 
+	        	//private int counter = 0;
+	        	//private String hostname; 
 	        	Rect imgRect = new Rect(0,0,PREVIEW_WIDTH-1,PREVIEW_HEIGHT-1); 
 	        	private void processFrame(Message msg)
 	        	{
@@ -168,18 +174,18 @@ public class VideoSender extends Thread{
 							Log.e("","",e1);
 							
 						}
-	        			initializeSocket(hostname);
+	        			initializeSocket();
 	        		}
 	        	}
 	        	
-	        	private void initializeSocket(String hostname)
+	        	private void initializeSocket()
 	        	{
 	        		
 	        			boolean success=true;
-	        			this.hostname=hostname;
+	        			//this.hostname=hostname;
 						InetAddress addr=null;
 						try {
-							addr = InetAddress.getByName(hostname);
+							addr = InetAddress.getByName(host);
 						} catch (UnknownHostException e) {
 							// TODO Auto-generated catch block
 							Log.e("","",e);
@@ -194,7 +200,7 @@ public class VideoSender extends Thread{
 						if(success)
 						{
 						try {
-							socket = new Socket(addr, SERVER_VIDEO_PORT);
+							socket = new Socket(addr, port);
 							socket.setKeepAlive(true);
 							//socket.setTcpNoDelay(true);
 							socket.setSoTimeout(100000);
@@ -234,7 +240,7 @@ public class VideoSender extends Thread{
 								Log.e("","",e1);
 								
 							}
-							this.obtainMessage(INITIALIZE_VIDEO_SOCKET,0,0,AvatarMainActivity.SERVER_AUTHORITY).sendToTarget();
+							this.obtainMessage(INITIALIZE_VIDEO_SOCKET).sendToTarget();
 							isRunning=false;
 						}
 	        	
@@ -273,7 +279,7 @@ public class VideoSender extends Thread{
 	            			processFrame(msg);
 	            			break;
 	            		case INITIALIZE_VIDEO_SOCKET:
-	            			initializeSocket((String)msg.obj);
+	            			initializeSocket();
 	            			break;
 	            		case CLOSE_VIDEO_SOCKET:
 	            			closeSocket();
@@ -353,59 +359,6 @@ public class VideoSender extends Thread{
 	     camera.setDisplayOrientation(result);
 	 }
 
-//	 public static final int MEDIA_TYPE_IMAGE = 1;
-//	 public static final int MEDIA_TYPE_VIDEO = 2;
-
-	 /** Create a file Uri for saving an image or video */
-/*	 private static Uri getOutputMediaFileUri(int type){
-	       return Uri.fromFile(getOutputMediaFile(type));
-	 }*/
-
-	 /** Create a File for saving an image or video */
-/*	 private File getOutputMediaFile(int type){
-	     // To be safe, you should check that the SDCard is mounted
-	     // using Environment.getExternalStorageState() before doing this.
-		 File mediaStorageDir;
-		 if (type == MEDIA_TYPE_IMAGE){
-			 mediaStorageDir= new File(Environment.getExternalStoragePublicDirectory(
-	               Environment.DIRECTORY_PICTURES), "MyCameraApp");
-		 }
-		 else
-		if(type == MEDIA_TYPE_VIDEO) { 
-		
-		 mediaStorageDir= new File(Environment.getExternalStoragePublicDirectory(
-	               Environment.DIRECTORY_MOVIES), "MyCameraApp");
-		}
-	 	else
-		 return null;
-	     // This location works best if you want the created images to be shared
-	     // between applications and persist after your app has been uninstalled.
-
-	     // Create the storage directory if it does not exist
-	     if (! mediaStorageDir.exists()){
-	         if (! mediaStorageDir.mkdirs()){
-	             Log.d("MyCameraApp", "failed to create directory");
-	             return null;
-	         }
-	     }
-
-	     // Create a media file name
-	     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-	    
-	     String filename;
-	     if (type == MEDIA_TYPE_IMAGE){
-	    	 filename = mediaStorageDir.getPath() + File.separator +
-	         "IMG_"+ timeStamp + ".jpg";
-	     } else if(type == MEDIA_TYPE_VIDEO) {
-	    	 filename = mediaStorageDir.getPath() + File.separator +
-	         "VID_"+ timeStamp + ".mp4";
-	     } else {
-	         return null;
-	     }
-	     File mediaFile=new File(filename);
-	     return mediaFile;
-	 }
-	*/
 
 	 private Handler mChildHandler=null;
 	 
@@ -417,7 +370,7 @@ public class VideoSender extends Thread{
 	 private static final int PROCESS_FRAME=1;
 	 private static final int CLOSE_VIDEO_SOCKET=2;
 	 
-	 private static final int SERVER_VIDEO_PORT = 10000;
+
 	 
 	 
 	protected void  finalize()
@@ -491,7 +444,7 @@ public class VideoSender extends Thread{
 	protected void startCamera()
 	{
 		// start socket;
-		Message msg = mChildHandler.obtainMessage(INITIALIZE_VIDEO_SOCKET,0,0,AvatarMainActivity.SERVER_AUTHORITY);
+		Message msg = mChildHandler.obtainMessage(INITIALIZE_VIDEO_SOCKET);
 		mChildHandler.sendMessage(msg);	
 		
 		// now camera;

@@ -20,6 +20,7 @@ public abstract class AbstractThreadWorker extends Thread {
 	public AbstractThreadWorker()
 	{
 		super();
+		initFeedbackHandler();
 		start();
 		try {
 			synchronized(sync)
@@ -168,21 +169,25 @@ public abstract class AbstractThreadWorker extends Thread {
 	}
 
 
-	protected final Handler errorHandler= new Handler()
+	protected Handler feedbackHandler;
+
+	protected void initFeedbackHandler()
 	{
-		public  void handleMessage(Message msg) {
-	    	
-	    	switch (msg.what)
-	    	{
-	    		case HAS_ERROR:
-	    			restart();
-	    			break;
-	    		default:
-	    			throw new RuntimeException("Unknown command to errorHandler in "+AbstractThreadWorker.class.getSimpleName());
-	    	};
-			
-	    }
-	};
-	
+		feedbackHandler=new Handler()
+			{
+				public  void handleMessage(Message msg) {
+			    	
+			    	switch (msg.what)
+			    	{
+			    		case HAS_ERROR:
+			    			restart();
+			    			break;
+			    		default:
+			    			throw new RuntimeException("Unknown command to errorHandler in "+AbstractThreadWorker.class.getSimpleName());
+			    	};
+					
+			    }
+			};
+	}
 	
 }

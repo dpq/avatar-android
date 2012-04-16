@@ -21,8 +21,8 @@ import android.util.Log;
 
 public class AudioReceiver extends Thread {
 
-	private final String host;
-	private final int port;
+	private String host;
+	private int port;
 	private String token;
 
 	AudioTrack player = null;
@@ -38,9 +38,14 @@ public class AudioReceiver extends Thread {
 
 	Object sync = new Object();
 
-	protected AudioReceiver(Activity base, String host, int port) {
+	void setHostAndPort(String host, int port)
+	{
 		this.host = host;
 		this.port = port;
+	}
+	
+	
+	protected AudioReceiver(Activity base) {
 		owner = base;
 		start();
 		try {
@@ -61,12 +66,10 @@ public class AudioReceiver extends Thread {
 	}
 
 	protected void internalStart() {
-		AudioManager audiomanager = (AudioManager) owner
-				.getSystemService(Activity.AUDIO_SERVICE);
-		audiomanager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-		audiomanager.setSpeakerphoneOn(true);
+
 		Message msg = mChildHandler.obtainMessage(START_AUDIO);
 		mChildHandler.sendMessage(msg);
+		Log.v("avatar audio in","internal start");
 	}
 
 	public void stopVoice() {
@@ -75,12 +78,10 @@ public class AudioReceiver extends Thread {
 	}
 
 	protected void internalStop() {
-		AudioManager audiomanager = (AudioManager) owner
-				.getSystemService(Activity.AUDIO_SERVICE);
-		audiomanager.setSpeakerphoneOn(false);
-		audiomanager.setMode(AudioManager.MODE_NORMAL);
+		
 		Message msg = mChildHandler.obtainMessage(STOP_AUDIO);
 		mChildHandler.sendMessage(msg);
+		Log.v("avatar audio in","internal stop");
 	}
 
 	Handler mChildHandler;
@@ -106,7 +107,7 @@ public class AudioReceiver extends Thread {
 				Socket socket = null;
 
 				// private byte[] audioData; //= new short[bufferSize];
-				// private float[] floatAudioData;
+			   // private float[] floatAudioData;
 				private short[] shortAudioData;
 				private int bufferSize;// = bufferSize;
 				DataInputStream floatStream;
@@ -134,7 +135,7 @@ public class AudioReceiver extends Thread {
 				private void startPlay() {
 
 					// prev_offset=0;
-
+					Log.v("avatar audio in","starting play");
 					bufferSize = AudioTrack.getMinBufferSize(sampleRate,
 							AudioFormat.CHANNEL_CONFIGURATION_MONO,
 							AudioFormat.ENCODING_PCM_16BIT);
@@ -255,6 +256,7 @@ public class AudioReceiver extends Thread {
 				}
 
 				private void stopPlay() {
+					Log.v("avatar audio in","stopping play");
 					mChildHandler.removeMessages(PROCESS_AUDIO);
 				//	mChildHandler.removeMessages(START_AUDIO);
 					if (player != null) {
@@ -279,22 +281,19 @@ public class AudioReceiver extends Thread {
 					boolean reconnect = false;
 					if (isPlaying) {
 						// try {
-						// int
-						// bytes_read=socket.getInputStream().read(audioData, 0,
-						// CHUNK_SIZE_FLOAT);
+						// int bytes_read=socket.getInputStream().read(audioData, 0, CHUNK_SIZE_FLOAT);
 
 						// recorder.read();
 						// if(bytes_read>0)
 						// {
-						// DataInputStream s =new DataInputStream( new
-						// ByteArrayInputStream(audioData));
-						try {
+						// DataInputStream s =new DataInputStream( new ByteArrayInputStream(audioData));
+						/*try {
 							socket.getOutputStream().write(' ');
 						} catch (IOException e3) {
 							// TODO Auto-generated catch block
 							Log.e("","",e3);
 							reconnect = true;
-						}
+						}*/
 						
 						
 						
@@ -345,6 +344,7 @@ public class AudioReceiver extends Thread {
 
 							}
 							if (i > 0) {
+								Log.v("avatar audio in" ,String.format("readed %d bytes",i*4));
 								player.write(shortAudioData, 0, i);
 							}
 
@@ -403,6 +403,7 @@ public class AudioReceiver extends Thread {
 			case AUDIO_IN_ERROR:
 				if (isRecording) {
 					mChildHandler.removeMessages(START_AUDIO);
+					Log.v("avatar audio in","reconnecting on error");
 					internalStop();
 					internalStart();
 				}
