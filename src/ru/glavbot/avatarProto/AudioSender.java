@@ -116,7 +116,7 @@ public class AudioSender extends Thread{
 
 	            private byte[] audioData; //= new short[bufferSize];
 	           // private byte[] floatAudioData;// = new float[CHUNK_SIZE_FLOAT];
-	            ByteArrayOutputStream floatOutput;
+	            //ByteArrayOutputStream floatOutput;
 	            private DataOutputStream os;
 	            private DataInputStream is;
 	            private int bufferSize;//= bufferSize;
@@ -228,9 +228,10 @@ public class AudioSender extends Thread{
 						{
 							recorder.startRecording();
 							audioData= new byte[CHUNK_SIZE_SHORT];
+							os = new DataOutputStream(s);
 							//floatAudioData= new byte[CHUNK_SIZE_FLOAT];
-							floatOutput=new ByteArrayOutputStream(CHUNK_SIZE_FLOAT);
-							os= new DataOutputStream(floatOutput);
+							//floatOutput=new ByteArrayOutputStream(CHUNK_SIZE_FLOAT);
+							//os= new DataOutputStream(floatOutput);
 				            is= new DataInputStream(new ByteArrayInputStream(audioData));
 				            is.mark(CHUNK_SIZE_FLOAT);
 				            //floatOutput.
@@ -293,8 +294,8 @@ public class AudioSender extends Thread{
 						{
 							
 							try {
-								/*int i;
-								floatOutput.reset();
+								int i;
+								//floatOutput.reset();
 								is.reset();
 								
 								for(i=0;i<CHUNK_SIZE_BASE;i++)
@@ -306,10 +307,10 @@ public class AudioSender extends Thread{
 										break;
 									} 
 
-								}*/
+								}
 								
 								
-								socket.getOutputStream().write(audioData/*floatOutput.toByteArray()*/,0,bytes_read/*i*(SIZEOF_FLOAT/SIZEOF_SHORT)*/);
+								//socket.getOutputStream().write(floatOutput.toByteArray(),0,i*(SIZEOF_FLOAT/SIZEOF_SHORT));
 								socket.getOutputStream().flush();
 							} catch (IOException e) {
 								Log.e("","",e);

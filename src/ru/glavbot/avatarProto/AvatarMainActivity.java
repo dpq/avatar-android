@@ -6,6 +6,8 @@ package ru.glavbot.avatarProto;
 //import java.io.DataOutputStream;
 //import java.io.IOException;
 
+import java.io.IOException;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,6 +17,7 @@ import ru.glavbot.asyncHttpRequest.ConnectionRequest;
 import ru.glavbot.asyncHttpRequest.ProcessAsyncRequestResponceProrotype;
 import ru.glavbot.avatarProto.R;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -23,6 +26,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 
+import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
@@ -52,7 +56,7 @@ import android.widget.TextView;
 
 public class AvatarMainActivity extends AccessoryProcessor {
 	
-	
+	private static final String TAG= "AvatarMainActivity";
 	boolean DEBUG=true;
     /** Called when the activity is first created. */
      private Button startButton;
@@ -147,7 +151,17 @@ public class AvatarMainActivity extends AccessoryProcessor {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
 
-        
+        try {
+        	Log.v(TAG, "Asking root permission");
+        	Process root = Runtime.getRuntime().exec("su");
+        	Log.v(TAG, "Root permission gained!");
+        	} catch (IOException e) {
+        	Log.e(TAG, "Impossible to get the root access... Quitting");
+        	e.printStackTrace();
+
+        	}
+
+
         
         
         setContentView(R.layout.main);
@@ -448,8 +462,16 @@ public class AvatarMainActivity extends AccessoryProcessor {
     @Override
     protected void onPause() {
         super.onPause();
+        
        disableAll();
        stopListeningNetwork();
+       
+       AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
+		if(audiomanager.getMode()!=AudioManager.MODE_NORMAL)
+		{
+			audiomanager.setSpeakerphoneOn(false);
+			audiomanager.setMode(AudioManager.MODE_NORMAL);
+		}
     }
 
     
@@ -478,6 +500,16 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	videoSender.setToken(session_token);
     	setPortsAndHosts();
     	startListeningNetwork();
+    	
+		AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
+		if(audiomanager.getMode()!=AudioManager.MODE_IN_COMMUNICATION)
+		{
+			audiomanager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+			audiomanager.setSpeakerphoneOn(true);
+			int maxVoice = audiomanager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
+			audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, maxVoice, 0);
+		}
+    	
    		doResume();
     }
 	

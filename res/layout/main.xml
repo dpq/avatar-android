@@ -175,7 +175,8 @@
                               android:layout_width="24dip"
                               android:layout_height="32dip"
 							  android:layout_centerHorizontal="true"
-							  android:layout_alignParentBottom="true" />
+							  android:layout_alignParentBottom="true"
+							  android:visibility="visible" />
  	                          
  	                          <Button
  	                          	android:id="@+id/StopButton"

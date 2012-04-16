@@ -15,6 +15,8 @@ public abstract class AbstractSocketWorker extends AbstractThreadWorker{
 	protected String host;
 	protected int port;
 	private String token;
+
+	
     
     public AbstractSocketWorker(String host,int port)
     {
@@ -28,10 +30,14 @@ public abstract class AbstractSocketWorker extends AbstractThreadWorker{
     public static abstract class  AbstractSocketHandler extends AbstractWorkerHandler
 	{
 
+    	private int inputBuffer = MAX_BUFFER;
+    	private int outputBuffer = MAX_BUFFER;
+    	
+    	
     	AbstractSocketWorker owner;
     	public AbstractSocketHandler(AbstractSocketWorker owner)
     	{
-    		super(owner.errorHandler);
+    		super(owner.feedbackHandler);
     		this.owner=owner;
 
     		
@@ -48,17 +54,17 @@ public abstract class AbstractSocketWorker extends AbstractThreadWorker{
 			
 				socket = new Socket(addr, owner.port);
 				socket.setKeepAlive(true);
-				socket.setTcpNoDelay(true);
-				socket.setSoTimeout(100000);
-				socket.setSendBufferSize(MAX_BUFFER);
-				socket.setReceiveBufferSize(MAX_BUFFER);
-				OutputStream s = socket.getOutputStream();
+				//socket.setTcpNoDelay(true);
+				socket.setSoTimeout(10000);
+				socket.setSendBufferSize(outputBuffer);
+				socket.setReceiveBufferSize(inputBuffer);
+				/*OutputStream s = socket.getOutputStream();
 				String ident = "ava-"+owner.getToken();
 				if(s!=null)
 				{
 					s.write(ident.getBytes());
 					s.flush();
-				}
+				}*/
 			}catch (Exception e)
 			{
 				socket=null;
@@ -89,8 +95,5 @@ public abstract class AbstractSocketWorker extends AbstractThreadWorker{
 	public void setToken(String token) {
 		this.token = token;
 	}
-    
-    
-    
-	
+
 };

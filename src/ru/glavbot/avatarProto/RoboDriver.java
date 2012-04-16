@@ -15,7 +15,7 @@ public class RoboDriver {
 	
 	private static final double Pi = Math.acos(0)*2;
 	// resoultion
-	private static final int RESOLUTION = 5; // ms
+	private static final int RESOLUTION = 15; // ms
 	private static final double TURN_SPEED =  8*Pi/1000*RESOLUTION;
 	private static final double ACCELERATION = 4;
 	private static final int WHEEL_CRUISE_SPD = 252;
@@ -233,11 +233,11 @@ private static final double[][] WHEEL_DIRECTIONS = {
 
 // SpringRC servo matrix (Robo version)
 private static final double[][] WHEEL_DIRECTIONS = {
-{ Pi/6-Pi/9+Pi/17+Pi/25,  Pi-Pi/6+Pi/9-Pi/20-Pi/45,  Pi/2  +Pi/6,     1, 1, 1,           2,   10, 2}, // 0   ^
+{ Pi/6-Pi/9+Pi/17+Pi/25,  Pi-Pi/6+Pi/9-Pi/20-Pi/45,  Pi/2  +Pi/6,     1, 1, -1,           2,   10, 2}, // 0   ^
 { 0,  Pi-Pi/3, Pi/2+Pi/6 +Pi/6,    1, 1, 1,          0,  10, 2}, //1    /'   -20
 { Pi/2+Pi/6,  Pi/2-Pi/6- Pi/25,0,    -1, 1,-1,        0,   10, 2}, // 2   >
 {  Pi/3,     0,   Pi/3+Pi/6,      -1, 1, -1,        0,   10, 2}, // 3   \.
-{ Pi/6-Pi/9+Pi/17+Pi/25,  Pi-Pi/6+Pi/9-Pi/20-Pi/45,  Pi/2+Pi/6,    -1, -1, -1,   2,   10, 2}, // 4   v
+{ Pi/6-Pi/9+Pi/17+Pi/25,  Pi-Pi/6+Pi/9-Pi/20-Pi/45,  Pi/2+Pi/6,    -1, -1, 1,   2,   10, 2}, // 4   v
 { 0,  Pi-Pi/3, Pi/2+Pi/6 +Pi/6,     -1,-1,  -1,         1,  10, 2}, //5   ./_
 {Pi/2+Pi/6,  Pi/2-Pi/6- Pi/25,0,    1, -1,  1,         1,  10, 2}, // 6   <
 { Pi/3,     Pi,   Pi/3,       1, 1, 1,          1, 10, 2 }, // 7  '\ -20
