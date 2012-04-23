@@ -188,4 +188,10 @@
                               	android:text="" />
  	    </RelativeLayout>
     </FrameLayout>
+    <TextView
+           android:id="@+id/StatusText"
+           android:minLines="5"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:background="#000000ff"/>
 </FrameLayout>

@@ -46,8 +46,8 @@ public class VideoSender extends Thread {
 	private String host;
 
 	private HandlerBuffer[] dataBuff;
-	private static final int PREVIEW_WIDTH = 320;
-	private static final int PREVIEW_HEIGHT = 240;
+	private static final int PREVIEW_WIDTH = 800;
+	private static final int PREVIEW_HEIGHT = 600;
 	private static final int NUM_FRAMES = 30;
 	private static final int NUM_BUFFERS = 5;
 	private static final int STD_DELAY = 100;
@@ -62,7 +62,7 @@ public class VideoSender extends Thread {
 		this.port = port;
 	}
 
-	volatile boolean isRunning=false;
+	volatile boolean isOn=false;
 	
 	VideoSender(final Context context, SurfaceView preview) {
 		this.context = context;
@@ -94,7 +94,7 @@ public class VideoSender extends Thread {
 
 		synchronized (sync) {
 			Looper.prepare();
-
+			setName("VideoSender");
 			mChildHandler = new Handler() {
 
 				boolean isRunning = false;
@@ -107,8 +107,8 @@ public class VideoSender extends Thread {
 				private void processFrame(Message msg) {
 					Log.v("VideoSender","sending image to server");
 					if (isRunning&&!socket.isConnected()) {
-						isRunning=false;
 						closeSocket();
+						OnScreenLogger.setVideoOut(false);
 						sendMessageDelayed(obtainMessage(INITIALIZE_VIDEO_SOCKET),STD_DELAY);
 					} else {
 						HandlerBuffer data = (HandlerBuffer) msg.obj;
@@ -150,13 +150,8 @@ public class VideoSender extends Thread {
 
 						} catch (IOException e) {
 							//Log.e("", "", e);
-							try {
-								if (socket != null)
-									socket.close();
-							} catch (IOException e1) {
-								Log.e("", "", e1);
-							}
-							isRunning=false;
+							closeSocket();
+							//isRunning=false;
 							sendMessageDelayed(obtainMessage(INITIALIZE_VIDEO_SOCKET),STD_DELAY);
 						}
 					}
@@ -166,7 +161,7 @@ public class VideoSender extends Thread {
 					if (hasMessages(INITIALIZE_VIDEO_SOCKET)) {
 						removeMessages(INITIALIZE_VIDEO_SOCKET);
 					}
-					if(!isRunning)
+					if(!isOn)
 						return;
 					try {
 						InetAddress addr = InetAddress.getByName(host);
@@ -188,15 +183,10 @@ public class VideoSender extends Thread {
 													 */;
 						socketOutputStream.write(header.getBytes());
 						isRunning = true;
+						OnScreenLogger.setVideoOut(true);
 					} catch (Exception e) {
 						Log.e(this.getClass().getName(), this.toString(), e);
-						try {
-							socketOutputStream=null;
-							if (socket != null)
-								socket.close();
-						} catch (IOException e1) {
-							Log.e("", "", e1);
-						}
+						closeSocket();
 						sendMessageDelayed(obtainMessage(INITIALIZE_VIDEO_SOCKET),STD_DELAY);
 					}
 				}
@@ -210,8 +200,10 @@ public class VideoSender extends Thread {
 							Log.e("", "", e);
 						}
 					}
+					socketOutputStream=null;
 					socket = null;
 					isRunning = false;
+					OnScreenLogger.setVideoOut(false);
 					if (mChildHandler.hasMessages(PROCESS_FRAME)) {
 						mChildHandler.removeMessages(PROCESS_FRAME);
 					}
@@ -376,7 +368,7 @@ public class VideoSender extends Thread {
 	protected void startCamera() {
 		// start socket;
 		Log.v("VideoSender::startCamera", "starting camera");
-		isRunning=true;
+		isOn=true;
 		Message msg = mChildHandler.obtainMessage(INITIALIZE_VIDEO_SOCKET);
 		mChildHandler.sendMessage(msg);
 		
@@ -444,7 +436,7 @@ public class VideoSender extends Thread {
 
 	protected void stopCamera() {
 		Log.v("VideoSender::stopCamera", "stop camera");
-		isRunning=false;
+		isOn=false;
 		Message msg = mChildHandler.obtainMessage(CLOSE_VIDEO_SOCKET);
 		mChildHandler.sendMessage(msg);
 

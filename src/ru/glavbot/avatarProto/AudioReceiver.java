@@ -95,7 +95,7 @@ public class AudioReceiver extends Thread {
 
 		synchronized (sync) {
 			Looper.prepare();
-
+			setName("AudioReceiver");
 			mChildHandler = new Handler() {
 
 				Socket socket = null;
@@ -169,7 +169,7 @@ public class AudioReceiver extends Thread {
 					}
 
 					isPlaying = true;
-
+					OnScreenLogger.setAudioIn(true);
 					player = new AudioTrack(AudioManager.STREAM_VOICE_CALL,
 							SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
 							AudioFormat.ENCODING_PCM_16BIT, bufferSize,
@@ -203,6 +203,7 @@ public class AudioReceiver extends Thread {
 						Log.e("", "", e);
 					}
 					socket = null;
+					OnScreenLogger.setAudioIn(false);
 				}
 				
 				private void doPlay() {

@@ -6,7 +6,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.util.Properties;
+//import java.util.Properties;
 
 
 
@@ -17,7 +17,10 @@ import android.util.Log;
 public class MjpegInputStream extends DataInputStream {
     private final byte[] SOI_MARKER = { (byte) 0xFF, (byte) 0xD8 };
     private final byte[] EOF_MARKER = { (byte) 0xFF, (byte) 0xD9 };
-    private final String CONTENT_LENGTH = "Content-Length";
+    private final byte[] CONTENT_LENGTH = {'C','o','n','t','e','n','t','-','L','e','n','g','t','h'};
+    private final byte[] COLON ={':'};
+    private final byte[] EOL_MARKER = { (byte)0x0D,(byte) 0x0A };
+    
     private final static int HEADER_MAX_LENGTH = 100;
     private final static int FRAME_MAX_LENGTH = 40000 + HEADER_MAX_LENGTH;
     private int mContentLength = -1;
@@ -46,10 +49,26 @@ public class MjpegInputStream extends DataInputStream {
     }
 
     private int parseContentLength(byte[] headerBytes) throws IOException, NumberFormatException {
-        ByteArrayInputStream headerIn = new ByteArrayInputStream(headerBytes);
-        Properties props = new Properties();
-        props.load(headerIn);
-        return Integer.parseInt(props.getProperty(CONTENT_LENGTH));
+        DataInputStream headerIn = new DataInputStream(new ByteArrayInputStream(headerBytes));
+        int contentLengthEnd=getEndOfSeqeunce(headerIn,CONTENT_LENGTH);
+        if(contentLengthEnd>0)
+        {
+        	int afterSemicolon=getEndOfSeqeunce(headerIn,COLON);
+        	if(afterSemicolon>0)
+        	{
+        		headerIn.mark(HEADER_MAX_LENGTH);
+        		int crLfPos=getEndOfSeqeunce(headerIn,EOL_MARKER);
+        		headerIn.reset();
+        		if(crLfPos>0)
+        		{
+        			
+        			String length =  headerIn.readLine();
+        			return Integer.parseInt(length);
+        		}
+        	}
+        }
+
+        return Integer.parseInt("huita"); // numberFormatException))
     }	
 
     public Bitmap readMjpegFrame() throws IOException {

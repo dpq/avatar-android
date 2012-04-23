@@ -148,6 +148,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
         .penaltyDeath()
         .build());*/
         }
+        
+
+		
         protocolManager= new ConnectionManager();
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -167,6 +170,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
         
         
         setContentView(R.layout.main);
+        
+        TextView statusText = (TextView) findViewById(R.id.StatusText);
+		logger = new OnScreenLogger(statusText);
         
         videoView= (MjpegView)findViewById(R.id.videoView);
     	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
@@ -373,6 +379,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
  					driver.reset();
  					stopStreaming();
  				}
+ 				setWorkerScreen();
+ 				break;
  			case STATE_PAUSED:
  				if(prevState>currentState)
  				{
@@ -546,7 +554,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	EditText editTextVideoOutPort;
 	EditText editTextAudioOutPort;
 	EditText editTextAudioInPort;
-	
+	OnScreenLogger logger;
 	@Override
 	protected Dialog  onCreateDialog(int id)
 	{
@@ -855,18 +863,20 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);//  reRunCommands();
+			OnScreenLogger.setCommands(false);
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
 			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
+			OnScreenLogger.setCommands(false);
 		}
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
 			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 			//driver.reset();
-
+			OnScreenLogger.setCommands(false);
 		}
 		
 		/*ByteArrayOutputStream s = new ByteArrayOutputStream(10);
@@ -883,6 +893,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void parceJson(Object responce)
 		{
 			JSONObject r;
+			
 			/*{a:N1, b:N2, c:N3, sa:M1, sb:M2, sc:M3, h:A }*/
 			try
 			{
@@ -942,6 +953,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onDataPart(Object responce) {
 			parceJson((String)responce);
+			OnScreenLogger.setCommands(true);
 		}
 		
 	};

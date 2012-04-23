@@ -35,12 +35,14 @@ public class VideoReceiver {
 		}
 		view.requestRead(String.format(address, token));
 		//MjpegInputStream.read(,);
+		OnScreenLogger.setVideoIn(true);
 
 	}
 	
 	public void stopReceiveVideo()
 	{
 		view.stopPlayback();
+		OnScreenLogger.setVideoIn(false);
 	}
 	
 	

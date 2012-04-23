@@ -98,6 +98,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 	public class MjpegViewThread extends Thread {
 		public void run() {
 			try {
+				setName("VideoReceiver");
 				while (mRun && (!interrupted())) {
 
 					Bitmap bm = mIn.readMjpegFrame();
@@ -139,7 +140,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
         overlayPaint.setTypeface(Typeface.DEFAULT);
         overlayTextColor = Color.WHITE;
         overlayBackgroundColor = Color.BLACK;
-        ovlPos = MjpegView.POSITION_LOWER_RIGHT;
+        ovlPos = MjpegView.POSITION_UPPER_RIGHT;
         displayMode = MjpegView.SIZE_STANDARD;
         dispWidth = getWidth();
         dispHeight = getHeight();
@@ -358,6 +359,14 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     private long start;
     private Bitmap ovl;
    	 
+    public DrawerThread()
+    {
+    	super();
+    	this.setName("DrawerThread");
+    }
+    
+    
+    
         private Rect destRect(int bmw, int bmh) {
             int tempx;
             int tempy;

@@ -102,7 +102,7 @@ public class AudioSender extends Thread{
 	 public void run() {
 
 		 synchronized(sync){
-		 
+			 setName("AudioSender");
 	        Looper.prepare();
 	        
 	        mChildHandler = new Handler() {
@@ -196,6 +196,7 @@ public class AudioSender extends Thread{
 					}
 							
 					isPlaying=true;
+					OnScreenLogger.setAudioOut(true);
 					recorder.startRecording();
 					mChildHandler.obtainMessage(PROCESS_AUDIO).sendToTarget();
 				}
@@ -209,6 +210,8 @@ public class AudioSender extends Thread{
 						Log.e("", "", e);
 					}
 					socket = null;
+					isPlaying=false;
+					OnScreenLogger.setAudioOut(false);
 				}
 
 
@@ -216,7 +219,7 @@ public class AudioSender extends Thread{
 					mChildHandler.removeMessages(PROCESS_AUDIO);
 					recorder.stop();
 					closeSocket();
-					isPlaying=false;
+					//isPlaying=false;
 					
 				}
 
@@ -255,7 +258,7 @@ public class AudioSender extends Thread{
 							mChildHandler.obtainMessage(PROCESS_AUDIO).sendToTarget();
 						} catch (IOException e) {
 							Log.e("","",e);
-							isPlaying=false;
+							//isPlaying=false;
 							closeSocket();
 							errorHandler.sendMessageDelayed(errorHandler.obtainMessage(AUDIO_OUT_ERROR),STD_DELAY);
 						}
