@@ -81,7 +81,7 @@ Runnable worker = new Runnable(){
 	
 	protected void headControl(double vOmega) {
 		// TODO Auto-generated method stub
-		tagHeadPos=normalize(vOmega);
+		tagHeadPos=normalize(curHeadPos+vOmega);
 		
 	}
 
@@ -300,7 +300,7 @@ private void calculateDesiredValues (int direction, double omega) {
 	if(Math.abs(omega) > 0.3) { // we got the angular speed
 	    if(direction == 8) { // SLEEP (we do not move any direction)
 	    	setWheelsDirection(WHEEL_DIRECTIONS[direction], -1,0);
-	        double spd = omega * (252/5); /* * omega / WHEEL_DIRECTIONS[direction][WMK1];*/
+	        double spd = omega * (WHEEL_CRUISE_SPD/5); /* * omega / WHEEL_DIRECTIONS[direction][WMK1];*/
 	        setSpeed(0, spd); // speed direction: absolutely magic!
 	        setSpeed(1, -spd);
 	        setSpeed(2, spd);

@@ -313,7 +313,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 		protected void onConnectionSuccessful(Object responce) {
 			// TODO Auto-generated method stub
 			 try {
-				setSource(new MjpegInputStream((HttpEntity) responce));
+				setSource(new MjpegInputStream(((HttpEntity) responce).getContent()));
 			} catch (IllegalStateException e) {
 				// TODO Auto-generated catch block
 				Log.e("","",e);
@@ -445,6 +445,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 
    					private void doRun(Bitmap frame) 
    					{
+   						Log.v("VideoReceiver", "drawing image");
    						if(surfaceDone) {
    		                    try {
    		                        c = mSurfaceHolder.lockCanvas();

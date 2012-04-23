@@ -12,6 +12,7 @@ import java.util.Properties;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 public class MjpegInputStream extends DataInputStream {
     private final byte[] SOI_MARKER = { (byte) 0xFF, (byte) 0xD8 };
@@ -52,7 +53,8 @@ public class MjpegInputStream extends DataInputStream {
     }	
 
     public Bitmap readMjpegFrame() throws IOException {
-        mark(FRAME_MAX_LENGTH);
+    	Log.v("VideoReceiver", "recieving image");
+    	mark(FRAME_MAX_LENGTH);
         int headerLen = getStartOfSequence(this, SOI_MARKER);
         reset();
         byte[] header = new byte[headerLen];

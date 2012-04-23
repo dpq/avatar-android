@@ -27,8 +27,8 @@ public class AudioSender extends Thread{
 	private String token;
 	
 	
-    AudioRecord recorder = null;
-    private static final int sampleRate = 8000;
+
+    private static final int SAMPLE_RATE = 8000;
 	private static final int CHUNK_SIZE_BASE = 320;
 	private static final int SIZEOF_SHORT = 2;
 	private static final int SIZEOF_FLOAT = 4;
@@ -36,7 +36,7 @@ public class AudioSender extends Thread{
 	private static final int CHUNK_SIZE_SHORT = CHUNK_SIZE_BASE * SIZEOF_SHORT;
 	private static final int CHUNK_SIZE_FLOAT = CHUNK_SIZE_BASE * SIZEOF_FLOAT;
 
-    
+	private static final int STD_DELAY = 10000;  
       
     Object sync= new Object();
     
@@ -62,11 +62,11 @@ public class AudioSender extends Thread{
 		}
 	}
 	
-	private boolean isRunning=false;
+	private boolean isRecording=false;
 	public void startVoice()
 	{
 
-		isRunning=true;
+		isRecording=true;
 		internalStart();
 	}
 	
@@ -80,7 +80,7 @@ public class AudioSender extends Thread{
 	public void stopVoice()
 	{
 
-		isRunning=false;
+		isRecording=false;
 		internalStop();
 	}
 	
@@ -96,9 +96,7 @@ public class AudioSender extends Thread{
 	protected static final int PROCESS_AUDIO = 1;
 	private static final int STOP_AUDIO=2;
 	protected static final int AUDIO_OUT_ERROR = -2;
-	protected static final int MAX_SEND_BUFFER = CHUNK_SIZE_SHORT*2;
 
-    private volatile boolean isRecording = false;
 
 	
 	 public void run() {
@@ -112,15 +110,23 @@ public class AudioSender extends Thread{
 	        //	boolean isRunning = false;
 	        	
 	        	Socket socket = null;
-	        	        	
+	            private boolean isPlaying = false;        	
 
-	            private byte[] audioData; //= new short[bufferSize];
-	           // private byte[] floatAudioData;// = new float[CHUNK_SIZE_FLOAT];
-	            //ByteArrayOutputStream floatOutput;
-	            private DataOutputStream os;
-	            private DataInputStream is;
-	            private int bufferSize;//= bufferSize;
-
+	            private byte[] audioData= new byte[CHUNK_SIZE_SHORT];
+	            AudioRecord recorder = null;
+	            private DataOutputStream os=null;
+	            private DataInputStream is=new DataInputStream(new ByteArrayInputStream(audioData));
+	            private int bufferSize;
+	            {
+					bufferSize =AudioRecord.getMinBufferSize(SAMPLE_RATE,
+	                        AudioFormat.CHANNEL_CONFIGURATION_MONO,
+	                        AudioFormat.ENCODING_PCM_16BIT);
+					bufferSize=bufferSize<CHUNK_SIZE_SHORT?CHUNK_SIZE_SHORT:bufferSize;
+			        is.mark(CHUNK_SIZE_FLOAT*4);
+				    recorder = new AudioRecord(AudioSource.VOICE_COMMUNICATION, SAMPLE_RATE,
+			                    AudioFormat.CHANNEL_CONFIGURATION_MONO,
+			                    AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+	            }
 	            
 	            public void handleMessage(Message msg) {
 	            	
@@ -146,139 +152,71 @@ public class AudioSender extends Thread{
 
 				private void startRecord() {
 
-					bufferSize =AudioRecord.getMinBufferSize(sampleRate,
-			                        AudioFormat.CHANNEL_CONFIGURATION_MONO,
-			                        AudioFormat.ENCODING_PCM_16BIT);
-				     bufferSize=bufferSize<CHUNK_SIZE_SHORT?CHUNK_SIZE_SHORT:bufferSize;
-				     recorder = new AudioRecord(AudioSource.VOICE_COMMUNICATION, sampleRate,
-				                    AudioFormat.CHANNEL_CONFIGURATION_MONO,
-				                    AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 
-				      boolean error=false;  
-				     InetAddress addr=null;
-						try {
-							addr = InetAddress.getByName(host);
-						} catch (UnknownHostException e) {
-							// TODO Auto-generated catch block
-							Log.e("","",e);
-							
-						}
-						catch (Exception e) {
-							// TODO Auto-generated catch block
-							Log.e("","",e);
-							error=true;
-						}
+
+					if (hasMessages(START_AUDIO)) {
+						removeMessages(START_AUDIO);
+					}
+					if(isPlaying)
+					{
+						return;
+					}
+					
 						
-						OutputStream s;
+					Log.v("avatar audio out","starting play");
+					closeSocket();
 						
-							try {
-								if(socket!=null)
-								{
-									socket.close();
-									socket=null;
-								}
-								
-								socket = new Socket(addr, port);
-							
-								socket.setKeepAlive(true);
-								//socket.setTcpNoDelay(true);
-								socket.setSoTimeout(10000);
-								socket.setSendBufferSize(MAX_SEND_BUFFER);
-							
-								s = socket.getOutputStream();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								try {
-									if (socket != null)
-										socket.close();
-								} catch (IOException e1) {
-									Log.e("", "", e1);
-								}
-								Log.e("","",e);
-								s=null;
-								error=true;
-							//	errorHandler.obtainMessage(AUDIO_OUT_ERROR,e).sendToTarget();
-							}
-							
-							
-							String ident = "ava-"+getToken();
-							try {
-								if(s!=null)
-								{
-									s.write(ident.getBytes());
-									s.flush();
-								}
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								Log.e("","",e);
-								error=true;
-								try {
-									if (socket != null)
-										socket.close();
-								} catch (IOException e1) {
-									Log.e("", "", e1);
-								}
-								//errorHandler.obtainMessage(START_AUDIO,e).sendToTarget();
-								
-							}
-							
-							isRecording=(socket!=null);
-							
-						if(isRecording)
-						{
-							recorder.startRecording();
-							audioData= new byte[CHUNK_SIZE_SHORT];
-							os = new DataOutputStream(s);
-							//floatAudioData= new byte[CHUNK_SIZE_FLOAT];
-							//floatOutput=new ByteArrayOutputStream(CHUNK_SIZE_FLOAT);
-							//os= new DataOutputStream(floatOutput);
-				            is= new DataInputStream(new ByteArrayInputStream(audioData));
-				            is.mark(CHUNK_SIZE_FLOAT);
-				            //floatOutput.
-							Message msg = mChildHandler.obtainMessage(PROCESS_AUDIO);
-							mChildHandler.sendMessage(msg);
-						//	mChildHandler.removeMessages(START_AUDIO);
-						}
-						else
-						{
-							error=true;
-						}
+					InetAddress addr = null;
+					try {
+						addr = InetAddress.getByName(host);
+					} catch (Exception e) {
+						Log.e("", "", e);
+						errorHandler.sendMessageDelayed(errorHandler.obtainMessage(AUDIO_OUT_ERROR),STD_DELAY);
+						return;
+					}
+					try {
+						socket = new Socket(addr, port);
 						
-						if(error)
-						{
-							try {
-								Thread.sleep(10000);
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								Log.e("","",e);
-								
-							}
-							errorHandler.obtainMessage(AUDIO_OUT_ERROR).sendToTarget();
+						socket.setKeepAlive(true);
+						socket.setSoTimeout(10000);
+						socket.setSendBufferSize(CHUNK_SIZE_FLOAT);
+				
+						OutputStream s = socket.getOutputStream();
+						String ident = "ava-"+getToken();
+						s.write(ident.getBytes());
+						s.flush();
+
+						os = new DataOutputStream(s);
+
 							
-						}
-						
+					} catch (IOException e) {
+							closeSocket();
+							errorHandler.sendMessageDelayed(errorHandler.obtainMessage(AUDIO_OUT_ERROR),STD_DELAY);
+							return;
+					}
+							
+					isPlaying=true;
+					recorder.startRecording();
+					mChildHandler.obtainMessage(PROCESS_AUDIO).sendToTarget();
 				}
 
-
+				private void closeSocket()
+				{
+					try {
+						if (socket != null)
+							socket.close();
+					} catch (IOException e) {
+						Log.e("", "", e);
+					}
+					socket = null;
+				}
 
 
 				private void stopRecord() {
 					mChildHandler.removeMessages(PROCESS_AUDIO);
-					//mChildHandler.removeMessages(START_AUDIO);
-					if(recorder!=null)
-					{
-						recorder.stop();
-						recorder.release();
-						recorder=null;
-					}
-					try {
-						if(socket!=null)
-						socket.close();
-					} catch (IOException e) {
-						Log.e("","",e);
-					}
-					socket=null;
-					isRecording=false;
+					recorder.stop();
+					closeSocket();
+					isPlaying=false;
 					
 				}
 
@@ -286,78 +224,46 @@ public class AudioSender extends Thread{
 
 
 				private void doRecord() {
-					boolean reconnect = false;
-					if(isRecording)
+					if(isPlaying)
 					{
-						int bytes_read=recorder.read(audioData, 0, CHUNK_SIZE_SHORT);
-						if(bytes_read>0)
-						{
-							
-							try {
-								int i;
-								//floatOutput.reset();
+						try {
+							int bytes_read=recorder.read(audioData, 0, CHUNK_SIZE_SHORT);
+							if(bytes_read>0)
+							{
+								//byte tmp;
+								/*for(int j=0;j<CHUNK_SIZE_BASE;j++)
+								{
+									tmp=audioData[j*2];
+									audioData[j*2]=audioData[j*2+1];
+									audioData[j*2+1]=tmp;
+								}*/
+								os.write(audioData, 0, bytes_read);
+								/*int i;
 								is.reset();
-								
 								for(i=0;i<CHUNK_SIZE_BASE;i++)
 								{
 									try{
-									os.writeFloat((float)is.readShort()/(float)Short.MAX_VALUE);
+										os.writeShort(is.readShort());
+										//os.writeFloat((float)is.readShort()/(float)Short.MAX_VALUE);
 									}
 									catch (EOFException e) {
 										break;
 									} 
 
-								}
-								
-								
-								//socket.getOutputStream().write(floatOutput.toByteArray(),0,i*(SIZEOF_FLOAT/SIZEOF_SHORT));
-								socket.getOutputStream().flush();
-							} catch (IOException e) {
-								Log.e("","",e);
-								reconnect=true;
-								try {
-									if (socket != null)
-										socket.close();
-								} catch (IOException e1) {
-									Log.e("", "", e1);
-								}
+								}*/
 							}
-						}
-						
-						
-						if((!reconnect)&&(!socket.isConnected()))
-						{
-							reconnect = true;
-						}
-						
-						if(!reconnect)
-						{
-							Message msg = mChildHandler.obtainMessage(PROCESS_AUDIO);
-							mChildHandler.sendMessage(msg);
-						}
-					}
-					else
-					{
-						reconnect=true;
-						
-					}
-					if(reconnect)
-					{
-						try {
-							Thread.sleep(10000);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
+							mChildHandler.obtainMessage(PROCESS_AUDIO).sendToTarget();
+						} catch (IOException e) {
 							Log.e("","",e);
-							
+							isPlaying=false;
+							closeSocket();
+							errorHandler.sendMessageDelayed(errorHandler.obtainMessage(AUDIO_OUT_ERROR),STD_DELAY);
 						}
-						errorHandler.obtainMessage(AUDIO_OUT_ERROR).sendToTarget();
+						
+						
 					}
 					
 				}
-
-
-
-
 
 	        };
 	        sync.notifyAll();
@@ -389,7 +295,7 @@ public class AudioSender extends Thread{
             			}
             			break;
             		default:
-            			throw new RuntimeException("Unknown command to incoming video error handler");
+            			throw new RuntimeException("Unknown command to audio sender error handler");
             	};
 				
             }

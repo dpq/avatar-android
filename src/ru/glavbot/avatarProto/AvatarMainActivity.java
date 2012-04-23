@@ -33,6 +33,8 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.StrictMode;
 
 import android.util.Log;
@@ -377,6 +379,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  					stopStreaming();
  					stopCommands();
  					
+ 					
  				}
  				setWorkerScreen();
  				break;
@@ -452,8 +455,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		if(!streamsRunning)
 		{
 			videoSender.startCamera();
-			audioSender.startVoice();
+			
 			audioReceiver.startVoice();
+			audioSender.startVoice();
 			videoReceiver.startReceiveVideo();
 			streamsRunning=true;
 		}
@@ -469,7 +473,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
        AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
 		if(audiomanager.getMode()!=AudioManager.MODE_NORMAL)
 		{
-			audiomanager.setSpeakerphoneOn(false);
+			//audiomanager.setSpeakerphoneOn(false);
 			audiomanager.setMode(AudioManager.MODE_NORMAL);
 		}
     }
@@ -505,7 +509,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		if(audiomanager.getMode()!=AudioManager.MODE_IN_COMMUNICATION)
 		{
 			audiomanager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-			audiomanager.setSpeakerphoneOn(true);
+			//audiomanager.setSpeakerphoneOn(true);
 			int maxVoice = audiomanager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
 			audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, maxVoice, 0);
 		}
@@ -664,13 +668,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						s =editTextAudioInPort.getText().toString();
 						if(s.length()==0)
 						{
-							s = "10002";
+							s = "10003";
 						}
 						audioPortIn=Integer.decode(s);
 						s =editTextAudioOutPort.getText().toString();
 						if(s.length()==0)
 						{
-							s = "10003";
+							s = "10002";
 						}
 						audioPortOut=Integer.decode(s);
 						
@@ -823,12 +827,26 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		
 	};
 
+	protected static final int RERUN_COMMANDS = 1;
+	protected static final int RERUN_COMMANDS_DELAY = 10000;	
 	
-/*	public void doHangup()
+	Handler reconnectHandler = new Handler()
 	{
-			stopCommands();
-			stopStreaming();
-	}*/
+		 public void handleMessage(Message msg) {
+         	
+         	switch (msg.what)
+         	{
+         		case RERUN_COMMANDS:
+         			reRunCommands();
+         			break;
+         		default:
+         			throw new RuntimeException("Unknown command to video writer thread");
+         	};
+				
+         }
+	};
+	
+	
 
 
 	ProcessAsyncRequestResponceProrotype cmdConnectionResponse = new ProcessAsyncRequestResponceProrotype()
@@ -836,17 +854,17 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
-			reRunCommands();
+			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);//  reRunCommands();
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
-			reRunCommands();
+			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 		}
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
-			reRunCommands();
+			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 			//driver.reset();
 
 		}
@@ -856,8 +874,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		byte[] error={90,90,0,90,0,90,0};*/
 		private static final String CMD_SLEEP="sleep";
 		private static final String CMD_DIR="dir";
-		private static final String CMD_OMEGA="omega";
-		private static final String CMD_VOMEGA="head";
+		private static final String CMD_OMEGA="theta";
+		private static final String CMD_VOMEGA="phi";
 		
 		
 		
@@ -879,13 +897,16 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				if(r.has(CMD_SLEEP))
 				{
 					int sleep=r.getInt(CMD_SLEEP);
-					if(sleep==0)
+					if(currentState>STATE_PAUSED)
 					{
-						setCurrentState(STATE_ENABLED);
-					}
-					else
-					{
-						setCurrentState(STATE_ON);
+						if(sleep==0)
+						{
+							setCurrentState(STATE_ENABLED);
+						}
+						else
+						{
+							setCurrentState(STATE_ON);
+						}
 					}
 				}
 				if(r.has(CMD_DIR)&&r.has(CMD_OMEGA)&&r.has(CMD_VOMEGA))

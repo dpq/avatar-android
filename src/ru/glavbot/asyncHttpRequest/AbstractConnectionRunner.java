@@ -5,6 +5,7 @@ import java.io.IOException;
 
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -26,6 +27,33 @@ abstract class AbstractConnectionRunner extends AsyncTask<ConnectionRequest,Asyn
 	
 	ConnectionManager owner;
 	
+	HttpResponse response= null;
+	
+	protected boolean needConsume=true;
+	
+	protected void consumeCurrentResponce()
+	{
+		if(response!=null)
+		{
+			try {
+				response.getEntity().consumeContent();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void consumeCurrentResponceIfNeeded()
+	{
+		if(needConsume)
+		{
+			consumeCurrentResponce();
+		}
+	}
+	
+	
+	
 	AbstractConnectionRunner(ConnectionManager owner)
 	{
 		this.owner=owner;
@@ -33,14 +61,11 @@ abstract class AbstractConnectionRunner extends AsyncTask<ConnectionRequest,Asyn
 			throw new RuntimeException("Go to hell, owner should not be null");
 	}
 	
-	
-	
 	@Override
 	protected AsyncRequestResponse doInBackground(ConnectionRequest... params) {
 		request = params[0];
-		DefaultHttpClient client = owner.getClient();
+		HttpClient client = owner.getClient();
 		HttpConnectionParams.setSoTimeout(client.getParams(), request.getTimeout());
-		HttpResponse response = null;
 		AsyncRequestResponse asyncResponce=null;
 		try {
 			

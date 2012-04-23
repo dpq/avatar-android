@@ -10,7 +10,7 @@ public class ReturnEntityConnectionRunner extends AbstractConnectionRunner {
 
 	ReturnEntityConnectionRunner(ConnectionManager owner) {
 		super(owner);
-		// TODO Auto-generated constructor stub
+		needConsume=false;
 	}
 
 	@Override
