@@ -110,11 +110,11 @@ abstract class AbstractConnectionRunner extends AsyncTask<ConnectionRequest,Asyn
 					//response.getEntity().getContent().close();
 					response.getEntity().consumeContent();
 					
-				} /*catch (IllegalStateException e1) {
+				} catch (IllegalStateException e1) {
 					// TODO Auto-generated catch block
 					Log.e("","",e1);
 					
-				}*/ catch (IOException e1) {
+				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					Log.e("","",e1);
 				}

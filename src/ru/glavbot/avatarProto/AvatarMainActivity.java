@@ -134,7 +134,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (DEBUG) {
-
+/*
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
         .detectDiskReads()
         .detectDiskWrites()
@@ -146,7 +146,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         .detectLeakedClosableObjects()
         .penaltyLog()
         .penaltyDeath()
-        .build());
+        .build());*/
         }
         protocolManager= new ConnectionManager();
         requestWindowFeature(Window.FEATURE_NO_TITLE);
