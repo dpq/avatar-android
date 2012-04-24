@@ -15,9 +15,9 @@ public class RoboDriver {
 	
 	private static final double Pi = Math.acos(0)*2;
 	// resoultion
-	private static final int RESOLUTION = 15; // ms
+	private static final int RESOLUTION = 10; // ms
 	private static final double TURN_SPEED =  8*Pi/1000*RESOLUTION;
-	private static final double ACCELERATION = 4;
+	private static final double ACCELERATION = 1;
 	private static final int WHEEL_CRUISE_SPD = 252;
 	private static final String TAG="RoboDriver";
 
@@ -36,13 +36,18 @@ Runnable worker = new Runnable(){
 		servoLoop();
 		s.reset();
 		try {
-		ds.writeByte(radToDeg(curHeadPos));
-		ds.writeByte(radToDeg(curWheelDirs[0]));
-		ds.writeShort((int)curWheelSpeeds[0]);
-		ds.writeByte(radToDeg(curWheelDirs[1]));
-		ds.writeShort((int)curWheelSpeeds[1]);
-		ds.writeByte(radToDeg(curWheelDirs[2]));
-		ds.writeShort((int)curWheelSpeeds[2]);
+			if(isChanged())
+			{
+				ds.writeByte(radToDeg(curHeadPos));
+				ds.writeByte(radToDeg(curWheelDirs[0]));
+				ds.writeShort((int)curWheelSpeeds[0]);
+				ds.writeByte(radToDeg(curWheelDirs[1]));
+				ds.writeShort((int)curWheelSpeeds[1]);
+				ds.writeByte(radToDeg(curWheelDirs[2]));
+				ds.writeShort((int)curWheelSpeeds[2]);
+				sendCommand(s.toByteArray());
+				copyCurPrev();
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			Log.e("","",e);
@@ -68,7 +73,7 @@ Runnable worker = new Runnable(){
 		Log.v("Goes to arduino",debug);
 		counter=0;
 		}
-		sendCommand(s.toByteArray());
+		//sendCommand(s.toByteArray());
 	}};
 	
 	static int counter = 0;
@@ -165,15 +170,41 @@ protected void sendCommand(byte[] byteArray) {
 // CURRENT POSITIONS
 
 // Desired
-volatile private double[] tagWheelSpeeds = {0,0,0}; // current wheel target speed
+volatile private int[] tagWheelSpeeds = {0,0,0}; // current wheel target speed
 volatile private double[] tagWheelDirs = {Pi/2,Pi/2,Pi/2};
 volatile double tagHeadPos=Pi/2;
 
 //Real
-private double[] curWheelSpeeds = {0,0,0}; // current wheel speed
+private int[] curWheelSpeeds = {0,0,0}; // current wheel speed
 private double[] curWheelDirs = {Pi/2,Pi/2,Pi/2};
 private double[] emuWheelDirs = {Pi/2,Pi/2,Pi/2};
 double curHeadPos=Pi/2;
+// Prev send
+//Real
+private int[] prevWheelSpeeds = {255,255,255}; // current wheel speed
+private double[] prevWheelDirs = {0,0,0};
+private double prevHeadPos = 0;
+
+
+boolean isChanged()
+{
+	if(prevHeadPos!=curHeadPos) return true;
+	for(int i=0;i<3;i++)
+		if(prevWheelSpeeds[i]!=curWheelSpeeds[i]) return true;
+	for(int i=0;i<3;i++)
+		if(radToDeg(prevWheelDirs[i])!=radToDeg(curWheelDirs[i])) return true;
+	return false;
+}
+
+void copyCurPrev()
+{
+	prevHeadPos=curHeadPos;
+	for(int i=0;i<3;i++)
+	prevWheelSpeeds[i]=curWheelSpeeds[i];
+	for(int i=0;i<3;i++)
+		prevWheelDirs[i]=curWheelDirs[i];
+		
+}
 
 
 //CONSTANTS
@@ -341,7 +372,7 @@ private void setDirection(int wheelNum, double dir) {
 
 
 private void setSpeed(int wheelNum, double spd) {
-    tagWheelSpeeds[wheelNum] = spd;
+    tagWheelSpeeds[wheelNum] =(int) spd;
 }
 
 
