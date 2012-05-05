@@ -233,27 +233,29 @@ public class AudioSender extends Thread{
 							int bytes_read=recorder.read(audioData, 0, CHUNK_SIZE_SHORT);
 							if(bytes_read>0)
 							{
-								//byte tmp;
-								/*for(int j=0;j<CHUNK_SIZE_BASE;j++)
+								/*byte tmp;
+								for(int j=0;j<CHUNK_SIZE_BASE;j++)
 								{
 									tmp=audioData[j*2];
 									audioData[j*2]=audioData[j*2+1];
 									audioData[j*2+1]=tmp;
 								}*/
-								os.write(audioData, 0, bytes_read);
-								/*int i;
+								//os.write(audioData, 0, bytes_read);
+								int i;
 								is.reset();
 								for(i=0;i<CHUNK_SIZE_BASE;i++)
 								{
+									char tmpShort = (char)(((int)is.readShort())-Short.MIN_VALUE);
+									if(tmpShort==0)tmpShort=1;
 									try{
-										os.writeShort(is.readShort());
+										os.writeShort(tmpShort);
 										//os.writeFloat((float)is.readShort()/(float)Short.MAX_VALUE);
 									}
 									catch (EOFException e) {
 										break;
 									} 
 
-								}*/
+								}
 							}
 							mChildHandler.obtainMessage(PROCESS_AUDIO).sendToTarget();
 						} catch (IOException e) {

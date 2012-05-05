@@ -107,6 +107,15 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String AUDIO_PORT_IN_PARAM = "audioPortIn";
      private static final String AUDIO_PORT_OUT_PARAM = "audioPortOut";
      
+     private static final String WHEEL_ANGLE_1 = "WheelAngle1";
+     private static final String WHEEL_ANGLE_2 = "WheelAngle2";
+     private static final String WHEEL_ANGLE_3 = "WheelAngle3";
+     
+     private static final String WHEEL_DIR_1 = "WheelDir1";
+     private static final String WHEEL_DIR_2 = "WheelDir2";
+     private static final String WHEEL_DIR_3 = "WheelDir3";
+     
+     
      private String serverAuthority = "auth.glavbot.ru"; 
      private String serverHttpPort = "1018";
      private int videoPortOut = 10000;
@@ -486,7 +495,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		}
     }
 
-    
+    int[] angles = new int[3];
+    int[] dirs = new int[3];
     @Override
     protected void onResume()
     {
@@ -506,6 +516,18 @@ public class AvatarMainActivity extends AccessoryProcessor {
         audioPortIn = prefs.getInt( AUDIO_PORT_IN_PARAM, 10002);
         audioPortOut = prefs.getInt( AUDIO_PORT_OUT_PARAM, 10003);
     	
+        
+        angles[0]=prefs.getInt( WHEEL_ANGLE_1, 0);
+        angles[1]=prefs.getInt( WHEEL_ANGLE_2, 0);
+        angles[2]=prefs.getInt( WHEEL_ANGLE_3, 0);
+        driver.setCompensationAngles(angles);
+        
+        dirs[0]=prefs.getInt( WHEEL_DIR_1, 1);
+        dirs[1]=prefs.getInt( WHEEL_DIR_2, 1);
+        dirs[2]=prefs.getInt( WHEEL_DIR_3, 1);
+        driver.setWheelDirs(dirs);
+
+        
     	videoReceiver.setToken(session_token);
     	audioSender.setToken(session_token);
     	audioReceiver.setToken(session_token);
@@ -555,6 +577,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	EditText editTextAudioOutPort;
 	EditText editTextAudioInPort;
 	OnScreenLogger logger;
+	EditText editTextWheel1Angle;
+	EditText editTextWheel2Angle;
+	EditText editTextWheel3Angle;
+	
 	@Override
 	protected Dialog  onCreateDialog(int id)
 	{
@@ -645,9 +671,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				editTextVideoOutPort=(EditText) layout.findViewById(R.id.editTextVideoOutPort);
 				editTextAudioOutPort=(EditText) layout.findViewById(R.id.editTextAudioOutPort);
 				editTextAudioInPort=(EditText) layout.findViewById(R.id.editTextAudioInPort);
-
 				
-				
+				editTextWheel1Angle=(EditText) layout.findViewById(R.id.editTextWheel1Angle);
+				editTextWheel1Angle.setText(String.format("%d", angles[0]));
+				editTextWheel2Angle=(EditText) layout.findViewById(R.id.editTextWheel2Angle);
+				editTextWheel2Angle.setText(String.format("%d", angles[1]));
+				editTextWheel3Angle=(EditText) layout.findViewById(R.id.editTextWheel3Angle);
+				editTextWheel3Angle.setText(String.format("%d", angles[2]));
 				Button buttonOk = (Button)layout.findViewById(R.id.buttonOk);
 				Button buttonCancel = (Button)layout.findViewById(R.id.buttonCancel);
 				buttonOk.setOnClickListener(new OnClickListener(){
@@ -685,7 +715,25 @@ public class AvatarMainActivity extends AccessoryProcessor {
 							s = "10002";
 						}
 						audioPortOut=Integer.decode(s);
-						
+						s=editTextWheel1Angle.getText().toString();
+						if(s.length()==0)
+						{
+							s = "0";
+						}
+						angles[0]=Integer.decode(s);
+						s=editTextWheel2Angle.getText().toString();
+						if(s.length()==0)
+						{
+							s = "0";
+						}
+						angles[1]=Integer.decode(s);
+						s=editTextWheel3Angle.getText().toString();
+						if(s.length()==0)
+						{
+							s = "0";
+						}
+						angles[2]=Integer.decode(s);
+						//driver.setCompensationAngles(angles);
 						SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
 						SharedPreferences.Editor  editor = prefs.edit();
 						editor.putString(SERVER_AUTHORITY_PARAM, serverAuthority);
@@ -693,6 +741,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						editor.putInt(VIDEO_PORT_OUT_PARAM, videoPortOut);
 						editor.putInt(AUDIO_PORT_IN_PARAM, audioPortIn);
 						editor.putInt(AUDIO_PORT_OUT_PARAM, audioPortOut);
+					    editor.putInt( WHEEL_ANGLE_1,  angles[0]);  
+					    editor.putInt( WHEEL_ANGLE_2,  angles[1]);   
+					    editor.putInt( WHEEL_ANGLE_3,  angles[2]);
+					    driver.setCompensationAngles(angles);
 				    	editor.apply();
 				    	setPortsAndHosts();
 				    	alertDialog.dismiss();
@@ -836,7 +888,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	};
 
 	protected static final int RERUN_COMMANDS = 1;
-	protected static final int RERUN_COMMANDS_DELAY = 10000;	
+	protected static final int RERUN_COMMANDS_DELAY = 1000;	
 	
 	Handler reconnectHandler = new Handler()
 	{

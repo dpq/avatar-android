@@ -2,6 +2,7 @@ package ru.glavbot.avatarProto;
 
 import java.io.ByteArrayOutputStream;
 //import java.io.File;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -64,6 +65,10 @@ public class VideoSender extends Thread {
 
 	volatile boolean isOn=false;
 	
+	private static final int IMAGE_MAX_SIZE=PREVIEW_WIDTH * PREVIEW_HEIGHT
+			* ImageFormat.getBitsPerPixel(ImageFormat.NV21);
+	
+	
 	VideoSender(final Context context, SurfaceView preview) {
 		this.context = context;
 		this.preview = preview;
@@ -71,13 +76,12 @@ public class VideoSender extends Thread {
 		// this.setToken(token);
 
 		buffers = new ArrayList<byte[]>();
-		int size = PREVIEW_WIDTH * PREVIEW_HEIGHT
-				* ImageFormat.getBitsPerPixel(ImageFormat.NV21);
+		//int size = 
 		for (int i = 0; i < NUM_BUFFERS; i++) {
-			buffers.add(new byte[size]);
+			buffers.add(new byte[IMAGE_MAX_SIZE]);
 		}
-		dataBuff = new HandlerBuffer[] { new HandlerBuffer(size),
-				new HandlerBuffer(size) };
+		dataBuff = new HandlerBuffer[] { new HandlerBuffer(IMAGE_MAX_SIZE),
+				new HandlerBuffer(IMAGE_MAX_SIZE) };
 
 		start();
 		try {
@@ -89,7 +93,26 @@ public class VideoSender extends Thread {
 			Log.e("", "", e);
 		}
 	}
-
+/*
+	private final byte[] EOF_MARKER = { (byte) 0xFF, (byte) 0xD9 };
+    private int getEndOfSeqeunce(DataInputStream in, byte[] sequence) throws IOException {
+        int seqIndex = 0;
+        byte c;
+        for(int i=0; i < IMAGE_MAX_SIZE; i++) {
+            c = (byte) in.readUnsignedByte();
+            if(c == sequence[seqIndex]) {
+                seqIndex++;
+                if(seqIndex == sequence.length) return i + 1;
+            } else seqIndex = 0;
+        }
+        return -1;
+    }
+	
+    private int getStartOfSequence(DataInputStream in, byte[] sequence) throws IOException {
+        int end = getEndOfSeqeunce(in, sequence);
+        return (end < 0) ? (-1) : (end - sequence.length);
+    }*/
+	
 	public void run() {
 
 		synchronized (sync) {
@@ -118,6 +141,8 @@ public class VideoSender extends Thread {
 								PREVIEW_HEIGHT, null);
 
 						ByteArrayOutputStream os = new ByteArrayOutputStream();
+						
+						//int length = dat
 						
 						img.compressToJpeg(imgRect, 50, os);
 						
@@ -321,7 +346,7 @@ public class VideoSender extends Thread {
 	private void setupCamera(Camera camera) {
 		Camera.Parameters p = camera.getParameters();
 		// List<Integer> formats =p.getSupportedPreviewFormats () ;
-		p.setPreviewFormat(ImageFormat.NV21);
+		p.setPreviewFormat(ImageFormat.JPEG); // was nv21
 		p.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		p.setPreviewFrameRate(NUM_FRAMES);
 		p.setSceneMode(Camera.Parameters.SCENE_MODE_ACTION);

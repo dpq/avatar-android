@@ -17,11 +17,34 @@ public class RoboDriver {
 	// resoultion
 	private static final int RESOLUTION = 10; // ms
 	private static final double TURN_SPEED =  8*Pi/1000*RESOLUTION;
-	private static final double ACCELERATION = 1;
+	private static final double ACCELERATION = 4;
 	private static final int WHEEL_CRUISE_SPD = 252;
 	private static final String TAG="RoboDriver";
 
-	volatile OutputStream commandWriter= null; 
+	//volatile OutputStream commandWriter= null; 
+	private volatile int[] compensationAngles={0,0,0};
+	private volatile int[] wheelDirections = {1,1,1};
+	//int[] servoDirections = {1,1,1};
+	
+	public synchronized void setCompensationAngles(int[] newAngles)
+	{
+		for(int i=0;i<compensationAngles.length;i++)
+		compensationAngles[i]=newAngles[i];
+	}
+	public int[] getCompensationAngles()
+	{
+		return	compensationAngles;
+	}
+	public synchronized  void setWheelDirs(int[] newDirs)
+	{
+		for(int i=0;i<wheelDirections.length;i++)
+			wheelDirections[i]=newDirs[i];
+	}
+	public int[] getWheelDirs()
+	{
+		return	wheelDirections;
+	}
+	
 	
 	ByteArrayOutputStream s = new ByteArrayOutputStream(10);
 	DataOutputStream ds = new DataOutputStream(s);
@@ -38,13 +61,21 @@ Runnable worker = new Runnable(){
 		try {
 			if(isChanged())
 			{
+				Log.v("Goes to arduino",String.format("%f", curHeadPos));
 				ds.writeByte(radToDeg(curHeadPos));
-				ds.writeByte(radToDeg(curWheelDirs[0]));
-				ds.writeShort((int)curWheelSpeeds[0]);
-				ds.writeByte(radToDeg(curWheelDirs[1]));
+				int compensedValue;
+				for(int i =0;i<3;i++)
+				{
+				compensedValue=normalize(radToDeg(curWheelDirs[i])+compensationAngles[i]);
+				ds.writeByte(compensedValue);
+				compensedValue=(int)curWheelSpeeds[i]*wheelDirections[i];
+				ds.writeShort(compensedValue);
+				}
+			/*	compensedValue=normalize(radToDeg(curWheelDirs[1])+compensationAngles[1]);
+				ds.writeByte(compensedValue);
 				ds.writeShort((int)curWheelSpeeds[1]);
 				ds.writeByte(radToDeg(curWheelDirs[2]));
-				ds.writeShort((int)curWheelSpeeds[2]);
+				ds.writeShort((int)curWheelSpeeds[2]);*/
 				sendCommand(s.toByteArray());
 				copyCurPrev();
 			}
@@ -70,7 +101,7 @@ Runnable worker = new Runnable(){
 		v&=0x000000ff;
 			debug+= String.format("%04d ",v);
 		}
-		Log.v("Goes to arduino",debug);
+	//	Log.v("Goes to arduino",debug);
 		counter=0;
 		}
 		//sendCommand(s.toByteArray());
@@ -102,7 +133,18 @@ Runnable worker = new Runnable(){
 	    }
 	    return src;
 	}
-	
+	protected int normalize(int src)
+	{
+		if(src > 180) {
+			src = 180;
+	        Log.v(TAG,"dir >!!!!");
+	    }
+	    if(src < 0) {
+	    	src = 0;
+	        Log.v(TAG,"dir <!!!!");
+	    }
+	    return src;
+	}
 	
 	
 
@@ -122,13 +164,7 @@ Runnable worker = new Runnable(){
 	
 	public void reset()
 	{
-		tagWheelSpeeds[0] = 0;
-		tagWheelSpeeds[1] = 0;
-		tagWheelSpeeds[2] =0; // current wheel target speed
-		tagWheelDirs[0] = Pi/2;
-		tagWheelDirs[1]= Pi/2;
-		tagWheelDirs[2]=Pi/2;
-		tagHeadPos=Pi/2;
+		setNewDirection(8, 0, 0);
 	}
 
 	public double dePi(double val) {
@@ -156,8 +192,16 @@ Runnable worker = new Runnable(){
 	        }
 	    }
 	    // head
-	    curHeadPos=tagHeadPos;
-        /*if(tagHeadPos > curHeadPos) curHeadPos += TURN_SPEED;
+	    if((curHeadPos<tagHeadPos)&&(tagHeadPos-curHeadPos>Pi/180))
+	    {
+	    	curHeadPos+=Pi/180;
+	    }
+	    else
+	    if((curHeadPos>tagHeadPos)&&(curHeadPos-tagHeadPos>Pi/180))
+	    {
+	    	curHeadPos-=Pi/180;
+	    }
+	    	/*if(tagHeadPos > curHeadPos) curHeadPos += TURN_SPEED;
         if(tagHeadPos < curHeadPos) curHeadPos -= TURN_SPEED;*/
 	 }
 	
@@ -264,15 +308,15 @@ private static final double[][] WHEEL_DIRECTIONS = {
 
 // SpringRC servo matrix (Robo version)
 private static final double[][] WHEEL_DIRECTIONS = {
-{ Pi/6-Pi/9+Pi/17+Pi/25,  Pi-Pi/6+Pi/9-Pi/20-Pi/45,  Pi/2  +Pi/6,     1, 1, -1,           2,   10, 2}, // 0   ^
-{ 0,  Pi-Pi/3, Pi/2+Pi/6 +Pi/6,    1, 1, 1,          0,  10, 2}, //1    /'   -20
-{ Pi/2+Pi/6,  Pi/2-Pi/6- Pi/25,0,    -1, 1,-1,        0,   10, 2}, // 2   >
-{  Pi/3,     0,   Pi/3+Pi/6,      -1, 1, -1,        0,   10, 2}, // 3   \.
-{ Pi/6-Pi/9+Pi/17+Pi/25,  Pi-Pi/6+Pi/9-Pi/20-Pi/45,  Pi/2+Pi/6,    -1, -1, 1,   2,   10, 2}, // 4   v
-{ 0,  Pi-Pi/3, Pi/2+Pi/6 +Pi/6,     -1,-1,  -1,         1,  10, 2}, //5   ./_
-{Pi/2+Pi/6,  Pi/2-Pi/6- Pi/25,0,    1, -1,  1,         1,  10, 2}, // 6   <
-{ Pi/3,     Pi,   Pi/3,       1, 1, 1,          1, 10, 2 }, // 7  '\ -20
-{	 0,     Pi,     0,  0, 0, 0,   -1,  50, 0}, // SLEEP MODE
+{ Pi/6/*-Pi/9+Pi/17+Pi/25*/,  Pi-Pi/6/*+Pi/9-Pi/20-Pi/45*/,  Pi/2  +Pi/6,     1, 1, -1,           2,   10, 2}, // 0   ^
+{ 0,  Pi-Pi/3, Pi/2,    1, 1, -1,          0,  10, 2}, //1    /'   -20
+{ Pi/2+Pi/6+Pi/18,  Pi/2-Pi/6-Pi/60/*- Pi/25*/,0,    -1, 1,-1,        0,   10, 2}, // 2   >
+{  Pi/3,     0,   Pi-Pi/6,      -1, 1, 1,        0,   10, 2}, // 3   \.
+{ Pi/6/*-Pi/9+Pi/17+Pi/25*/,  Pi-Pi/6/*+Pi/9-Pi/20-Pi/45*/,  Pi/2+Pi/6,    -1, -1, 1,   2,   10, 2}, // 4   v
+{ 0,  Pi-Pi/3, Pi/2,     -1,-1, 1,         1,  10, 2}, //5   ./_
+{Pi/2+Pi/6+Pi/18,  Pi/2-Pi/6-Pi/60/*- Pi/25*/,0,    1, -1,  1,         1,  10, 2}, // 6   <
+{ Pi/3,     0,   Pi-Pi/6,       1, -1, -1,          1, 10, 2 }, // 7  '\ -20
+{	 Pi/10,     Pi,     0,  0, 0, 0,   -1,  50, 0}, // SLEEP MODE
 {	 0,     Pi,     0,  0, 0, 0,   -1,  50, 0} // SLEEP MODE2
 };
 
@@ -340,7 +384,7 @@ private void calculateDesiredValues (int direction, double omega) {
 	        // Out-of-order wheel parameters calculation
 	        double oo_diffang = omega / WHEEL_DIRECTIONS[direction][WMK1];
 	        int oo_wheelnum = (int) WHEEL_DIRECTIONS[direction][OOW];
-	        double oo_wheelangle = WHEEL_DIRECTIONS[direction][ oo_wheelnum ] - oo_diffang;
+	        double oo_wheelangle = WHEEL_DIRECTIONS[direction][ oo_wheelnum ] + oo_diffang;
 	            // OO-wheel speed uses WHEEL_CRUISE_SPD as base parameter (which is 2/3 full throttle) and magic coeffs of current direction
 	        //double oo_wheelspeed =  WHEEL_DIRECTIONS[direction][3+oo_wheelnum]*WHEEL_CRUISE_SPD * (1+ ( Math.abs(oo_diffang) / WHEEL_DIRECTIONS[direction][WMK2]));
 	        double oo_wheelspeed = (int)  WHEEL_CRUISE_SPD;

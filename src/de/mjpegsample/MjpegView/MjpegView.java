@@ -1,5 +1,6 @@
 package de.mjpegsample.MjpegView;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -167,14 +168,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
         mRun = false;
         initializing=false;
         boolean retry = true;
-        try {
-        	if(mIn!=null)
-			{
-        		mIn.close();
-        		mIn=null;
-			}
-		} catch (IOException e1) {			
-		}
+        
         while(retry) {
             try {
             	
@@ -191,7 +185,18 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
             	retry = false;
             } catch (InterruptedException e) {}
         }
+        
+        try {
+        	if(mIn!=null)
+			{
+        		mIn.close();
+        		mIn=null;
+			}
+		} catch (IOException e1) {			
+		}
+        
         drawerThread.getChildHandler().obtainMessage(DrawerThread.DONE).sendToTarget();
+
     }
 
     public MjpegView(Context context, AttributeSet attrs) { super(context, attrs); init(context); }
@@ -314,7 +319,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 		protected void onConnectionSuccessful(Object responce) {
 			// TODO Auto-generated method stub
 			 try {
-				setSource(new MjpegInputStream(((HttpEntity) responce).getContent()));
+				setSource(new MjpegInputStream(new BufferedInputStream(((HttpEntity) responce).getContent(), MjpegInputStream.FRAME_MAX_LENGTH)));
 			} catch (IllegalStateException e) {
 				// TODO Auto-generated catch block
 				Log.e("","",e);

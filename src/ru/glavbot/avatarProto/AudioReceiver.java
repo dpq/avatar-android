@@ -191,7 +191,7 @@ public class AudioReceiver extends Thread {
 						player = null;
 					}
 					closeSocket();
-					isPlaying = false;
+					
 				}
 
 				private void closeSocket()
@@ -203,6 +203,7 @@ public class AudioReceiver extends Thread {
 						Log.e("", "", e);
 					}
 					socket = null;
+					isPlaying = false;
 					OnScreenLogger.setAudioIn(false);
 				}
 				
@@ -217,7 +218,7 @@ public class AudioReceiver extends Thread {
 									break;
 								} catch (IOException e1) {
 									Log.e("", "", e1);
-									isPlaying = false;
+									
 									closeSocket();
 									errorHandler.sendMessageDelayed(errorHandler.obtainMessage(AUDIO_IN_ERROR),STD_DELAY);
 									break;

@@ -20,15 +20,20 @@ public class MjpegInputStream extends DataInputStream {
     private final byte[] CONTENT_LENGTH = {'C','o','n','t','e','n','t','-','L','e','n','g','t','h'};
     private final byte[] COLON ={':'};
     private final byte[] EOL_MARKER = { (byte)0x0D,(byte) 0x0A };
+    private final byte[] BOUNDARY = {'-','-','b','o','u','n','d','a','r','y','d','o','n','o','t','c','r','o','s','s',(byte)0x0D,(byte) 0x0A};
     
     private final static int HEADER_MAX_LENGTH = 100;
-    private final static int FRAME_MAX_LENGTH = 40000 + HEADER_MAX_LENGTH;
+    private final static int JPEG_MAX_LENGTH = 40000;
+    public final static int FRAME_MAX_LENGTH = JPEG_MAX_LENGTH + HEADER_MAX_LENGTH;
     private int mContentLength = -1;
   //private static Socket socket;
 	
 
-	
-    public MjpegInputStream(InputStream in) { super(new BufferedInputStream(in, FRAME_MAX_LENGTH)); }
+    private BufferedInputStream bis;
+    public MjpegInputStream(BufferedInputStream in) { 
+    	super(in); 
+    	bis=in;
+    }
 	
     private int getEndOfSeqeunce(DataInputStream in, byte[] sequence) throws IOException {
         int seqIndex = 0;
@@ -48,7 +53,7 @@ public class MjpegInputStream extends DataInputStream {
         return (end < 0) ? (-1) : (end - sequence.length);
     }
 
-    private int parseContentLength(byte[] headerBytes) throws IOException, NumberFormatException {
+    private int parseContentLength(byte[] headerBytes, int headerLength) throws IOException, NumberFormatException {
         DataInputStream headerIn = new DataInputStream(new ByteArrayInputStream(headerBytes));
         int contentLengthEnd=getEndOfSeqeunce(headerIn,CONTENT_LENGTH);
         if(contentLengthEnd>0)
@@ -56,7 +61,7 @@ public class MjpegInputStream extends DataInputStream {
         	int afterSemicolon=getEndOfSeqeunce(headerIn,COLON);
         	if(afterSemicolon>0)
         	{
-        		headerIn.mark(HEADER_MAX_LENGTH);
+        		headerIn.mark(headerLength);
         		int crLfPos=getEndOfSeqeunce(headerIn,EOL_MARKER);
         		headerIn.reset();
         		if(crLfPos>0)
@@ -70,24 +75,32 @@ public class MjpegInputStream extends DataInputStream {
 
         return Integer.parseInt("huita"); // numberFormatException))
     }	
-
+    byte[] buffer = new byte[FRAME_MAX_LENGTH];
     public Bitmap readMjpegFrame() throws IOException {
     	Log.v("VideoReceiver", "recieving image");
+    	if(bis.available()>0)
+    	Log.w("VideoReceiver", String.format("In buffer: %d", bis.available()));
+    	mark(FRAME_MAX_LENGTH);
+    	int boundary= getEndOfSeqeunce(this, BOUNDARY);
+    	if (boundary<0) return null;
+    	reset();
+    	skipBytes(boundary);
     	mark(FRAME_MAX_LENGTH);
         int headerLen = getStartOfSequence(this, SOI_MARKER);
         reset();
-        byte[] header = new byte[headerLen];
-        readFully(header);
+        //byte[] header = new byte[headerLen];
+        readFully(buffer,0,headerLen);
         try {
-            mContentLength = parseContentLength(header);
+            mContentLength = parseContentLength(buffer,headerLen);
         } catch (NumberFormatException nfe) { 
             mContentLength = getEndOfSeqeunce(this, EOF_MARKER); 
         }
-        reset();
-        byte[] frameData = new byte[mContentLength];
-        skipBytes(headerLen);
-        readFully(frameData);
-        return BitmapFactory.decodeStream(new ByteArrayInputStream(frameData));
+        //reset();
+        mark(JPEG_MAX_LENGTH);
+        //byte[] frameData = new byte[mContentLength];
+        //skipBytes(headerLen);
+        readFully(buffer,0,mContentLength);
+        return BitmapFactory.decodeStream(new ByteArrayInputStream(buffer));
     }
     
    /* @Override

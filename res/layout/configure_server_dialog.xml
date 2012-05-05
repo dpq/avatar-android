@@ -120,6 +120,37 @@
         	android:layout_weight="1"
         	android:inputType="number"/>
 	</LinearLayout>
+	<LinearLayout android:id="@+id/layoutAngles"
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:paddingTop="10dp"
+              android:paddingBottom="10dp"
+              >
+    	<EditText
+        	android:id="@+id/editTextWheel1Angle"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="numberSigned"/>
+    	<EditText
+        	android:id="@+id/editTextWheel2Angle"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="numberSigned"/>
+    	<EditText
+        	android:id="@+id/editTextWheel3Angle"
+        	android:layout_width="0dip"
+        	android:layout_height="wrap_content"
+        	android:layout_weight="1"
+        	android:inputType="numberSigned"/>
+    <!-- 	<Button
+		    android:id="@+id/buttonTestWheels"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="test" /> -->
+	</LinearLayout>
 	<LinearLayout android:id="@+id/layout_buttons"
             android:orientation="horizontal"
             android:layout_width="fill_parent"
