@@ -16,7 +16,7 @@ public class RoboDriver {
 	private static final double Pi = Math.acos(0)*2;
 	// resoultion
 	private static final int RESOLUTION = 10; // ms
-	private static final double TURN_SPEED =  8*Pi/1000*RESOLUTION;
+	private static final double TURN_SPEED = 1 /*8*Pi/1000*RESOLUTION*/;
 	private static final double ACCELERATION = 4;
 	private static final int WHEEL_CRUISE_SPD = 252;
 	private static final String TAG="RoboDriver";
@@ -48,7 +48,7 @@ public class RoboDriver {
 	
 	ByteArrayOutputStream s = new ByteArrayOutputStream(10);
 	DataOutputStream ds = new DataOutputStream(s);
-	byte[] error={90,90,0,90,0,90,0};
+//	byte[] error={90,90,0,90,0,90,0};
 
 ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 
@@ -56,20 +56,21 @@ Runnable worker = new Runnable(){
 
 	public void run() {
 		// TODO Auto-generated method stub
+		try{
 		servoLoop();
 		s.reset();
 		try {
 			if(isChanged())
 			{
-				Log.v("Goes to arduino",String.format("%f", curHeadPos));
-				ds.writeByte(radToDeg(curHeadPos));
+				Log.v("Goes to arduino",String.format("%d", curHeadPos));
+				ds.writeByte(curHeadPos);
 				int compensedValue;
 				for(int i =0;i<3;i++)
 				{
-				compensedValue=normalize(radToDeg(curWheelDirs[i])+compensationAngles[i]);
-				ds.writeByte(compensedValue);
-				compensedValue=(int)curWheelSpeeds[i]*wheelDirections[i];
-				ds.writeShort(compensedValue);
+					compensedValue=normalize(curWheelDirs[i]+compensationAngles[i]);
+					ds.writeByte(compensedValue);
+					compensedValue=(int)curWheelSpeeds[i]*wheelDirections[i];
+					ds.writeShort(compensedValue);
 				}
 			/*	compensedValue=normalize(radToDeg(curWheelDirs[1])+compensationAngles[1]);
 				ds.writeByte(compensedValue);
@@ -92,7 +93,7 @@ Runnable worker = new Runnable(){
 		
 		for(int i=0;i<3;i++){
 			
-				debug+= String.format(" %f ",curWheelDirs[i]);
+				debug+= String.format(" %d ",curWheelDirs[i]);
 			}
 
 		
@@ -105,6 +106,10 @@ Runnable worker = new Runnable(){
 		counter=0;
 		}
 		//sendCommand(s.toByteArray());
+		}catch(Exception e)
+		{
+			Log.e("RoboRuler", "This should never happen!");
+		}
 	}};
 	
 	static int counter = 0;
@@ -117,11 +122,11 @@ Runnable worker = new Runnable(){
 	
 	protected void headControl(double vOmega) {
 		// TODO Auto-generated method stub
-		tagHeadPos=normalize(curHeadPos+vOmega);
+		tagHeadPos=normalize(curHeadPos+radToDeg(vOmega),120);
 		
 	}
 
-	protected double normalize(double src)
+	/*protected double normalize(double src)
 	{
 		if(src > Pi) {
 			src = Pi;
@@ -132,11 +137,17 @@ Runnable worker = new Runnable(){
 	        Log.v(TAG,"dir <!!!!");
 	    }
 	    return src;
-	}
+	}*/
 	protected int normalize(int src)
 	{
-		if(src > 180) {
-			src = 180;
+		return normalize(src,180);
+	}
+	
+	
+	protected int normalize(int src, int max)
+	{
+		if(src > max) {
+			src = max;
 	        Log.v(TAG,"dir >!!!!");
 	    }
 	    if(src < 0) {
@@ -164,7 +175,10 @@ Runnable worker = new Runnable(){
 	
 	public void reset()
 	{
-		setNewDirection(8, 0, 0);
+		setNewDirection(8, 0, Pi/2);
+    	/*setSpeed(0, 0);
+        setSpeed(1, 0);
+        setSpeed(2, 0);*/
 	}
 
 	public double dePi(double val) {
@@ -181,25 +195,25 @@ Runnable worker = new Runnable(){
 	        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] -= ACCELERATION;
 	        
 	    	//curWheelDirs[i]=tagWheelDirs[i]; 
-	        if(tagWheelDirs[i] > emuWheelDirs[i]) emuWheelDirs[i] += TURN_SPEED;
-	        if(tagWheelDirs[i] < emuWheelDirs[i]) emuWheelDirs[i] -= TURN_SPEED;
+	   /*     if(tagWheelDirs[i] > curWheelDirs[i]) curWheelDirs[i] += TURN_SPEED;
+	        if(tagWheelDirs[i] < curWheelDirs[i]) curWheelDirs[i] -= TURN_SPEED;*/
 	        
 	        // if (any of wheel) declination is > calculated omega: set speed to zero!
 	        // calculate mean direction
 	        double meandir = 0;
 	        for(int j=0; j<3;j++) {
-	        	meandir = meandir + emuWheelDirs[i]; 
+	        	meandir = meandir + curWheelDirs[i]; 
 	        }
 	    }
 	    // head
-	    if((curHeadPos<tagHeadPos)&&(tagHeadPos-curHeadPos>Pi/180))
+	    if((curHeadPos<tagHeadPos)&&(tagHeadPos-curHeadPos>1))
 	    {
-	    	curHeadPos+=Pi/180;
+	    	curHeadPos+=1;
 	    }
 	    else
-	    if((curHeadPos>tagHeadPos)&&(curHeadPos-tagHeadPos>Pi/180))
+	    if((curHeadPos>tagHeadPos)&&(curHeadPos-tagHeadPos>1))
 	    {
-	    	curHeadPos-=Pi/180;
+	    	curHeadPos-=1;
 	    }
 	    	/*if(tagHeadPos > curHeadPos) curHeadPos += TURN_SPEED;
         if(tagHeadPos < curHeadPos) curHeadPos -= TURN_SPEED;*/
@@ -215,19 +229,19 @@ protected void sendCommand(byte[] byteArray) {
 
 // Desired
 volatile private int[] tagWheelSpeeds = {0,0,0}; // current wheel target speed
-volatile private double[] tagWheelDirs = {Pi/2,Pi/2,Pi/2};
-volatile double tagHeadPos=Pi/2;
+volatile private int[] tagWheelDirs = {90,90,120};
+volatile int tagHeadPos=90;
 
 //Real
-private int[] curWheelSpeeds = {0,0,0}; // current wheel speed
-private double[] curWheelDirs = {Pi/2,Pi/2,Pi/2};
-private double[] emuWheelDirs = {Pi/2,Pi/2,Pi/2};
-double curHeadPos=Pi/2;
+volatile private int[] curWheelSpeeds = {0,0,0}; // current wheel speed
+volatile private int[] curWheelDirs = {90,90,120};
+//private int[] emuWheelDirs = {90,90,90};
+volatile int curHeadPos=90;
 // Prev send
 //Real
-private int[] prevWheelSpeeds = {255,255,255}; // current wheel speed
-private double[] prevWheelDirs = {0,0,0};
-private double prevHeadPos = 0;
+volatile private int[] prevWheelSpeeds = {0,0,0}; // current wheel speed
+volatile private int[] prevWheelDirs = {0,0,0};
+volatile private int prevHeadPos = 0;
 
 
 boolean isChanged()
@@ -236,7 +250,7 @@ boolean isChanged()
 	for(int i=0;i<3;i++)
 		if(prevWheelSpeeds[i]!=curWheelSpeeds[i]) return true;
 	for(int i=0;i<3;i++)
-		if(radToDeg(prevWheelDirs[i])!=radToDeg(curWheelDirs[i])) return true;
+		if(prevWheelDirs[i]!=curWheelDirs[i]) return true;
 	return false;
 }
 
@@ -289,7 +303,7 @@ private static final int WMK1 = 7;
 private static final int WMK2 = 8;
 
 
-private static final double[] WHEEL_SHIFT = {0, 0, 0}; // COMPUTE!! based on DEFAULT_ROT: WHEEL_SHIFT[i] = WHEEL_DIRECTIONS[0][i] - WHEEL_DEFAULT_ROT[i]; 
+private static final int[] WHEEL_SHIFT = {0, 0, 0}; // COMPUTE!! based on DEFAULT_ROT: WHEEL_SHIFT[i] = WHEEL_DIRECTIONS[0][i] - WHEEL_DEFAULT_ROT[i]; 
 /*
 // TowerPro SG-5010 SERVO MATRIX!
 private static final double[][] WHEEL_DIRECTIONS = {
@@ -307,17 +321,17 @@ private static final double[][] WHEEL_DIRECTIONS = {
 
 
 // SpringRC servo matrix (Robo version)
-private static final double[][] WHEEL_DIRECTIONS = {
-{ Pi/6/*-Pi/9+Pi/17+Pi/25*/,  Pi-Pi/6/*+Pi/9-Pi/20-Pi/45*/,  Pi/2  +Pi/6,     1, 1, -1,           2,   10, 2}, // 0   ^
-{ 0,  Pi-Pi/3, Pi/2,    1, 1, -1,          0,  10, 2}, //1    /'   -20
-{ Pi/2+Pi/6+Pi/18,  Pi/2-Pi/6-Pi/60/*- Pi/25*/,0,    -1, 1,-1,        0,   10, 2}, // 2   >
-{  Pi/3,     0,   Pi-Pi/6,      -1, 1, 1,        0,   10, 2}, // 3   \.
-{ Pi/6/*-Pi/9+Pi/17+Pi/25*/,  Pi-Pi/6/*+Pi/9-Pi/20-Pi/45*/,  Pi/2+Pi/6,    -1, -1, 1,   2,   10, 2}, // 4   v
-{ 0,  Pi-Pi/3, Pi/2,     -1,-1, 1,         1,  10, 2}, //5   ./_
-{Pi/2+Pi/6+Pi/18,  Pi/2-Pi/6-Pi/60/*- Pi/25*/,0,    1, -1,  1,         1,  10, 2}, // 6   <
-{ Pi/3,     0,   Pi-Pi/6,       1, -1, -1,          1, 10, 2 }, // 7  '\ -20
-{	 Pi/10,     Pi,     0,  0, 0, 0,   -1,  50, 0}, // SLEEP MODE
-{	 0,     Pi,     0,  0, 0, 0,   -1,  50, 0} // SLEEP MODE2
+private static final int[][] WHEEL_DIRECTIONS = {
+{ 120,  60,  30, 1, 1, 1,  2, 10, 2}, // 0   ^
+{  75,  15,  15, 1, 1, 1,  0, 10, 2}, // 1   /'   -20
+{  30, 150,  120, 1,-1,-1,  0, 10, 2}, // 2   >
+{ 165, 105,  75,-1,-1,-1,  0, 10, 2}, // 3   \.
+{ 120,  60,  30,-1,-1,-1,  2, 10, 2}, // 4   v
+{  75,  15,  15,-1,-1,-1,  1, 10, 2}, // 5   ./_
+{  30, 150,  120,-1, 1, 1,  1, 10, 2}, // 6   <
+{ 165, 105,  75, 1, 1, 1,  1, 10, 2}, // 7  '\ -20
+{  90,  90,  120, 0, 0, 0, -1, 50, 0}, // SLEEP MODE
+{  90,  90,  120, 0, 0, 0, -1, 50, 0} // SLEEP MODE2
 };
 
 
@@ -351,13 +365,13 @@ WHEEL_DIRECTIONS array doc:
 
 
 
-private void setWheelsDirection(double[] dir_array, int oow, int oow2) {
+private void setWheelsDirection(int[] dir_array, int oow, int oow2) {
    for(int i=0;i<3;i++) {
        if(i != oow) setDirection(i, dir_array[i] - WHEEL_SHIFT[i]);
    }
 }
 
-private void setWheelsSpeed(double[] dir_array,double  spd,int oow, int oow2) {
+private void setWheelsSpeed(int[] dir_array,int  spd,int oow, int oow2) {
    for(int i=0;i<3;i++) {
        if(i != oow) setSpeed(i, spd * dir_array[3+i]);
    }
@@ -367,6 +381,7 @@ private void setWheelsSpeed(double[] dir_array,double  spd,int oow, int oow2) {
 
 
 private void calculateDesiredValues (int direction, double omega) {
+//	int iOmega=radToDeg(omega);
     if(direction == 9) {
     	setSpeed(0, 0); // speed direction: absolutely magic!
         setSpeed(1, 0);
@@ -375,19 +390,19 @@ private void calculateDesiredValues (int direction, double omega) {
 	if(Math.abs(omega) > 0.3) { // we got the angular speed
 	    if(direction == 8) { // SLEEP (we do not move any direction)
 	    	setWheelsDirection(WHEEL_DIRECTIONS[direction], -1,0);
-	        double spd = omega * (WHEEL_CRUISE_SPD/5); /* * omega / WHEEL_DIRECTIONS[direction][WMK1];*/
+	        int spd = (int)(omega * (WHEEL_CRUISE_SPD/Pi)); /* * omega / WHEEL_DIRECTIONS[direction][WMK1];*/
 	        setSpeed(0, spd); // speed direction: absolutely magic!
 	        setSpeed(1, -spd);
 	        setSpeed(2, spd);
 	    } else { // we have the direction of movement AND angular speed
 	        
 	        // Out-of-order wheel parameters calculation
-	        double oo_diffang = omega / WHEEL_DIRECTIONS[direction][WMK1];
+	        int oo_diffang = (int)((180/Pi)*omega / WHEEL_DIRECTIONS[direction][WMK1]);
 	        int oo_wheelnum = (int) WHEEL_DIRECTIONS[direction][OOW];
-	        double oo_wheelangle = WHEEL_DIRECTIONS[direction][ oo_wheelnum ] + oo_diffang;
+	        int oo_wheelangle = WHEEL_DIRECTIONS[direction][ oo_wheelnum ] + oo_diffang;
 	            // OO-wheel speed uses WHEEL_CRUISE_SPD as base parameter (which is 2/3 full throttle) and magic coeffs of current direction
 	        //double oo_wheelspeed =  WHEEL_DIRECTIONS[direction][3+oo_wheelnum]*WHEEL_CRUISE_SPD * (1+ ( Math.abs(oo_diffang) / WHEEL_DIRECTIONS[direction][WMK2]));
-	        double oo_wheelspeed = (int)  WHEEL_CRUISE_SPD;
+	        int oo_wheelspeed =  WHEEL_CRUISE_SPD;
 
 	        setDirection(oo_wheelnum, oo_wheelangle - WHEEL_SHIFT[oo_wheelnum]);
 	        setSpeed(oo_wheelnum, oo_wheelspeed * WHEEL_DIRECTIONS[direction][3+oo_wheelnum]);
@@ -406,8 +421,8 @@ private void calculateDesiredValues (int direction, double omega) {
 }
 
 
-private void setDirection(int wheelNum, double dir) {
-    //tagWheelDirs[wheelNum] = normalize(dir);
+private void setDirection(int wheelNum, int dir) {
+    tagWheelDirs[wheelNum] = normalize(dir);
     curWheelDirs[wheelNum] = normalize(dir);
 }
 
@@ -415,8 +430,8 @@ private void setDirection(int wheelNum, double dir) {
 
 
 
-private void setSpeed(int wheelNum, double spd) {
-    tagWheelSpeeds[wheelNum] =(int) spd;
+private void setSpeed(int wheelNum, int spd) {
+    tagWheelSpeeds[wheelNum] = spd;
 }
 
 
