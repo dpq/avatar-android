@@ -549,7 +549,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	
     public void setPortsAndHosts()
     {
-    	videoReceiver.setAddress(serverAuthority, serverHttpPort);
+    	videoReceiver.setAddress(serverAuthority, "5000");
     	audioSender.setHostAndPort(serverAuthority, audioPortOut);
     	audioReceiver.setHostAndPort(serverAuthority, audioPortIn);
     	videoSender.setHostAndPort(serverAuthority, videoPortOut);

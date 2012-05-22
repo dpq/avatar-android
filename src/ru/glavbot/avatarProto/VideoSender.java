@@ -195,17 +195,15 @@ public class VideoSender extends Thread {
 						socket.setSoTimeout(10000);
 						socketOutputStream = socket.getOutputStream();
 						String ident = "ava-" + token;
-						String header = /*
-											 * String.format(
-											 * "POST /restreamer?oid=%s HTTP/1.1"
-											 * +eol +"Server: %s:%d"+eol
-											 * +"User-Agent: avatar/0.2"+eol +
-											 * "Content-Type: multipart/x-mixed-replace; boundary=--boundarydonotcross"
-											 * +eol +eol +eol ,
-											 */ident/*
-													 * ,hostname,SERVER_VIDEO_PORT
-													 * )
-													 */;
+						String header = 
+											  String.format(
+											  "POST /restreamer?oid=%s HTTP/1.1"
+											  +eol +"Server: %s:%d"+eol
+											  +"User-Agent: avatar/0.2"+eol +
+											  "Content-Type: multipart/x-mixed-replace; boundary=--boundarydonotcross"
+											  +eol +eol +eol ,
+											 ident  ,host,port
+													  );
 						socketOutputStream.write(header.getBytes());
 						isRunning = true;
 						OnScreenLogger.setVideoOut(true);

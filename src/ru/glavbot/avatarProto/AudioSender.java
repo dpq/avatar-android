@@ -28,7 +28,7 @@ public class AudioSender extends Thread{
 	
 	
 
-    private static final int SAMPLE_RATE = 8000;
+    private static final int SAMPLE_RATE = 44100;
 	private static final int CHUNK_SIZE_BASE = 320;
 	private static final int SIZEOF_SHORT = 2;
 	private static final int SIZEOF_FLOAT = 4;
@@ -245,8 +245,8 @@ public class AudioSender extends Thread{
 								is.reset();
 								for(i=0;i<CHUNK_SIZE_BASE;i++)
 								{
-									char tmpShort = (char)(((int)is.readShort())-Short.MIN_VALUE);
-									if(tmpShort==0)tmpShort=1;
+									short tmpShort = is.readShort();
+									//if(tmpShort==0)tmpShort=1;
 									try{
 										os.writeShort(tmpShort);
 										//os.writeFloat((float)is.readShort()/(float)Short.MAX_VALUE);
