@@ -10,6 +10,7 @@ import java.net.Socket;
 //import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.List;
 
 //import java.text.SimpleDateFormat;
 //import java.util.List;
@@ -25,6 +26,7 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.ErrorCallback;
 import android.hardware.Camera.PreviewCallback;
+import android.hardware.Camera.Size;
 //import android.hardware.Camera.Size;
 //import android.os.Environment;
 import android.os.Handler;
@@ -46,17 +48,15 @@ public class VideoSender extends Thread {
 	private int port;
 	private String host;
 
-	private HandlerBuffer[] dataBuff;
-	private static final int PREVIEW_WIDTH = 800;
-	private static final int PREVIEW_HEIGHT = 600;
-	private static final int NUM_FRAMES = 30;
+
+	private static final int NUM_FRAMES = 15;
 	private static final int NUM_BUFFERS = 5;
 	private static final int STD_DELAY = 100;
 	private String token;
 
 	Object sync = new Object();
 
-	ArrayList<byte[]> buffers;
+
 
 	void setHostAndPort(String host, int port) {
 		this.host = host;
@@ -65,16 +65,48 @@ public class VideoSender extends Thread {
 
 	volatile boolean isOn=false;
 	
-	private static final int IMAGE_MAX_SIZE=PREVIEW_WIDTH * PREVIEW_HEIGHT
-			* ImageFormat.getBitsPerPixel(ImageFormat.NV21);
+	private ArrayList<byte[]> buffers;
+	private  final int PREVIEW_WIDTH;// = 768;
+	private  final int PREVIEW_HEIGHT;// =  432;
+	private  final int IMAGE_MAX_SIZE;//=PREVIEW_WIDTH * PREVIEW_HEIGHT	* ImageFormat.getBitsPerPixel(ImageFormat.NV21);
+	private HandlerBuffer[] dataBuff;
+
+	
+	void setupPreviewSizes()
+	{
+
+	}
+	
 	
 	
 	VideoSender(final Context context, SurfaceView preview) {
 		this.context = context;
 		this.preview = preview;
-		// this.foreignStream=foreignStream;
-		// this.setToken(token);
 
+
+		
+		Camera c = getFrontCamera();
+		Camera.Parameters params  = c.getParameters();
+		List<Size> ps = params.getSupportedPreviewSizes();
+		int pnum=-1;
+		double bestFit=Double.MAX_VALUE;
+		for(int i=0; i<ps.size();i++)
+		{
+			double current = Math.sqrt(Math.pow((ps.get(i).width-800), 2)+Math.pow((ps.get(i).height-600), 2));
+			if(current<bestFit)
+			{
+				bestFit=current;
+				pnum=i;
+			}
+		}
+		PREVIEW_WIDTH = ps.get(pnum).width;
+		PREVIEW_HEIGHT=ps.get(pnum).height;
+		IMAGE_MAX_SIZE=PREVIEW_WIDTH * PREVIEW_HEIGHT* ImageFormat.getBitsPerPixel(ImageFormat.NV21);
+		c.release();
+		
+		
+		
+		
 		buffers = new ArrayList<byte[]>();
 		//int size = 
 		for (int i = 0; i < NUM_BUFFERS; i++) {
@@ -173,7 +205,10 @@ public class VideoSender extends Thread {
 								throw new IOException("socket output stream not defined!");
 							}
 
-						} catch (IOException e) {
+						}/*catch (IOException e) {
+						
+						}*/
+						catch (IOException e) {
 							//Log.e("", "", e);
 							closeSocket();
 							//isRunning=false;
@@ -192,7 +227,9 @@ public class VideoSender extends Thread {
 						InetAddress addr = InetAddress.getByName(host);
 						socket = new Socket(addr, port);
 						socket.setKeepAlive(true);
-						socket.setSoTimeout(10000);
+						socket.setSoTimeout(1000);
+						socket.setSendBufferSize(IMAGE_MAX_SIZE+200);
+						socket.setSoLinger(true, 0);
 						socketOutputStream = socket.getOutputStream();
 						String ident = "ava-" + token;
 						String header = 
@@ -200,7 +237,7 @@ public class VideoSender extends Thread {
 											  "POST /restreamer?oid=%s HTTP/1.1"
 											  +eol +"Server: %s:%d"+eol
 											  +"User-Agent: avatar/0.2"+eol +
-											  "Content-Type: multipart/x-mixed-replace; boundary=--boundarydonotcross"
+											  "Content-Type: multipart/x-mixed-replace; boundary=boundarydonotcross"
 											  +eol +eol +eol ,
 											 ident  ,host,port
 													  );
@@ -343,12 +380,15 @@ public class VideoSender extends Thread {
 
 	private void setupCamera(Camera camera) {
 		Camera.Parameters p = camera.getParameters();
-		// List<Integer> formats =p.getSupportedPreviewFormats () ;
-		p.setPreviewFormat(ImageFormat.JPEG); // was nv21
+		 List<Size> formats =p.getSupportedPreviewSizes() ;
+		 List<Integer> fr=p.getSupportedPreviewFrameRates();
+		p.setPreviewFormat(ImageFormat.NV21); // was nv21
 		p.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		p.setPreviewFrameRate(NUM_FRAMES);
-		p.setSceneMode(Camera.Parameters.SCENE_MODE_ACTION);
-		// p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+		List<String> sm =p.getSupportedSceneModes();
+		List<String> fm=p.getSupportedFocusModes();
+		//p.setSceneMode(Camera.Parameters.SCENE_MODE_SUNSET);
+	   // p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
 		// List<String> l = p.getSupportedColorEffects();
 		// p.setColorEffect(Camera.Parameters.EFFECT_SEPIA);
 		// if(p.is)

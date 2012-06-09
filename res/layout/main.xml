@@ -186,6 +186,14 @@
                  				android:layout_alignParentBottom="true"
                  				android:background="@drawable/button_stop"
                               	android:text="" />
+ 	                         <Button
+ 	                          	android:id="@+id/VolumeButton"
+                              	android:layout_width="wrap_content"
+                              	android:layout_height="wrap_content"
+                 				android:layout_toLeftOf="@id/StopButton"
+                 				android:layout_alignParentBottom="true"
+                 				android:background="@drawable/button_volume"
+                              	android:text="" /> 
  	    </RelativeLayout>
     </FrameLayout>
     <TextView

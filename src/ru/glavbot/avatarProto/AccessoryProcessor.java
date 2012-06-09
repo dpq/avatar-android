@@ -31,16 +31,17 @@ public class AccessoryProcessor extends Activity {
 	private UsbAccessory mAccessory;
 	private ParcelFileDescriptor mFileDescriptor;
 	private FileInputStream mInputStream;
+	//protected FileOutputStream mOutputStream;
 	protected FileOutputStream mOutputStream;
 	
-	
+	protected Object sync=new Object();
 	
 	private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
 			if (ACTION_USB_PERMISSION.equals(action)) {
-				synchronized (this) {
+				synchronized (sync) {
 					UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
 					if (intent.getBooleanExtra(
 							UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
@@ -52,9 +53,11 @@ public class AccessoryProcessor extends Activity {
 					mPermissionRequestPending = false;
 				}
 			} else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
-				UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-				if (accessory != null && accessory.equals(mAccessory)) {
-					closeAccessory();
+				synchronized (sync) {
+					UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+					if (accessory != null && accessory.equals(mAccessory)) {
+						closeAccessory();
+					}
 				}
 			}
 		}
@@ -96,14 +99,16 @@ public Object onRetainNonConfigurationInstance() {
 
 protected void sendCommand(byte[] commandData) {
 	// TODO Auto-generated method stub
-	if(mOutputStream!=null)
-	{
-		try {
-			mOutputStream.write(commandData,0,commandData.length);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			Log.e("","",e);
+	synchronized (sync) {
+		if(mOutputStream!=null)
+		{
+			try {
+				mOutputStream.write(commandData,0,commandData.length);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				Log.e("","",e);
 			
+			}
 		}
 	}
 }
@@ -112,28 +117,28 @@ protected void sendCommand(byte[] commandData) {
 @Override
 protected void onResume() {
 	super.onResume();
-
+	synchronized (sync) {
 	//Intent intent = getIntent();
-	if (mInputStream != null && mOutputStream != null) {
-		return;
-	}
+		if (mInputStream != null && mOutputStream != null) {
+			return;
+		}
 
-	UsbAccessory[] accessories = mUsbManager.getAccessoryList();
-	UsbAccessory accessory = (accessories == null ? null : accessories[0]);
-	if (accessory != null) {
-		if (mUsbManager.hasPermission(accessory)) {
-			openAccessory(accessory);
-		} else {
-			synchronized (mUsbReceiver) {
-				if (!mPermissionRequestPending) {
-					mUsbManager.requestPermission(accessory,
-							mPermissionIntent);
-					mPermissionRequestPending = true;
+		UsbAccessory[] accessories = mUsbManager.getAccessoryList();
+		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
+		if (accessory != null) {
+			if (mUsbManager.hasPermission(accessory)) {
+				openAccessory(accessory);
+			} else {
+				synchronized (mUsbReceiver) {
+					if (!mPermissionRequestPending) {
+						mUsbManager.requestPermission(accessory,mPermissionIntent);
+						mPermissionRequestPending = true;
 				}
 			}
 		}
 	} else {
 		Log.d(TAG, "mAccessory is null");
+	}
 	}
 }
 
@@ -146,6 +151,7 @@ protected void onPause() {
 @Override
 public void onDestroy() {
 	unregisterReceiver(mUsbReceiver);
+	closeAccessory();
 	super.onDestroy();
 }
 
@@ -155,7 +161,7 @@ private void openAccessory(UsbAccessory accessory) {
 		mAccessory = accessory;
 		FileDescriptor fd = mFileDescriptor.getFileDescriptor();
 		mInputStream = new FileInputStream(fd);
-		mOutputStream = new FileOutputStream(fd);
+		mOutputStream =  new FileOutputStream(fd);
 		//Thread thread = new Thread(this, "DemoKit");
 		//thread.start();
 		Log.d(TAG, "accessory opened");

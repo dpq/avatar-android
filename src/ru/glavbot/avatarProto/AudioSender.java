@@ -28,7 +28,7 @@ public class AudioSender extends Thread{
 	
 	
 
-    private static final int SAMPLE_RATE = 44100;
+    private static final int SAMPLE_RATE = 11025;
 	private static final int CHUNK_SIZE_BASE = 320;
 	private static final int SIZEOF_SHORT = 2;
 	private static final int SIZEOF_FLOAT = 4;
@@ -178,9 +178,9 @@ public class AudioSender extends Thread{
 						socket = new Socket(addr, port);
 						
 						socket.setKeepAlive(true);
-						socket.setSoTimeout(10000);
-						socket.setSendBufferSize(CHUNK_SIZE_FLOAT);
-				
+						socket.setSoTimeout(1000);
+						socket.setSendBufferSize(CHUNK_SIZE_FLOAT+10);
+						socket.setSoLinger(true, 0);
 						OutputStream s = socket.getOutputStream();
 						String ident = "ava-"+getToken();
 						s.write(ident.getBytes());
@@ -212,6 +212,7 @@ public class AudioSender extends Thread{
 					socket = null;
 					isPlaying=false;
 					OnScreenLogger.setAudioOut(false);
+					Log.v("avatar audio out","socket closed");
 				}
 
 
@@ -233,6 +234,7 @@ public class AudioSender extends Thread{
 							int bytes_read=recorder.read(audioData, 0, CHUNK_SIZE_SHORT);
 							if(bytes_read>0)
 							{
+								Log.v("avatar audio out","read "+String.format("%d", bytes_read)+" bytes");
 								/*byte tmp;
 								for(int j=0;j<CHUNK_SIZE_BASE;j++)
 								{
@@ -252,6 +254,7 @@ public class AudioSender extends Thread{
 										//os.writeFloat((float)is.readShort()/(float)Short.MAX_VALUE);
 									}
 									catch (EOFException e) {
+										Log.v("avatar audio out","sent "+String.format("%d", (i+1)*2)+" bytes");
 										break;
 									} 
 

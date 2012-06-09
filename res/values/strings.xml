@@ -33,5 +33,7 @@
 	<string name="configSrvDlgServerPort">Server http port:</string>
 	<string name="configSrvDlgAudioOutPort">Outgoing audio port:</string>
 	<string name="configSrvDlgAudioInPort">Incoming audio port:</string>
-	<string name="configSrvDlgVideoOutPort">Outgoing video port:</string>
+	<string name="configSrvDlgVideoOutPort">Video port:</string>
+	<string name="volumeRegulationDlgSetVolume">Set volume:</string>
+	<string name="volumeRegulationDlgHeader">Volume regulation</string>
 </resources>

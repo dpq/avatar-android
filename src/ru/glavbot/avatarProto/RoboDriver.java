@@ -28,8 +28,11 @@ public class RoboDriver {
 	
 	public synchronized void setCompensationAngles(int[] newAngles)
 	{
-		for(int i=0;i<compensationAngles.length;i++)
-		compensationAngles[i]=newAngles[i];
+	    synchronized(synchronizer)
+	    {
+	    	for(int i=0;i<compensationAngles.length;i++)
+	    		compensationAngles[i]=newAngles[i];
+	    }
 	}
 	public int[] getCompensationAngles()
 	{
@@ -46,9 +49,9 @@ public class RoboDriver {
 	}
 	
 	
-	ByteArrayOutputStream s = new ByteArrayOutputStream(10);
+	ByteArrayOutputStream s = new ByteArrayOutputStream(11);
 	DataOutputStream ds = new DataOutputStream(s);
-//	byte[] error={90,90,0,90,0,90,0};
+//	byte[] error={90,90,0,90,0,90,0,0};
 
 ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 
@@ -56,6 +59,8 @@ Runnable worker = new Runnable(){
 
 	public void run() {
 		// TODO Auto-generated method stub
+	    synchronized(synchronizer)
+	    {
 		try{
 		servoLoop();
 		s.reset();
@@ -77,6 +82,7 @@ Runnable worker = new Runnable(){
 				ds.writeShort((int)curWheelSpeeds[1]);
 				ds.writeByte(radToDeg(curWheelDirs[2]));
 				ds.writeShort((int)curWheelSpeeds[2]);*/
+				ds.writeByte(curLEDlight);
 				sendCommand(s.toByteArray());
 				copyCurPrev();
 			}
@@ -110,10 +116,11 @@ Runnable worker = new Runnable(){
 		{
 			Log.e("RoboRuler", "This should never happen!");
 		}
+	    }
 	}};
 	
 	static int counter = 0;
-	
+	Object synchronizer = new Object();
 	private static int radToDeg(double rad)
 	{
 		return (int)( (rad*180.0)/Pi);
@@ -138,6 +145,16 @@ Runnable worker = new Runnable(){
 	    }
 	    return src;
 	}*/
+	public void updateLuxmeterValue(float luxmeter)
+	{
+	    synchronized(synchronizer)
+	    {
+	    	luxmeterValue=luxmeter;
+	    }
+	}
+	
+	
+	
 	protected int normalize(int src)
 	{
 		return normalize(src,180);
@@ -169,8 +186,11 @@ Runnable worker = new Runnable(){
 	
 	public void setNewDirection(int newDir, double newOmega, double newVOmega)
 	{
-		calculateDesiredValues (newDir, newOmega);
-		headControl(newVOmega);
+	    synchronized(synchronizer)
+	    {
+	    	calculateDesiredValues (newDir, newOmega);
+	    	headControl(newVOmega);
+	    }
 	}
 	
 	public void reset()
@@ -215,8 +235,16 @@ Runnable worker = new Runnable(){
 	    {
 	    	curHeadPos-=1;
 	    }
-	    	/*if(tagHeadPos > curHeadPos) curHeadPos += TURN_SPEED;
-        if(tagHeadPos < curHeadPos) curHeadPos -= TURN_SPEED;*/
+	    //LED
+
+	    if((luxmeterValue<=121)&&(curLEDlight<155))
+	    {
+	    	curLEDlight+=5;
+	    }else if((luxmeterValue>1199)&&(curLEDlight>0))
+	    {
+	    	curLEDlight-=5;
+	    }
+	    
 	 }
 	
 protected void sendCommand(byte[] byteArray) {
@@ -237,11 +265,14 @@ volatile private int[] curWheelSpeeds = {0,0,0}; // current wheel speed
 volatile private int[] curWheelDirs = {90,90,120};
 //private int[] emuWheelDirs = {90,90,90};
 volatile int curHeadPos=90;
+volatile int curLEDlight=0;
+volatile float luxmeterValue=0;
 // Prev send
 //Real
 volatile private int[] prevWheelSpeeds = {0,0,0}; // current wheel speed
 volatile private int[] prevWheelDirs = {0,0,0};
 volatile private int prevHeadPos = 0;
+private int prevLedLight=0;
 
 
 boolean isChanged()
@@ -251,6 +282,7 @@ boolean isChanged()
 		if(prevWheelSpeeds[i]!=curWheelSpeeds[i]) return true;
 	for(int i=0;i<3;i++)
 		if(prevWheelDirs[i]!=curWheelDirs[i]) return true;
+	if(prevLedLight!=curLEDlight) return true;
 	return false;
 }
 
@@ -261,6 +293,7 @@ void copyCurPrev()
 	prevWheelSpeeds[i]=curWheelSpeeds[i];
 	for(int i=0;i<3;i++)
 		prevWheelDirs[i]=curWheelDirs[i];
+	prevLedLight=curLEDlight;
 		
 }
 
@@ -320,7 +353,7 @@ private static final double[][] WHEEL_DIRECTIONS = {
 */
 
 
-// SpringRC servo matrix (Robo version)
+// SpringRC  servo matrix (Robo version)
 private static final int[][] WHEEL_DIRECTIONS = {
 { 120,  60,  30, 1, 1, 1,  2, 10, 2}, // 0   ^
 {  75,  15,  15, 1, 1, 1,  0, 10, 2}, // 1   /'   -20

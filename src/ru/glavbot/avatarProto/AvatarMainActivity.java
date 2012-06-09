@@ -25,9 +25,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.DhcpInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -67,6 +72,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private Button sendLinkButton;
      private Button resumeButton;
      private Button stopButton;
+     private Button volumeButton;
      private SurfaceView cameraPreview;
      private MjpegView videoView;
      private FrameLayout frameLayoutRun;
@@ -78,14 +84,21 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private AudioReceiver audioReceiver;
      private VideoReceiver videoReceiver;
  
+	  private SensorManager mSensorManager;
+	  private Sensor mLuxmeter;
+     private String gatewayIp;
+     
      private static final int SEND_CONTROL_LINK_DIALOG = 1001;
      private static final int CONFIGURE_SERVER_DIALOG = 1002;
+     private static final int VOLUME_REGULATION_DIALOG = 1003;
+     
      
      
      private static final String SHARED_PREFS = "RobotSharedPrefs";
      private static final String SHARED_PREFS_EMAIL = "email";
      private static final String SHARED_PREFS_TTL = "ttl";
      private static final String SHARED_PREFS_TOKEN = "token"; 
+     
      
      private static final String SERVER_SCHEME = "http";    
 
@@ -118,17 +131,17 @@ public class AvatarMainActivity extends AccessoryProcessor {
      
      private String serverAuthority = "auth.glavbot.ru"; 
      private String serverHttpPort = "1018";
-     private int videoPortOut = 10000;
+     private int videoPort = 5001;
      private int audioPortIn = 10002;
      private int audioPortOut = 10003;
      ToastBuilder toastBuilder = new ToastBuilder(this);
-
+     private static final float STOPITSOT = 100500; 
      
      
      private  String email;
      private  String session_token;
      private  int  ttl;
-     private boolean turnedOn=false;
+    // private boolean turnedOn=false;
      
  //	private WebView webView;
  	private ConnectivityManager network;
@@ -164,7 +177,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
-
+/*
         try {
         	Log.v(TAG, "Asking root permission");
         	Process root = Runtime.getRuntime().exec("su");
@@ -175,7 +188,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
         	}
 
-
+*/
         
         
         setContentView(R.layout.main);
@@ -218,7 +231,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	});
     	
     	
-    	
+	    volumeButton=(Button)findViewById(R.id.VolumeButton);
+	    volumeButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+					showDialog(VOLUME_REGULATION_DIALOG);
+			}
+    		
+    	});
+	    
     	
     	relativeLayoutStart = (RelativeLayout)findViewById(R.id.relativeLayoutStart);
     	frameLayoutRun = (FrameLayout)findViewById(R.id.frameLayoutRun);
@@ -270,8 +290,32 @@ public class AvatarMainActivity extends AccessoryProcessor {
         videoSender = new VideoSender(this, cameraPreview);
         audioSender = new AudioSender(this);
         audioReceiver= new AudioReceiver(this);
+        
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        
         driver= new RoboDriver(this);
     }
+    
+    SensorEventListener sensorEventListener = new SensorEventListener(){
+
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void onSensorChanged(SensorEvent event) {
+			// TODO Auto-generated method stub
+			if(currentState>STATE_ON)
+				driver.updateLuxmeterValue(event.values[0]);
+			else
+				driver.updateLuxmeterValue(STOPITSOT);
+		}
+    	
+    };
+    
+    
+    
     boolean isListeningNetwork=false;
 
     private void processNetworkState()
@@ -279,10 +323,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
         if(isNetworkAvailable)
         {
         	setCurrentState(Math.abs(currentState));
+        	WifiManager wifi = (WifiManager) getSystemService(WIFI_SERVICE); 
+        	DhcpInfo info = wifi.getDhcpInfo();
+        	gatewayIp=android.text.format.Formatter.formatIpAddress(info.gateway);
         }
         else
         {
         	setCurrentState(-Math.abs(currentState));
+        	gatewayIp="";
         	driver.reset();
         }
     }
@@ -399,12 +447,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
  					
  				}
  				setWorkerScreen();
+ 				driver.updateLuxmeterValue(STOPITSOT);
  				break;
  			case STATE_ENABLED_NO_NETWORK:
  				stopStreaming();
  			case STATE_ON_NO_NETWORK:
  				stopCommands();
- 				
+ 				driver.updateLuxmeterValue(STOPITSOT);
  			case STATE_PAUSED_NO_NETWORK: 				
  				break;
 
@@ -463,6 +512,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			videoReceiver.stopReceiveVideo();
 			audioSender.stopVoice();
 			audioReceiver.stopVoice();
+			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/stop");
+			r.setTimeout(1000);
+			bottomCameraStreamManager.push(r);
 			streamsRunning=false;
 		}
 	}
@@ -476,9 +528,40 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			audioReceiver.startVoice();
 			audioSender.startVoice();
 			videoReceiver.startReceiveVideo();
+			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/start?oid=dwn_"+getSession_token());
+			r.setTimeout(1000);
+			bottomCameraStreamManager.push(r);
 			streamsRunning=true;
 		}
     }
+	
+	ConnectionManager bottomCameraStreamManager = new ConnectionManager();
+	
+	ProcessAsyncRequestResponceProrotype bottomCameraStreamResponce = new ProcessAsyncRequestResponceProrotype()
+	{
+
+		@Override
+		protected void onConnectionSuccessful(Object responce) {
+			// TODO Auto-generated method stub
+				String answer = (String)responce;
+		}
+
+		@Override
+		protected void onConnectionUnsuccessful(int statusCode) {
+		
+		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
+			
+		}
+
+		@Override
+		protected void onConnectionFail(Throwable e) {
+		
+		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
+		}
+		
+	};
+	
+	
     
     @Override
     protected void onPause() {
@@ -486,7 +569,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         
        disableAll();
        stopListeningNetwork();
-       
+       mSensorManager.unregisterListener(sensorEventListener);
        AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
 		if(audiomanager.getMode()!=AudioManager.MODE_NORMAL)
 		{
@@ -494,6 +577,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			audiomanager.setMode(AudioManager.MODE_NORMAL);
 		}
     }
+    
 
     int[] angles = new int[3];
     int[] dirs = new int[3];
@@ -512,7 +596,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         
         serverAuthority = prefs.getString( SERVER_AUTHORITY_PARAM, "auth.glavbot.ru");
         serverHttpPort = prefs.getString( SERVER_HTTP_PORT_PARAM, "8080");//"1017";
-        videoPortOut =prefs.getInt( VIDEO_PORT_OUT_PARAM, 10000);
+        videoPort =prefs.getInt( VIDEO_PORT_OUT_PARAM, 5001);
         audioPortIn = prefs.getInt( AUDIO_PORT_IN_PARAM, 10002);
         audioPortOut = prefs.getInt( AUDIO_PORT_OUT_PARAM, 10003);
     	
@@ -543,16 +627,16 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			int maxVoice = audiomanager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
 			audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, maxVoice, 0);
 		}
-    	
+		mSensorManager.registerListener(sensorEventListener, mLuxmeter, SensorManager.SENSOR_DELAY_GAME);
    		doResume();
     }
 	
     public void setPortsAndHosts()
     {
-    	videoReceiver.setAddress(serverAuthority, "5000");
+    	videoReceiver.setAddress(serverAuthority, videoPort);
     	audioSender.setHostAndPort(serverAuthority, audioPortOut);
     	audioReceiver.setHostAndPort(serverAuthority, audioPortIn);
-    	videoSender.setHostAndPort(serverAuthority, videoPortOut);
+    	videoSender.setHostAndPort(serverAuthority, videoPort);
     }
     
     
@@ -580,7 +664,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	EditText editTextWheel1Angle;
 	EditText editTextWheel2Angle;
 	EditText editTextWheel3Angle;
-	
+	SeekBar  volumeSelect;
 	@Override
 	protected Dialog  onCreateDialog(int id)
 	{
@@ -702,7 +786,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						{
 							s = "10000";
 						}
-						videoPortOut=Integer.decode(s);
+						videoPort=Integer.decode(s);
 						s =editTextAudioInPort.getText().toString();
 						if(s.length()==0)
 						{
@@ -738,7 +822,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						SharedPreferences.Editor  editor = prefs.edit();
 						editor.putString(SERVER_AUTHORITY_PARAM, serverAuthority);
 						editor.putString(SERVER_HTTP_PORT_PARAM, serverHttpPort);
-						editor.putInt(VIDEO_PORT_OUT_PARAM, videoPortOut);
+						editor.putInt(VIDEO_PORT_OUT_PARAM, videoPort);
 						editor.putInt(AUDIO_PORT_IN_PARAM, audioPortIn);
 						editor.putInt(AUDIO_PORT_OUT_PARAM, audioPortOut);
 					    editor.putInt( WHEEL_ANGLE_1,  angles[0]);  
@@ -757,6 +841,42 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					}});
 				d= alertDialog;
 				break;
+			}
+			case VOLUME_REGULATION_DIALOG:
+			{
+				AlertDialog.Builder builder;
+				final AlertDialog alertDialog;
+
+				LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
+				View layout = inflater.inflate(R.layout.volume_regulation_dialog,
+				                               (ViewGroup) findViewById(R.id.volumeRegulationDialogRoot));
+				builder = new AlertDialog.Builder(this);
+				builder.setView(layout);
+				builder.setTitle(R.string.volumeRegulationDlgHeader);
+				alertDialog = builder.create();
+				Button buttonOk = (Button)layout.findViewById(R.id.buttonOk);
+				buttonOk.setOnClickListener(new OnClickListener(){
+
+					public void onClick(View v) {
+						alertDialog.cancel();
+					}});
+				volumeSelect=(SeekBar)layout.findViewById(R.id.seekBarVolume);
+				volumeSelect.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+					
+					public void onStopTrackingTouch(SeekBar seekBar) {}
+					
+					public void onStartTrackingTouch(SeekBar seekBar) {}
+					
+					public void onProgressChanged(SeekBar seekBar, int progress,
+							boolean fromUser) {
+						if(fromUser)
+						{
+							AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
+							audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, progress, 0);
+						}
+					}
+				});
+				d= alertDialog;
 			}
 		}
 		return d;
@@ -781,9 +901,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		{
 			editTextServer.setText(serverAuthority);
 			editTextServerPort.setText(serverHttpPort);
-			editTextVideoOutPort.setText(String.format("%d", videoPortOut));
+			editTextVideoOutPort.setText(String.format("%d", videoPort));
 			editTextAudioOutPort.setText(String.format("%d", audioPortOut));
 			editTextAudioInPort.setText(String.format("%d", audioPortIn));		
+		}else if(id==VOLUME_REGULATION_DIALOG)
+		{
+			AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
+			volumeSelect.setMax(audiomanager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL));
+			volumeSelect.setProgress(audiomanager.getStreamVolume(AudioManager.STREAM_VOICE_CALL));
 		}
 	}
 

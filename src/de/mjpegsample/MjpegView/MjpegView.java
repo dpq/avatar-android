@@ -112,17 +112,13 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 					// System.gc();
 				}
 			} catch (IOException e) {
-				try {
+				
 					if(mIn!=null)
 					{
 						mIn.close();
 						mIn = null;
 					}
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					Log.e("", "", e1);
-
-				}
+				
 				errorHandler.obtainMessage(VIDEO_IN_ERROR, e).sendToTarget();
 				Log.e("", "", e);
 			}
@@ -186,14 +182,13 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
             } catch (InterruptedException e) {}
         }
         
-        try {
+
         	if(mIn!=null)
 			{
         		mIn.close();
         		mIn=null;
 			}
-		} catch (IOException e1) {			
-		}
+
         
         drawerThread.getChildHandler().obtainMessage(DrawerThread.DONE).sendToTarget();
 
@@ -319,7 +314,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 		protected void onConnectionSuccessful(Object responce) {
 			// TODO Auto-generated method stub
 			 try {
-				setSource(new MjpegInputStream(new BufferedInputStream(((HttpEntity) responce).getContent(), MjpegInputStream.FRAME_MAX_LENGTH)));
+				setSource(new MjpegInputStream((HttpEntity) responce));
 			} catch (IllegalStateException e) {
 				// TODO Auto-generated catch block
 				Log.e("","",e);

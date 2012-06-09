@@ -12,19 +12,23 @@ public final class R {
     }
     public static final class drawable {
         public static final int button_pause=0x7f020000;
-        public static final int button_play=0x7f020001;
-        public static final int button_stop=0x7f020002;
-        public static final int gb_logo_big=0x7f020003;
-        public static final int ic_launcher=0x7f020004;
-        public static final int icon_error=0x7f020005;
-        public static final int icon_ok=0x7f020006;
-        public static final int icon_warning=0x7f020007;
-        public static final int invite_button=0x7f020008;
-        public static final int invite_button_proto=0x7f020009;
-        public static final int invite_button_proto_blue_3=0x7f02000a;
-        public static final int invite_button_proto_green=0x7f02000b;
-        public static final int platform_view=0x7f02000c;
-        public static final int start_button_image=0x7f02000d;
+        public static final int button_pause_old=0x7f020001;
+        public static final int button_play=0x7f020002;
+        public static final int button_play_old=0x7f020003;
+        public static final int button_stop=0x7f020004;
+        public static final int button_stop_old=0x7f020005;
+        public static final int button_volume=0x7f020006;
+        public static final int gb_logo_big=0x7f020007;
+        public static final int ic_launcher=0x7f020008;
+        public static final int icon_error=0x7f020009;
+        public static final int icon_ok=0x7f02000a;
+        public static final int icon_warning=0x7f02000b;
+        public static final int invite_button=0x7f02000c;
+        public static final int invite_button_proto=0x7f02000d;
+        public static final int invite_button_proto_blue_3=0x7f02000e;
+        public static final int invite_button_proto_green=0x7f02000f;
+        public static final int platform_view=0x7f020010;
+        public static final int start_button_image=0x7f020011;
     }
     public static final class id {
         public static final int CameraPreview=0x7f070022;
@@ -35,13 +39,14 @@ public final class R {
         public static final int SendLinkButton=0x7f07001a;
         public static final int SettingsButton=0x7f07001c;
         public static final int StartButton=0x7f070020;
-        public static final int StatusText=0x7f070024;
+        public static final int StatusText=0x7f070025;
         public static final int StopButton=0x7f070023;
+        public static final int VolumeButton=0x7f070024;
         public static final int buttonCancel=0x7f070016;
         public static final int buttonOk=0x7f070015;
         public static final int editTextAudioInPort=0x7f07000f;
         public static final int editTextAudioOutPort=0x7f07000c;
-        public static final int editTextEmail=0x7f070028;
+        public static final int editTextEmail=0x7f070029;
         public static final int editTextServer=0x7f070003;
         public static final int editTextServerPort=0x7f070006;
         public static final int editTextVideoOutPort=0x7f070009;
@@ -50,35 +55,39 @@ public final class R {
         public static final int editTextWheel3Angle=0x7f070013;
         public static final int frameLayoutMain=0x7f070017;
         public static final int frameLayoutRun=0x7f07001d;
-        public static final int imageViewErrLevel=0x7f07002c;
+        public static final int imageViewErrLevel=0x7f07002d;
         public static final int layoutAngles=0x7f070010;
         public static final int layoutAudioInPort=0x7f07000d;
         public static final int layoutAudioOutPort=0x7f07000a;
         public static final int layoutVideoOutPort=0x7f070007;
         public static final int layout_buttons=0x7f070014;
         public static final int layout_config_server_root=0x7f070000;
-        public static final int layout_email=0x7f070026;
-        public static final int layout_root=0x7f070025;
+        public static final int layout_email=0x7f070027;
+        public static final int layout_root=0x7f070026;
         public static final int layout_server=0x7f070001;
         public static final int layout_server_port=0x7f070004;
         public static final int relativeLayoutStart=0x7f070018;
-        public static final int seekBarLength=0x7f07002a;
+        public static final int seekBarLength=0x7f07002b;
+        public static final int seekBarVolume=0x7f070031;
         public static final int textAudioInPort=0x7f07000e;
         public static final int textAudioOutPort=0x7f07000b;
         public static final int textVideoOutPort=0x7f070008;
-        public static final int textViewText=0x7f07002d;
-        public static final int text_email=0x7f070027;
+        public static final int textViewHeader=0x7f070030;
+        public static final int textViewText=0x7f07002e;
+        public static final int text_email=0x7f070028;
         public static final int text_server=0x7f070002;
         public static final int text_server_port=0x7f070005;
-        public static final int text_timeout=0x7f070029;
-        public static final int toast_layout_root=0x7f07002b;
+        public static final int text_timeout=0x7f07002a;
+        public static final int toast_layout_root=0x7f07002c;
         public static final int videoView=0x7f07001e;
+        public static final int volumeRegulationDialogRoot=0x7f07002f;
     }
     public static final class layout {
         public static final int configure_server_dialog=0x7f030000;
         public static final int main=0x7f030001;
         public static final int send_invite_dialog=0x7f030002;
         public static final int toast_layout=0x7f030003;
+        public static final int volume_regulation_dialog=0x7f030004;
     }
     public static final class string {
         public static final int app_name=0x7f050001;
@@ -114,6 +123,8 @@ public final class R {
         public static final int toastInviteOk=0x7f050016;
         public static final int toastInviteServerRefuse=0x7f050019;
         public static final int toastNoWifi=0x7f050015;
+        public static final int volumeRegulationDlgHeader=0x7f050022;
+        public static final int volumeRegulationDlgSetVolume=0x7f050021;
     }
     public static final class style {
         public static final int ControlButton=0x7f060000;

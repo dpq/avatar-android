@@ -9,10 +9,10 @@ public class VideoReceiver {
 	private String address;
 	boolean isPlaying=false;
 	
-	void setAddress(String host, String httpPort)
+	void setAddress(String host, int videoPort)
 	{
 		
-		this.address="http://"+host+":"+httpPort+"/restreamer?oid=%s";
+		this.address=String.format("http://%s:%d",host,videoPort)+"/restreamer?oid=%s";
 	}
 	
 	VideoReceiver(MjpegView view)

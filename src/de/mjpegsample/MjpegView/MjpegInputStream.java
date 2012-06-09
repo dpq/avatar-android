@@ -6,6 +6,8 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.http.HttpEntity;
+
 //import java.util.Properties;
 
 
@@ -24,15 +26,15 @@ public class MjpegInputStream extends DataInputStream {
     
     private final static int HEADER_MAX_LENGTH = 100;
     private final static int JPEG_MAX_LENGTH = 40000;
-    public final static int FRAME_MAX_LENGTH = JPEG_MAX_LENGTH + HEADER_MAX_LENGTH;
+    private final static int FRAME_MAX_LENGTH = JPEG_MAX_LENGTH + HEADER_MAX_LENGTH;
     private int mContentLength = -1;
   //private static Socket socket;
 	
 
-    private BufferedInputStream bis;
-    public MjpegInputStream(BufferedInputStream in) { 
-    	super(in); 
-    	bis=in;
+    private HttpEntity ent;
+    public MjpegInputStream(HttpEntity in) throws IllegalStateException, IOException { 
+    	super(new BufferedInputStream(in.getContent(),FRAME_MAX_LENGTH)); 
+    	ent=in;
     }
 	
     private int getEndOfSeqeunce(DataInputStream in, byte[] sequence) throws IOException {
@@ -78,10 +80,16 @@ public class MjpegInputStream extends DataInputStream {
     byte[] buffer = new byte[FRAME_MAX_LENGTH];
     public Bitmap readMjpegFrame() throws IOException {
     	Log.v("VideoReceiver", "recieving image");
-    	if(bis.available()>0)
-    	Log.w("VideoReceiver", String.format("In buffer: %d", bis.available()));
+
     	mark(FRAME_MAX_LENGTH);
-    	int boundary= getEndOfSeqeunce(this, BOUNDARY);
+    	int boundary;
+		try {
+			boundary = getEndOfSeqeunce(this, BOUNDARY);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			boundary =-1;
+		}
     	if (boundary<0) return null;
     	reset();
     	skipBytes(boundary);
@@ -90,23 +98,38 @@ public class MjpegInputStream extends DataInputStream {
         reset();
         //byte[] header = new byte[headerLen];
         readFully(buffer,0,headerLen);
+        mark(JPEG_MAX_LENGTH);
         try {
             mContentLength = parseContentLength(buffer,headerLen);
         } catch (NumberFormatException nfe) { 
             mContentLength = getEndOfSeqeunce(this, EOF_MARKER); 
         }
-        //reset();
-        mark(JPEG_MAX_LENGTH);
+        reset();
+        
         //byte[] frameData = new byte[mContentLength];
         //skipBytes(headerLen);
         readFully(buffer,0,mContentLength);
         return BitmapFactory.decodeStream(new ByteArrayInputStream(buffer));
     }
     
-   /* @Override
-    public void Close()
+    @Override
+    public void close()
     {
     	
-    }*/
+    	try {
+    		ent.consumeContent();
+    		
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			Log.e("","",e);
+		}
+    	try {
+			super.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			Log.e("","",e);
+		}
+    }
     
 }
