@@ -3,6 +3,7 @@
 	<name>AvatarProto</name>
 	<comment></comment>
 	<projects>
+		<project>AVRestreamer</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -12,6 +12,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.mjpegsample.MjpegView.MjpegView;
+import ru.glavbot.AVRestreamer.AudioReceiver;
+import ru.glavbot.AVRestreamer.AudioSender;
+import ru.glavbot.AVRestreamer.OnScreenLogger;
+import ru.glavbot.AVRestreamer.VideoReceiver;
+import ru.glavbot.AVRestreamer.VideoSender;
 import ru.glavbot.asyncHttpRequest.ConnectionManager;
 import ru.glavbot.asyncHttpRequest.ConnectionRequest;
 import ru.glavbot.asyncHttpRequest.ProcessAsyncRequestResponceProrotype;
@@ -194,7 +199,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         setContentView(R.layout.main);
         
         TextView statusText = (TextView) findViewById(R.id.StatusText);
-		logger = new OnScreenLogger(statusText);
+		logger = OnScreenLogger.init(statusText);
         
         videoView= (MjpegView)findViewById(R.id.videoView);
     	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
@@ -288,8 +293,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		
 		videoReceiver = new VideoReceiver(videoView);
         videoSender = new VideoSender(this, cameraPreview);
-        audioSender = new AudioSender(this);
-        audioReceiver= new AudioReceiver(this);
+        audioSender = new AudioSender();
+        audioReceiver= new AudioReceiver();
         
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
@@ -1041,12 +1046,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionSuccessful(Object responce) {
 			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);//  reRunCommands();
 			OnScreenLogger.setCommands(false);
+			driver.reset();
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
 			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 			OnScreenLogger.setCommands(false);
+			//driver.reset();
 		}
 
 		@Override
@@ -1054,6 +1061,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			reconnectHandler.sendMessageDelayed(reconnectHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 			//driver.reset();
 			OnScreenLogger.setCommands(false);
+			//driver.reset();
 		}
 		
 		/*ByteArrayOutputStream s = new ByteArrayOutputStream(10);
@@ -1143,9 +1151,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	public void setSession_token(String session_token) {
 		this.session_token = session_token;
 		getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putString(SHARED_PREFS_TOKEN, session_token).apply();
-		videoReceiver.setToken(session_token);
-		audioSender.setToken(session_token);
-		audioReceiver.setToken(session_token);
-		videoSender.setToken(session_token);
+		videoReceiver.setToken("web-"+session_token);
+		audioSender.setToken("ava-"+session_token);
+		audioReceiver.setToken("web-"+session_token);
+		videoSender.setToken("ava-"+session_token);
 	}
 }

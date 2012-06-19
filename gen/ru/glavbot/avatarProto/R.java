@@ -128,6 +128,7 @@ public final class R {
     }
     public static final class style {
         public static final int ControlButton=0x7f060000;
+        public static final int MainWindowButton=0x7f060001;
     }
     public static final class xml {
         public static final int accessory_filter=0x7f040000;

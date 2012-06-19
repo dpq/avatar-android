@@ -74,10 +74,11 @@
     				android:layout_height="fill_parent" >
 
 					<ImageView android:id="@+id/ImageViewLogo"
-					    android:layout_width="fill_parent"
-                        android:layout_height="fill_parent"
+					    android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_centerHorizontal="true"
-                        
+                        android:layout_alignParentTop="true"
+                        android:scaleType="fitCenter"
                         android:background="@drawable/gb_logo_big"
 					    />
  	    
@@ -85,21 +86,21 @@
  	    
                           <Button
                               android:id="@+id/SendLinkButton"
-                         	  android:layout_above="@+id/ResumeButton"
+                         	  android:layout_below="@+id/ImageViewLogo"
                          	  android:layout_alignLeft="@+id/ImageViewLogo"
                          	  android:layout_alignRight="@+id/ImageViewLogo"
                               android:text="@string/btnsendlinktext"
                               style="@style/MainWindowButton" />
                           <Button
                               android:id="@+id/ResumeButton"
-                         	  android:layout_above="@+id/SettingsButton"
+                         	  android:layout_below="@+id/SendLinkButton"
                          	  android:layout_alignLeft="@+id/ImageViewLogo"
                          	  android:layout_alignRight="@+id/ImageViewLogo"
                               android:text="@string/btnresumesessiontext"
                               style="@style/MainWindowButton"  />
 						<Button
                               android:id="@+id/SettingsButton"
-                         	  android:layout_alignParentBottom="true"
+                         	  android:layout_below="@+id/ResumeButton"
                          	  android:layout_alignLeft="@+id/ImageViewLogo"
                          	  android:layout_alignRight="@+id/ImageViewLogo"
                               android:text="@string/btnsettingstext"
