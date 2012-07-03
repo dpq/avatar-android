@@ -27,8 +27,9 @@ public final class R {
         public static final int invite_button_proto=0x7f02000d;
         public static final int invite_button_proto_blue_3=0x7f02000e;
         public static final int invite_button_proto_green=0x7f02000f;
-        public static final int platform_view=0x7f020010;
-        public static final int start_button_image=0x7f020011;
+        public static final int malevich=0x7f020010;
+        public static final int platform_view=0x7f020011;
+        public static final int start_button_image=0x7f020012;
     }
     public static final class id {
         public static final int CameraPreview=0x7f070022;

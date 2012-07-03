@@ -6,12 +6,12 @@ package ru.glavbot.avatarProto;
 //import java.io.DataOutputStream;
 //import java.io.IOException;
 
-import java.io.IOException;
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.mjpegsample.MjpegView.MjpegView;
+
 import ru.glavbot.AVRestreamer.AudioReceiver;
 import ru.glavbot.AVRestreamer.AudioSender;
 import ru.glavbot.AVRestreamer.OnScreenLogger;
@@ -79,7 +79,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private Button stopButton;
      private Button volumeButton;
      private SurfaceView cameraPreview;
-     private MjpegView videoView;
+     private SurfaceView videoView;
      private FrameLayout frameLayoutRun;
      private RelativeLayout relativeLayoutStart;
      
@@ -201,7 +201,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         TextView statusText = (TextView) findViewById(R.id.StatusText);
 		logger = OnScreenLogger.init(statusText);
         
-        videoView= (MjpegView)findViewById(R.id.videoView);
+        videoView= (SurfaceView)findViewById(R.id.videoView);
     	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
 		settingsButton=(Button)findViewById(R.id.SettingsButton);
 		settingsButton.setOnClickListener(new OnClickListener() {
@@ -617,10 +617,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         driver.setWheelDirs(dirs);
 
         
-    	videoReceiver.setToken(session_token);
-    	audioSender.setToken(session_token);
-    	audioReceiver.setToken(session_token);
-    	videoSender.setToken(session_token);
+        writeTokenToWorkers(session_token);
     	setPortsAndHosts();
     	startListeningNetwork();
     	
@@ -1148,12 +1145,17 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		return session_token;
 	}
 
-	public void setSession_token(String session_token) {
-		this.session_token = session_token;
-		getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putString(SHARED_PREFS_TOKEN, session_token).apply();
+	private void writeTokenToWorkers(String session_token)
+	{		
 		videoReceiver.setToken("web-"+session_token);
 		audioSender.setToken("ava-"+session_token);
 		audioReceiver.setToken("web-"+session_token);
 		videoSender.setToken("ava-"+session_token);
+		
+	}
+	public void setSession_token(String session_token) {
+		this.session_token = session_token;
+		getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putString(SHARED_PREFS_TOKEN, session_token).apply();
+		writeTokenToWorkers(session_token);
 	}
 }

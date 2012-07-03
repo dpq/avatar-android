@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">Avatar прототип v0.2</string>
 	<string name="btnstartstoptext">Вкл|Выкл</string>
-	<string name="btnsendlinktext">Начать новую сессию</string>
-	<string name="btnresumesessiontext">Возобновить сессию</string>
+	<string name="btnsendlinktext">Начать новый сеанс</string>
+	<string name="btnresumesessiontext">Возобновить сеанс</string>
 	<string name="btnsettingstext">Настройки сервера</string>
 	<string name="sendLinkDlgHeader">Введите параметры приглашения</string>
 	<string name="sendLinkDlgButtonOk">Ok</string>
