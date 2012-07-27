@@ -4,7 +4,8 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:gravity="bottom" 
-    android:keepScreenOn="true" >
+    android:keepScreenOn="true" 
+   >
 
     <!--     <TextView
             android:id="@+id/LeftEngineForward"
@@ -71,39 +72,102 @@
             android:background="#000000"/>
 -->                              	 	<RelativeLayout android:id="@+id/relativeLayoutStart"
     				android:layout_width="fill_parent"
-    				android:layout_height="fill_parent" >
+    				android:layout_height="fill_parent"
+    				android:background="@drawable/main_background_repeatable"
+    				 >
 
-					<ImageView android:id="@+id/ImageViewLogo"
-					    android:layout_width="fill_parent"
-                        android:layout_height="fill_parent"
+				 	<ImageView android:id="@+id/ImageViewLogo"
+					    android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_centerHorizontal="true"
-                        
-                        android:background="@drawable/gb_logo_big"
+                        android:layout_alignParentTop="true"
+                        android:background="@drawable/logo_big"
+                        android:layout_marginTop="25dp"
 					    />
  	    
- 	    
+				 	    
+				 	     <FrameLayout android:id="@+id/FrameLayoutMailSelector"
+ 								android:layout_width="fill_parent"
+ 	                            android:layout_height="wrap_content"
+                         	  	android:layout_alignParentLeft="true"
+                         	  	android:layout_alignParentRight="true"
+ 	                            android:layout_below="@+id/ImageViewLogo"
+ 	                            android:layout_marginLeft="30dp"
+ 	                            android:layout_marginRight="30dp"
+ 	                            android:layout_marginTop="10dp"
+ 	                            
+ 	                            android:foregroundGravity="right"
+ 	                            >
+ 	                            
+				 	         
+				 	    	<AutoCompleteTextView
+ 	                        	android:id="@+id/autoCompleteTextViewAddress"
+ 	                       		android:layout_width="fill_parent"
+ 	                           	android:layout_height="80dp"
+ 	                           	android:hint="Enter mail here" 
+ 	                           	android:inputType="textEmailAddress"
+ 	                           	android:textSize="24dp"
+ 	                           	android:textColor="#00000000"
+ 	                           	android:textStyle="bold"
+ 	                           	android:textCursorDrawable="@null"
+ 	                           	android:background="@drawable/input_email_background">
+ 	                        <requestFocus />
+	 	                    </AutoCompleteTextView>
+				 	         
+				 	         <Button
+                              android:id="@+id/MailListButton"
+                         	  android:layout_gravity="right"
+                         	  android:layout_width="32dp"
+ 	                          android:layout_height="32dp"
+                              android:text=""
+                              android:layout_marginRight="20dp"
+                              android:layout_marginTop="20dp"
+                              android:background="@drawable/select_contact"
+                              />
+				 	         
+				 	         
+				 	    </FrameLayout>
+
+ 	     
  	    
                           <Button
                               android:id="@+id/SendLinkButton"
-                         	  android:layout_above="@+id/ResumeButton"
-                         	  android:layout_alignLeft="@+id/ImageViewLogo"
-                         	  android:layout_alignRight="@+id/ImageViewLogo"
+                         	  android:layout_below="@+id/FrameLayoutMailSelector"
+                         	  android:layout_alignParentLeft="true"
+                         	  android:layout_alignParentRight="true"
                               android:text="@string/btnsendlinktext"
                               style="@style/MainWindowButton" />
-                          <Button
+                         <!--  <Button
                               android:id="@+id/ResumeButton"
                          	  android:layout_above="@+id/SettingsButton"
-                         	  android:layout_alignLeft="@+id/ImageViewLogo"
-                         	  android:layout_alignRight="@+id/ImageViewLogo"
+                         	  android:layout_alignParentLeft="true"
+                         	  android:layout_alignParentRight="true"
                               android:text="@string/btnresumesessiontext"
-                              style="@style/MainWindowButton"  />
+                              style="@style/MainWindowButton"  /> -->
 						<Button
                               android:id="@+id/SettingsButton"
                          	  android:layout_alignParentBottom="true"
-                         	  android:layout_alignLeft="@+id/ImageViewLogo"
-                         	  android:layout_alignRight="@+id/ImageViewLogo"
-                              android:text="@string/btnsettingstext"
-                              style="@style/MainWindowButton"  />						<!-- <WebView 
+                         	  android:layout_alignParentRight="true"
+                              android:text=""
+                              android:background="@drawable/settings_button"
+                              android:layout_width="85dp"
+                              android:layout_height="80dp"
+                              android:layout_marginRight="30dp"
+                              android:layout_marginBottom="30dp"
+                              
+                               />
+						<Button
+                              android:id="@+id/RegisterButton"
+                         	  android:layout_alignParentBottom="true"
+                         	  android:layout_alignParentLeft="true"
+                              android:text=""
+                              android:background="@drawable/register_button"
+                              android:layout_width="85dp"
+                              android:layout_height="80dp"
+                              android:layout_marginLeft="30dp"
+                              android:layout_marginBottom="30dp"
+                              
+                               />						<!-- <WebView 
 							android:layout_width="fill_parent" 
 							android:id="@+id/webview" 
 							android:layout_height="wrap_content"
@@ -135,46 +199,118 @@
  	        		android:gravity="bottom"
  	        		android:layout_width="fill_parent"
  	        		android:layout_height="fill_parent">
- 	                          <Button
-                              android:id="@+id/StartButton"
+				 			<!-- top indicators -->         
+ 	    		    		<LinearLayout android:orientation="horizontal"
+ 	    		    		    android:id="@+id/LinearLayoutIndicators"
+ 	    		    		    android:weightSum="3"
+ 	    		    		    android:layout_alignParentLeft="true"
+ 	    		    		    android:layout_alignParentTop="true"
+ 	    		    		    android:layout_alignParentRight="true"
+ 	    		    		    android:layout_width="fill_parent" 
+ 	    		    		    android:layout_height="wrap_content">
+ 	    		    		   	<TextView
+             					 	android:id="@+id/TextViewSignal"
+            						android:text="weak signal" 
+            						android:background="#FFFFFFFF"
+            						android:layout_weight="1"
+            						android:layout_width="wrap_content" 
+ 	    		    		    	android:layout_height="wrap_content"/>
+ 	    		    		   	<TextView
+             					 	android:id="@+id/TextViewCharge"
+            						android:text="need charge" 
+            						android:background="#FFFFFFFF"
+            						android:layout_weight="1"
+            						android:layout_width="wrap_content" 
+ 	    		    		    	android:layout_height="wrap_content"/>
+ 	    		    		   	<TextView
+             					 	android:id="@+id/TextViewEstimatedTime"
+            						android:text="10 minutes left" 
+            						android:background="#FFFFFFFF"
+            						android:layout_weight="1"
+            						android:layout_width="wrap_content" 
+ 	    		    		    	android:layout_height="wrap_content"/>
+ 	    		    		</LinearLayout>
+ 	    		    
+ 	                          <Button 
+                              android:id="@+id/StopButton"
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"
-                              android:layout_alignParentLeft="true"
+                              android:layout_alignParentRight="true"
                               android:textColor="#000000ff"
-                              android:layout_alignParentBottom="true" 
-                              android:background="@drawable/button_play"/>
+                              android:layout_below="@+id/LinearLayoutIndicators" 
+                              android:background="@drawable/stop_button"/>
  	                          <Button
                               android:id="@+id/PauseButton"
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"
-                              android:layout_alignParentLeft="true"
+                              android:layout_alignParentRight="true"
                               android:textColor="#000000ff"
-                              android:layout_alignParentBottom="true" 
-                              android:background="@drawable/button_pause"/>
+                              android:layout_below="@+id/StopButton" 
+                              android:background="@drawable/pause_button"/>
  	                          <SurfaceView
                               android:id="@+id/CameraPreview"
                               android:layout_width="24dip"
                               android:layout_height="32dip"
 							  android:layout_centerHorizontal="true"
 							  android:layout_alignParentBottom="true"
-							  android:visibility="visible" />
+							   />
  	                          
- 	                          <Button
- 	                          	android:id="@+id/StopButton"
+ 	                      <!--    <Button
+ 	                          	android:id="@+id/PlayButton"
                               	android:layout_width="wrap_content"
                               	android:layout_height="wrap_content"
                  				android:layout_alignParentRight="true"
                  				android:layout_alignParentBottom="true"
                  				android:background="@drawable/button_stop"
-                              	android:text="" />
- 	                         <Button
+                              	android:text="" />-->
+ 	                        <!--  <Button
  	                          	android:id="@+id/VolumeButton"
                               	android:layout_width="wrap_content"
                               	android:layout_height="wrap_content"
                  				android:layout_toLeftOf="@id/StopButton"
                  				android:layout_alignParentBottom="true"
                  				android:background="@drawable/button_volume"
-                              	android:text="" /> 
+                              	android:text="" />
+ 							-->
+								<LinearLayout android:orientation="horizontal"
+ 	    		    		    android:id="@+id/LinearLayoutVolume"
+ 	    		    		    android:weightSum="10"
+ 	    		    		    android:layout_alignParentLeft="true"
+ 	    		    		    android:layout_alignParentBottom="true"
+ 	    		    		    android:layout_alignParentRight="true"
+ 	    		    		    android:layout_width="fill_parent" 
+ 	    		    		    android:layout_height="wrap_content"
+ 	    		    		    android:layout_marginBottom="32dp">
+ 	    		    		   		
+								    <ImageView android:id="@+id/ImageViewNoVolume"
+					    				android:layout_width="32dp"
+                        				android:layout_height="32dp"
+                        				android:background="@drawable/no_volume_icon"
+                        				android:layout_marginLeft="10dp"
+                        				android:layout_weight="1" 
+                        				android:layout_marginBottom="4dip"/>
+								    
+								    
+								    <SeekBar
+		    							android:id="@+id/seekBarVolume"
+		    							android:layout_width="fill_parent"
+		    							android:layout_height="32dp"
+		    							android:layout_weight="8" 
+		    							android:progressDrawable="@drawable/seekbar_progress"
+		    							android:thumbOffset="8dp"
+		    							android:thumb="@drawable/seek_bar_seeker"
+		    							android:layout_gravity="center_horizontal"/>
+								    
+								    <ImageView android:id="@+id/ImageViewMaxVolume"
+					    				android:layout_width="32dp"
+                        				android:layout_height="32dp"
+                        				android:background="@drawable/max_volume_icon"
+                        				android:layout_marginRight="10dp"
+                        				android:layout_weight="1" 
+                        				android:layout_marginBottom="4dip"/>   
+ 	    		    		   	</LinearLayout>
+ 	    		    		   	
+ 
  	    </RelativeLayout>
     </FrameLayout>
     <TextView

@@ -120,6 +120,7 @@
         	android:layout_weight="1"
         	android:inputType="number"/>
 	</LinearLayout>
+	<!-- 
 	<LinearLayout android:id="@+id/layoutAngles"
               android:orientation="horizontal"
               android:layout_width="fill_parent"
@@ -144,13 +145,98 @@
         	android:layout_width="0dip"
         	android:layout_height="wrap_content"
         	android:layout_weight="1"
-        	android:inputType="numberSigned"/>
+        	android:inputType="numberSigned"/> -->
     <!-- 	<Button
 		    android:id="@+id/buttonTestWheels"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
 		    android:text="test" /> -->
-	</LinearLayout>
+	<!-- </LinearLayout> -->
+	
+	   <RadioGroup
+        android:id="@+id/radioGroupDest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" 
+        android:checkedButton="@+id/radioT">
+        <RadioButton
+            android:id="@+id/radioT"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Turn" />
+	       
+	       
+        <RadioButton
+            android:id="@+id/radioF"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Forward" />
+
+        <RadioButton
+            android:id="@+id/radioRF"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Right Forward" />
+
+        <RadioButton
+            android:id="@+id/radioR"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Right" />
+
+        <RadioButton
+            android:id="@+id/radioBR"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Right backward" />
+
+
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/radioGroupWheel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:checkedButton="@+id/radio0" >
+
+        <RadioButton
+            android:id="@+id/radio0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="wheel fr" />
+
+        <RadioButton
+            android:id="@+id/radio1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="wheel fl" />
+
+        <RadioButton
+            android:id="@+id/radio2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="wheel b" />
+    </RadioGroup>
+
+    <TextView android:id="@+id/textWheelAngle"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="0"
+              
+    />
+    <SeekBar
+        android:id="@+id/seekBarAngle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:layout_marginTop="25dp"
+        android:max="180"
+        />
+		
 	<LinearLayout android:id="@+id/layout_buttons"
             android:orientation="horizontal"
             android:layout_width="fill_parent"
@@ -168,7 +254,6 @@
 		    android:layout_height="wrap_content"
 		    android:text="@string/sendLinkDlgButtonCancel" />
 	</LinearLayout>
-
-		
+ 
 
 </LinearLayout>

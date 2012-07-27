@@ -10,7 +10,7 @@ const int bPin=5;
 const int cPin=8;
 const int headPin=49;
 
-const int cmdLength=11;
+const int cmdLength=12;
 
 AndroidAccessory acc("Cyberdyne Systems",
 		     "RoboRuler",
@@ -24,27 +24,54 @@ HPRGB ledShield; // default mcp4728 id(0) and default PCA9685 id(0)
 class WheelCaret{
   Servo srv;
   int basePin;
+  byte isActive;
   public:
   short prevSpd;
-  void init(int basePin)
+  void init(int basePin/*,unsigned char* data*/)
   {
     this->basePin=basePin;
     pinMode(basePin, OUTPUT);
     pinMode(basePin+1, OUTPUT);
-    srv.attach(basePin+2);
+    enable();
+    //process(data);
     prevSpd=0;
-    
+
   }
+
+
+  void disable()
+  {
+    if(isActive)
+    {
+      srv.detach();
+      analogWrite(basePin,0);
+      analogWrite(basePin+1,0);
+      digitalWrite(basePin+2,LOW);
+      isActive=false;
+      
+    }
+  }
+  void enable()
+  {
+    if(!isActive)
+    {
+      srv.attach(basePin+2);
+      isActive=true;
+    }
+  }
+
 
   void process(unsigned char* data)
   {
-    unsigned char angle=data[0];
-    short spd=data[1];
-    spd=(spd<<8)+data[2];
-    if(srv.read()!=angle)
-      srv.write(angle);
-    if(spd!=prevSpd)
+    if(isActive)
     {
+      unsigned char angle=data[0];
+      short spd=data[1];
+      spd=(spd<<8)+data[2];
+      //if(srv.read()!=angle)
+      srv.write(angle);
+      if(spd!=prevSpd)
+      {
         prevSpd=spd;
         if(spd>0)
         {
@@ -62,6 +89,7 @@ class WheelCaret{
             analogWrite(basePin+1,0);
             analogWrite(basePin,0);
         }
+      }
     }
   /* Serial.print("\r\nSpd: ");
    Serial.print(spd,DEC);
@@ -77,6 +105,11 @@ class WheelCaret{
 
 WheelCaret a,b,c;
 Servo head;
+
+long timer = millis(); 
+
+const byte defCommand[] = {1,90,90,0,0,90,0,0,120,0,0,0};
+static unsigned char my_msg[cmdLength];
 
 void setup()
 {
@@ -96,14 +129,12 @@ void setup()
         ledShield.setCurrent(350,350,350); // set maximum current for channel 1-3 (mA)
         ledShield.setFreq(600);// operation frequency of the LED driver (KHz)
         ledShield.eepromWrite();// write current settings to EEPROM
+        
+        memcpy(my_msg,defCommand,cmdLength);
+        
         delay(100); // wait for EEPROM writing
 }
 
-        const byte defCommand[] = {90,90,0,0,90,0,0,120,0,0,0};
-
-
-long timer = millis(); 
-static unsigned char my_msg[cmdLength];
 
 void setLed(short val)
 {
@@ -121,6 +152,45 @@ void setLed(short val)
   }
 }
 
+
+
+
+void setAll()
+{
+  if(my_msg[0]!=0)
+  {
+        if(!head.attached())
+            head.attach(headPin);
+    
+        //if(head.read()!=my_msg[1])
+        head.write(my_msg[1]);
+        a.enable();
+        b.enable();
+        c.enable();
+        a.process(my_msg+2);
+        b.process(my_msg+5);
+        c.process(my_msg+8);
+        setLed(my_msg[11]);
+        Serial.print("\r\ncmd: ");
+        for(int i =0; i< cmdLength;i++)
+            Serial.print(my_msg[i],DEC);
+  }
+  else
+  {
+    if(head.attached())
+    {
+        head.detach();
+        digitalWrite(headPin,LOW);
+    }
+    a.disable();
+    b.disable();
+    c.disable();
+  }
+}
+
+
+
+
 void loop()
 {
 	//byte err;
@@ -136,32 +206,15 @@ void loop()
 
                 if(curRead==cmdLength)
                 {
-                    if(head.read()!=my_msg[0])
-                       head.write(my_msg[0]);
-                    //analogWrite(headPin, czzz);
-                    a.process(my_msg+1);
-                    b.process(my_msg+4);
-                    c.process(my_msg+7);
-                    //my_already_read=0;
-                    setLed(my_msg[10]);
-                    Serial.print("\r\ncmd: ");
-                    for(int i =0; i< cmdLength;i++)
-                        Serial.print(my_msg[i],DEC);
+                  setAll();
                 }
 	    }
             else
             {
               memcpy(my_msg,defCommand,cmdLength);
-              if(head.read()!=my_msg[0])
-                 head.write(my_msg[0]);
-              //analogWrite(headPin, czzz);
-              a.process(my_msg+1);
-              b.process(my_msg+4);
-              c.process(my_msg+7);
-              setLed(my_msg[10]);
+              setAll();
             }
         timer = millis();
-        analogWrite(13,127);
         }
 }
 

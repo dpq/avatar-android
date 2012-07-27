@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ListView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" 
+    android:background="#FFFFFF"
+    android:id="@+id/AddressBookListId"
+    android:divider="@drawable/main_background_repeatable"
+    android:dividerHeight="1dp"
+    
+    style="@style/MyListViewStyle">
+        
+
+</ListView>

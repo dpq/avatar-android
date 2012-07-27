@@ -36,4 +36,15 @@
 	<string name="configSrvDlgVideoOutPort">Video port:</string>
 	<string name="volumeRegulationDlgSetVolume">Set volume:</string>
 	<string name="volumeRegulationDlgHeader">Volume regulation</string>
+	<string name="connectionLostDialogDesc">Connection lost! Trying to re-estabilish it.</string>
+	<string name="connectionLostDialogButton">Close session</string>
+	<string name="lowChargeDialogDesc">Our battery is almost charged off! Replace it or insert charger.</string>
+	<string name="lowChargeDialogButton">Close</string>
+	<string name="pauseDialogDesc">Session paused. No data transferring.</string>
+	<string name="pauseDialogButton">Resume</string>
+	<string name="remotePauseDialogDesc">Session paused by remote user. No data transferring.</string>
+	<string name="remotePauseDialogButton">Close session</string>
+	<string name="timeOutDialogDesc">Session time is over!</string>
+	<string name="timeOutDialogButton">Start new session</string>
+	<string name="AddressBookHeader">Recent addresses</string>
 </resources>

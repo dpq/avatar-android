@@ -20,7 +20,7 @@ import android.util.Log;
 
 public class AccessoryProcessor extends Activity {
 	
-	private static final String TAG = "RoboRuler";
+	private static final String TAG = "RoboRuler"; 
 
 	private static final String ACTION_USB_PERMISSION = "ru.glavbot.avatarProto.action.USB_PERMISSION";
 
@@ -164,7 +164,7 @@ private void openAccessory(UsbAccessory accessory) {
 		mOutputStream =  new FileOutputStream(fd);
 		//Thread thread = new Thread(this, "DemoKit");
 		//thread.start();
-		Log.d(TAG, "accessory opened");
+		Log.d(TAG, "accessory opened"); 
 		//enableControls(true);
 	} else {
 		Log.d(TAG, "accessory open fail");

@@ -24,4 +24,5 @@
 	<string name="configSrvDlgVideoOutPort">Порт видеопотока:</string>
 	<string name="volumeRegulationDlgSetVolume">Укажите громкость:</string>
 	<string name="volumeRegulationDlgHeader">Регулятор громкости</string>
+	<string name="AddressBookHeader">Недавние адреса</string>
 </resources>
