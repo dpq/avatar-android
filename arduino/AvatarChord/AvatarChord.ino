@@ -10,7 +10,7 @@ const int bPin=5;
 const int cPin=8;
 const int headPin=49;
 
-const int cmdLength=12;
+const int cmdLength=13;
 
 AndroidAccessory acc("Cyberdyne Systems",
 		     "RoboRuler",
@@ -107,8 +107,9 @@ WheelCaret a,b,c;
 Servo head;
 
 long timer = millis(); 
+long chargeTimer=millis();
 
-const byte defCommand[] = {1,90,90,0,0,90,0,0,120,0,0,0};
+const byte defCommand[] = {1,90,90,0,0,90,0,0,120,0,0,0,0};
 static unsigned char my_msg[cmdLength];
 
 void setup()
@@ -171,9 +172,9 @@ void setAll()
         b.process(my_msg+5);
         c.process(my_msg+8);
         setLed(my_msg[11]);
-        Serial.print("\r\ncmd: ");
-        for(int i =0; i< cmdLength;i++)
-            Serial.print(my_msg[i],DEC);
+       // Serial.print("\r\ncmd: ");
+       // for(int i =0; i< cmdLength;i++)
+       //     Serial.print(my_msg[i],DEC);
   }
   else
   {
@@ -185,6 +186,21 @@ void setAll()
     a.disable();
     b.disable();
     c.disable();
+  }
+  if(my_msg[12]!=0)
+  {
+      if (acc.isConnected()) {
+         int sensorValue = analogRead(A0);
+         byte data[2];
+         data[0]=(byte)sensorValue;
+         data[1]=(byte)(sensorValue>>8);
+         acc.write(data,2);
+         Serial.print("\r\nData: ");
+          Serial.print(data[0],DEC);
+          Serial.print(data[1],DEC);
+         Serial.print("\r\nCharge: ");
+         Serial.print(sensorValue,DEC);
+      }
   }
 }
 
@@ -198,7 +214,7 @@ void loop()
 	//static byte count = 0;
 	
         //static int my_already_read=0;
-        if(millis()-timer>10) { // sending 100 times per second
+        //if(millis()-timer>10) { // sending 100 times per second
 	    if (acc.isConnected()) {
                 int curRead=acc.read(my_msg,cmdLength,1);
                   //my_msg[my_already_read]=curRead;
@@ -213,8 +229,34 @@ void loop()
             {
               memcpy(my_msg,defCommand,cmdLength);
               setAll();
+              delay(10);
             }
-        timer = millis();
+        //timer = millis();
+        //}
+        
+      /*  if(millis()- chargeTimer>1000)
+        {
+           int sensorValue = analogRead(A0);
+           byte data[2];
+             data[0]=(byte)sensorValue;
+             data[1]=(byte)(sensorValue>>8);
+           if (acc.isConnected()) {
+
+
+             acc.write(data,2);
+             
+             
+           }
+          Serial.print("\r\nData: ");
+          Serial.print(data[0],DEC);
+          Serial.print(data[1],DEC);
+           
+          Serial.print("\r\nCharge: ");
+          Serial.print(sensorValue,DEC);
+          chargeTimer=millis();
         }
+        */
+        
+        
 }
 

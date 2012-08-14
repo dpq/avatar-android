@@ -1,9 +1,11 @@
 package ru.glavbot.avatarProto;
 
+import java.io.BufferedInputStream;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 
 import android.app.Activity;
@@ -15,8 +17,11 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+import android.widget.Toast;
 
 public class AccessoryProcessor extends Activity {
 	
@@ -30,9 +35,9 @@ public class AccessoryProcessor extends Activity {
 
 	private UsbAccessory mAccessory;
 	private ParcelFileDescriptor mFileDescriptor;
-	private FileInputStream mInputStream;
+	private BufferedInputStream mInputStream=null;
 	//protected FileOutputStream mOutputStream;
-	protected FileOutputStream mOutputStream;
+	protected FileOutputStream mOutputStream=null;
 	
 	protected Object sync=new Object();
 	
@@ -57,8 +62,22 @@ public class AccessoryProcessor extends Activity {
 					UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
 					if (accessory != null && accessory.equals(mAccessory)) {
 						closeAccessory();
-					}
+						try {
+							Process process = new ProcessBuilder()
+						       .command("/system/bin/su")
+						       .start();
+								OutputStream o =process.getOutputStream();
+								o.write("/system/bin/reboot -p\n".getBytes());
+
+						} catch (Exception e) {
+							Toast.makeText(getApplicationContext(), "fail!", Toast.LENGTH_LONG).show();
+						} 
+					}	
+
+
 				}
+
+
 			}
 		}
 	};
@@ -71,7 +90,9 @@ public class AccessoryProcessor extends Activity {
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
 		IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-		filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
+	    filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
+	    filter.addAction(UsbManager.ACTION_USB_ACCESSORY_ATTACHED);
+
 		registerReceiver(mUsbReceiver, filter);
 
 		if (getLastNonConfigurationInstance() != null) {
@@ -112,6 +133,81 @@ protected void sendCommand(byte[] commandData) {
 		}
 	}
 }
+
+volatile byte[] readerData = {};//new byte[commandLength];
+Thread readerThread= null;
+Thread watcherThread= null;
+
+protected void readCommand(int commandLength) {
+	// TODO Auto-generated method stub
+	readerData=new byte[commandLength];
+	synchronized (sync) {
+		if(mInputStream!=null)
+		{
+			
+			//try {
+				
+
+				
+			       readerThread = new Thread() {
+			            public void run() {                
+			                try {
+			                	int read=0;
+			                	int totalRead=0;
+			                	while(totalRead<readerData.length)
+			                	{
+			                		read=mInputStream.read(readerData,totalRead, readerData.length-totalRead);
+			                		if(read>0)
+			                		{
+			                			totalRead+=read;
+			                		}
+			                		
+			                	}
+			                	
+								int tmp1=readerData[1];
+								int chrg=(tmp1<<8)+readerData[0]; 
+								if(chrg>0)
+									reportCharge(chrg);
+								
+			                } catch (Exception e) {
+			                  
+			                } 
+			            }
+			        };
+
+			        
+			        watcherThread=  new Thread() {
+			            public void run() {   
+			            	readerThread.start();
+			            	try {
+								readerThread.join(1000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+			            }
+			        };
+			        
+			        watcherThread.start();
+			        
+				
+					
+					
+				//	return readerData;
+				
+
+		}
+	//	return readerData;
+	}
+}
+
+private void reportCharge(int chrg)
+{
+	Message msg=mainThreadHandler.obtainMessage(AvatarMainActivity.READ_CHARGE_STATE);
+	msg.arg1=chrg;
+	mainThreadHandler.sendMessage(msg);
+}
+
 
 
 @Override
@@ -155,15 +251,31 @@ public void onDestroy() {
 	super.onDestroy();
 }
 
+protected Handler mainThreadHandler;
+
+
+
+Handler getHandler()
+{
+	return mainThreadHandler;
+}
+
+
 private void openAccessory(UsbAccessory accessory) {
 	mFileDescriptor = mUsbManager.openAccessory(accessory);
 	if (mFileDescriptor != null) {
 		mAccessory = accessory;
 		FileDescriptor fd = mFileDescriptor.getFileDescriptor();
-		mInputStream = new FileInputStream(fd);
+		mInputStream =new BufferedInputStream( new FileInputStream(fd));
 		mOutputStream =  new FileOutputStream(fd);
 		//Thread thread = new Thread(this, "DemoKit");
 		//thread.start();
+		/*try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 		Log.d(TAG, "accessory opened"); 
 		//enableControls(true);
 	} else {

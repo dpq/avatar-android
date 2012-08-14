@@ -152,48 +152,62 @@
 		    android:layout_height="wrap_content"
 		    android:text="test" /> -->
 	<!-- </LinearLayout> -->
-	
+		<TextView android:id="@+id/textDirectionsHeader"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="@string/configSrvDlgDirs"
+    />
+
 	   <RadioGroup
         android:id="@+id/radioGroupDest"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
         android:orientation="horizontal" 
-        android:checkedButton="@+id/radioT">
+        android:checkedButton="@+id/radioT"
+        android:gravity="center_vertical"
+        >
         <RadioButton
             android:id="@+id/radioT"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:checked="true"
-            android:text="Turn" />
+            android:text="@string/configSrvDlgDirT" />
 	       
 	       
         <RadioButton
             android:id="@+id/radioF"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Forward" />
+            android:layout_height="match_parent"
+            android:text="@string/configSrvDlgDirF" />
 
         <RadioButton
             android:id="@+id/radioRF"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Right Forward" />
+            android:layout_height="match_parent"
+            android:text="@string/configSrvDlgDirRF" />
 
         <RadioButton
             android:id="@+id/radioR"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Right" />
+            android:layout_height="match_parent"
+            android:text="@string/configSrvDlgDirR" />
 
         <RadioButton
             android:id="@+id/radioBR"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Right backward" />
+            android:layout_height="match_parent"
+            android:text="@string/configSrvDlgDirRB" />
 
 
     </RadioGroup>
 
+	<TextView android:id="@+id/textWheelHeader"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#FFF"
+              android:text="@string/configSrvDlgWheels"
+    />
     <RadioGroup
         android:id="@+id/radioGroupWheel"
         android:layout_width="wrap_content"
@@ -206,27 +220,27 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="wheel fr" />
+            android:text="@string/configSrvDlgWheelFR" />
 
         <RadioButton
             android:id="@+id/radio1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="wheel fl" />
+            android:text="@string/configSrvDlgWheelFL" />
 
         <RadioButton
             android:id="@+id/radio2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="wheel b" />
+            android:text="@string/configSrvDlgWheelB" />
     </RadioGroup>
 
+    <!-- this field's value is calculating dynamically -->
     <TextView android:id="@+id/textWheelAngle"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:textColor="#FFF"
               android:text="0"
-              
     />
     <SeekBar
         android:id="@+id/seekBarAngle"

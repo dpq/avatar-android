@@ -2,7 +2,7 @@
 <resources>
 
     <string name="hello">Hello World, Test1Activity!</string>
-    <string name="app_name">Avatar prototype v0.2</string>
+    <string name="app_name">Avatar prototype v0.3</string>
 	<string name="control1">1</string>
 	<string name="control2">2</string>
 	<string name="control3">3</string>
@@ -12,28 +12,55 @@
 	<string name="control7">7</string>
 	<string name="control8">8</string>
 	<string name="control9">9</string>
-	<string name="btnstartstoptext">Start|stop</string>
-	<string name="btncanceltext">Сlose</string>
+	<string name="TextViewAddressHint">Enter email here</string>
 	<string name="btnsendlinktext">Start new session</string>
 	<string name="btnresumesessiontext">Resume session</string>
-	<string name="btnsettingstext">Server settings</string>
-	<string name="sendLinkDlgButtonOk">Ok</string>
+	<string name="btnsettingstext">Robot settings</string>
+<!-- 	<string name="sendLinkDlgButtonOk">Ok</string>
 	<string name="sendLinkDlgButtonCancel">Cancel</string>
 	<string name="sendLinkDlgHeader">Enter invite options</string>
 	<string name="sendLinkDlgEmail">Enter email</string>
-	<string name="sendLinkDlgExpires">Select expiration time, current %d h</string>
+	<string name="sendLinkDlgExpires">Select expiration time, current %d h</string> -->
+	<string name="sendingLinkMessage">Sending invite...</string>
+	
+	<!-- toasts -->
 	<string name="toastNoWifi">No wifi connection available. Please enable wifi!</string>
 	<string name="toastInviteOk">Invite sent successfully, waiting for commands.</string>
 	<string name="toastInviteFail">Invite sending failed with message \r %s</string>
 	<string name="toastInviteHz">Unknown server responce. Possibly fail</string>
 	<string name="toastInviteServerRefuse">"Server returned %d, try again later"</string>
 	<string name="toastInviteFailNoConnection">Invite sending failed with message \r %s</string>
-	<string name="configSrvDlgHeader">Server configuration</string>
+	<!-- worker screen -->
+	<string name="btnstartstoptext">Start|stop</string>
+	<string name="btncanceltext">Сlose</string>
+	
+	
+	<string name="TextWeakSignal">Weak signal</string>
+	<string name="TextNeedCharge">Low battery</string>
+	<string name="TextNoTimeLeft">10 min left</string>
+	
+	
+	<!-- ConfigSrvDialog -->
+	<string name="configSrvDlgHeader">Robot configuration</string>
 	<string name="configSrvDlgServer">Server</string>
 	<string name="configSrvDlgServerPort">Server http port:</string>
 	<string name="configSrvDlgAudioOutPort">Outgoing audio port:</string>
 	<string name="configSrvDlgAudioInPort">Incoming audio port:</string>
 	<string name="configSrvDlgVideoOutPort">Video port:</string>
+	
+	<string name="configSrvDlgDirs">Select direction</string>
+	<string name="configSrvDlgDirT">Turn</string>
+	<string name="configSrvDlgDirF">Forward</string>
+	<string name="configSrvDlgDirRF">Right forward</string>
+	<string name="configSrvDlgDirR">Right</string>
+	<string name="configSrvDlgDirRB">Right Backward</string>
+	
+	
+	<string name="configSrvDlgWheels">Select wheel</string>
+	<string name="configSrvDlgWheelFR">Front right</string>
+	<string name="configSrvDlgWheelFL">Front left</string>
+	<string name="configSrvDlgWheelB">Backward</string>
+	<!--  -->
 	<string name="volumeRegulationDlgSetVolume">Set volume:</string>
 	<string name="volumeRegulationDlgHeader">Volume regulation</string>
 	<string name="connectionLostDialogDesc">Connection lost! Trying to re-estabilish it.</string>
@@ -47,4 +74,7 @@
 	<string name="timeOutDialogDesc">Session time is over!</string>
 	<string name="timeOutDialogButton">Start new session</string>
 	<string name="AddressBookHeader">Recent addresses</string>
+
+
+	
 </resources>

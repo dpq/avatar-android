@@ -39,16 +39,20 @@
    			android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
        	<activity android:name="UsbAccessoryActivity" android:label="RoboRuler"
 			android:taskAffinity="" android:launchMode="singleInstance">
 			<intent-filter>
 				<action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
+
 			</intent-filter>
 			<meta-data android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
 				android:resource="@xml/accessory_filter" />
+
 		</activity>
     </application>
 

@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
+import android.os.Message;
 import android.util.Log;
 
 public class RoboDriver {
@@ -22,6 +23,13 @@ public class RoboDriver {
 	private static final int WHEEL_CRUISE_SPD = 252;
 	private static final String TAG="RoboDriver";
 
+	
+	private volatile long chargeWatchDog=Calendar.getInstance().getTimeInMillis(); 
+	private static final int CHARGE_DELAY=60000;
+	private int needReadCharge = 0;
+	private int prevNeedReadCharge = 0;
+	
+	
 	//volatile OutputStream commandWriter= null; 
 //	private volatile int[] compensationAngles={0,0,0};
 //	private volatile int[] wheelDirections = {1,1,1};
@@ -52,7 +60,7 @@ public class RoboDriver {
 	}*/
 	
 	
-	ByteArrayOutputStream s = new ByteArrayOutputStream(12);
+	ByteArrayOutputStream s = new ByteArrayOutputStream(13);
 	DataOutputStream ds = new DataOutputStream(s);
 //	byte[] error={90,90,0,90,0,90,0,0};
 
@@ -90,8 +98,32 @@ Runnable worker = new Runnable(){
 				ds.writeByte(radToDeg(curWheelDirs[2]));
 				ds.writeShort((int)curWheelSpeeds[2]);*/
 				ds.writeByte(curLEDlight);
+				ds.writeByte(needReadCharge);
 				sendCommand(s.toByteArray());
 				copyCurPrev();
+				
+				
+				if(needReadCharge!=0)
+				{
+					/*byte[] data = */readCommand(2);
+					
+					
+					needReadCharge=0;
+				}
+				
+				
+				/*
+				 * 
+				 * 
+				 * 
+				 * 
+				 * */
+				
+				
+				
+				
+				
+				
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -127,8 +159,7 @@ Runnable worker = new Runnable(){
 	}};
 	
 	
-	
-	
+
 	
 	
 	static int counter = 0;
@@ -192,9 +223,20 @@ Runnable worker = new Runnable(){
 	public RoboDriver(AccessoryProcessor owner)
 	{
 		this.owner=owner;
-		timer.scheduleAtFixedRate(worker, RESOLUTION, RESOLUTION, TimeUnit.MILLISECONDS);
+
 		
 	}
+	
+	public  void start()
+	{
+		timer.scheduleAtFixedRate(worker, RESOLUTION, RESOLUTION, TimeUnit.MILLISECONDS);
+	}
+	
+	public  void stop()
+	{
+		timer.remove(worker);
+	}
+	
 	
 	public void setNewDirection(int newDir, double newOmega, double newVOmega)
 	{
@@ -248,7 +290,7 @@ Runnable worker = new Runnable(){
 	    // wheel speeds
 	    for(int i=0;i<3;i++) {
 	        if(tagWheelSpeeds[i] > curWheelSpeeds[i]) curWheelSpeeds[i] += ACCELERATION;
-	        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] -= ACCELERATION;
+	        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] = tagWheelSpeeds[i];
 	        
 	    	//curWheelDirs[i]=tagWheelDirs[i]; 
 	   /*     if(tagWheelDirs[i] > curWheelDirs[i]) curWheelDirs[i] += TURN_SPEED;
@@ -280,6 +322,15 @@ Runnable worker = new Runnable(){
 	    {
 	    	curLEDlight-=5;
 	    }
+	    // charge
+	    if(Calendar.getInstance().getTimeInMillis()-chargeWatchDog>CHARGE_DELAY)
+	    {
+	    	chargeWatchDog=Calendar.getInstance().getTimeInMillis();
+	    	needReadCharge=1;
+	    }
+	   
+	    
+	    
 	    
 	    synchronized(synchronizer)
 	    {
@@ -291,7 +342,9 @@ protected void sendCommand(byte[] byteArray) {
 		owner.sendCommand(byteArray);
 	}
 
-
+protected void readCommand( int size) {
+	 owner.readCommand(size);
+}
 
 // CURRENT POSITIONS
 
@@ -318,6 +371,11 @@ private int prevLedLight=0;
 
 private volatile long watchDog=Calendar.getInstance().getTimeInMillis(); 
 
+
+
+
+
+
 private volatile long cmdWatchDog=Calendar.getInstance().getTimeInMillis(); 
 
 
@@ -336,6 +394,7 @@ byte prevServosEnabled = servosEnabled;
 
 boolean isChanged()
 {
+	//return true;
 	if(prevHeadPos!=curHeadPos) return resetWatchdog();
 	for(int i=0;i<3;i++)
 		if(prevWheelSpeeds[i]!=curWheelSpeeds[i]) return resetWatchdog();
@@ -343,6 +402,8 @@ boolean isChanged()
 		if(prevWheelDirs[i]!=curWheelDirs[i]) return resetWatchdog();
 	if(prevLedLight!=curLEDlight) return resetWatchdog();
 	if(prevServosEnabled != servosEnabled) 
+		return true;
+	if(needReadCharge!=prevNeedReadCharge)
 		return true;
 	return false;
 }
@@ -365,7 +426,7 @@ void copyCurPrev()
 		prevWheelDirs[i]=curWheelDirs[i];
 	prevLedLight=curLEDlight;
 	prevServosEnabled = servosEnabled;
-		
+	prevNeedReadCharge = needReadCharge;
 }
 
 
