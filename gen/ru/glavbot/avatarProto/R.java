@@ -158,6 +158,10 @@ public final class R {
         public static final int toast_layout=0x7f030006;
     }
     public static final class string {
+        public static final int AddressBookClearButton=0x7f050038;
+        /**  Address book  
+ Address book  
+         */
         public static final int AddressBookHeader=0x7f050037;
         public static final int TextNeedCharge=0x7f050019;
         public static final int TextNoTimeLeft=0x7f05001a;
@@ -209,11 +213,11 @@ public final class R {
         public static final int pauseDialogDesc=0x7f050031;
         public static final int remotePauseDialogButton=0x7f050034;
         public static final int remotePauseDialogDesc=0x7f050033;
-        public static final int sendLinkDlgButtonCancel=0x7f05003a;
-        public static final int sendLinkDlgButtonOk=0x7f050039;
-        public static final int sendLinkDlgEmail=0x7f05003b;
-        public static final int sendLinkDlgExpires=0x7f05003c;
-        public static final int sendLinkDlgHeader=0x7f050038;
+        public static final int sendLinkDlgButtonCancel=0x7f05003b;
+        public static final int sendLinkDlgButtonOk=0x7f05003a;
+        public static final int sendLinkDlgEmail=0x7f05003c;
+        public static final int sendLinkDlgExpires=0x7f05003d;
+        public static final int sendLinkDlgHeader=0x7f050039;
         /**  	<string name="sendLinkDlgButtonOk">Ok</string>
 	<string name="sendLinkDlgButtonCancel">Cancel</string>
 	<string name="sendLinkDlgHeader">Enter invite options</string>

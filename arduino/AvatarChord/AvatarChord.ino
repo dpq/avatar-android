@@ -214,7 +214,7 @@ void loop()
 	//static byte count = 0;
 	
         //static int my_already_read=0;
-        //if(millis()-timer>10) { // sending 100 times per second
+        if(millis()-timer>10) { // sending 100 times per second
 	    if (acc.isConnected()) {
                 int curRead=acc.read(my_msg,cmdLength,1);
                   //my_msg[my_already_read]=curRead;
@@ -229,10 +229,10 @@ void loop()
             {
               memcpy(my_msg,defCommand,cmdLength);
               setAll();
-              delay(10);
+              //delay(10);
             }
-        //timer = millis();
-        //}
+        timer = millis();
+        }
         
       /*  if(millis()- chargeTimer>1000)
         {

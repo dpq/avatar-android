@@ -73,8 +73,9 @@
 	<string name="remotePauseDialogButton">Close session</string>
 	<string name="timeOutDialogDesc">Session time is over!</string>
 	<string name="timeOutDialogButton">Start new session</string>
+	
+	<!-- Address book  -->
 	<string name="AddressBookHeader">Recent addresses</string>
-
-
+	<string name="AddressBookClearButton"><u>Clear</u></string>
 	
 </resources>

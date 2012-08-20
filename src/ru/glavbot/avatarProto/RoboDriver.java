@@ -3,13 +3,13 @@ package ru.glavbot.avatarProto;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+//import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
-import android.os.Message;
+//import android.os.Message;
 import android.util.Log;
 
 public class RoboDriver {
@@ -18,7 +18,7 @@ public class RoboDriver {
 	private static final double Pi = Math.acos(0)*2;
 	// resoultion
 	private static final int RESOLUTION = 10; // ms
-	private static final double TURN_SPEED = 1 /*8*Pi/1000*RESOLUTION*/;
+	//private static final double TURN_SPEED = 1 /*8*Pi/1000*RESOLUTION*/;
 	private static final double ACCELERATION = 4;
 	private static final int WHEEL_CRUISE_SPD = 252;
 	private static final String TAG="RoboDriver";
@@ -153,7 +153,7 @@ Runnable worker = new Runnable(){
 		//sendCommand(s.toByteArray());
 		}catch(Exception e)
 		{
-			Log.e("RoboRuler", "This should never happen!");
+			Log.wtf("RoboRuler", "This should never happen!");
 		}
 	    }
 	}};

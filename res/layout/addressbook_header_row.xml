@@ -21,15 +21,15 @@
         android:layout_weight="1"
 />
      
-                 <Button
-                         android:layout_marginLeft="220dp"
+      <Button
+        android:layout_marginLeft="220dp"
         android:id="@+id/WipeButton"
-        android:text="Wipe"
+        android:text="@string/AddressBookClearButton"
         android:textStyle="bold"
         android:textSize="22dp"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/solid_button"
-        android:layout_width="100dp"
+        android:textColor="#006699"
+        android:background="@android:color/transparent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 
         />

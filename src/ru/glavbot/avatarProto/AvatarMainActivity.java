@@ -11,13 +11,13 @@ package ru.glavbot.avatarProto;
 //import java.io.IOException;
 //import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import java.io.Serializable;
+//import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+//import java.util.SortedSet;
+//import java.util.TreeSet;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,7 +41,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
+//import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -60,6 +60,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.Settings.Secure;
 //import android.os.StrictMode;
 
 import android.util.Log;
@@ -85,7 +86,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.RadioGroup;
-import android.widget.Toast;
+//import android.widget.Toast;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -157,6 +158,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String TTL_PARAM = "ttl";
      private static final String TOKEN_PARAM = "token";
      private static final String MODE_PARAM = "mode";
+     private static final String DEVICE_PARAM = "device";
      private static final String MODE_PARAM_VALUE = "read";
      
      private static final String SERVER_AUTHORITY_PARAM = "serverAuthority";
@@ -204,6 +206,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  	TextView statusText;
  	TextView textViewSignal;
  	TextView textViewCharge;
+ 	private String android_id;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -218,7 +221,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		} catch( Exception e ) { // pokemon catching
 			Toast.makeText(getApplicationContext(), "Cannot receive root privileges! Error is "+e.getMessage(), Toast.LENGTH_LONG);
 		}*/
-		
+		android_id = Secure.getString(getContentResolver(),
+                Secure.ANDROID_ID); 
 		
         protocolManager= new ConnectionManager();
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -297,6 +301,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					        new ArrayAdapter<String>(AvatarMainActivity.this, android.R.layout.simple_list_item_1, emailsSet.toEmailStringSet());
 					
 					autoCompleteTextViewAddress.setAdapter(adapter);
+				    if(!autoCompleteTextViewAddress.isPopupShowing()){
+				    	autoCompleteTextViewAddress.dismissDropDown();
+				    }
+
 					SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
 					prefs.edit().putStringSet(EMAILS_LIST_PARAM, emailsSet.toStringSet()).apply();
 					progressDialog = ProgressDialog.show(AvatarMainActivity.this, "",getResources().getText(R.string.sendingLinkMessage) );
@@ -409,10 +417,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
     protected void calcPing() {
 		// TODO Auto-generated method stub
 
+    	if(currentState>0)
+    	{
     		Uri.Builder builder = new Uri.Builder();
     		builder.path(CMD_PATH)
     		.appendQueryParameter(TOKEN_PARAM, getSession_token())
-    		.appendQueryParameter(MODE_PARAM, "rtt");
+    		.appendQueryParameter(MODE_PARAM, "rtt")
+    		.appendQueryParameter(DEVICE_PARAM, android_id);
     		Uri uri=builder.build();
     		String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
     		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
@@ -424,6 +435,12 @@ public class AvatarMainActivity extends AccessoryProcessor {
     		r.setTimeout(TELEMETRIC_DELAY);
     		r.setAnswerProcessor(emptyResponce);
     		telemetricManager.push(r);*/
+    	}
+    	else
+    	{
+			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), TELEMETRIC_DELAY);
+			pingManager.clearQueue();
+    	}
     	
 	}
     
@@ -436,7 +453,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			
 			long pingEndMsecs=Calendar.getInstance().getTimeInMillis();
 			ping = (int)(pingEndMsecs-pingStartMsecs)/2;
-			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);
+			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), TELEMETRIC_DELAY);
 				
 		}
 
@@ -558,6 +575,12 @@ public class AvatarMainActivity extends AccessoryProcessor {
  		frameLayoutRun.setVisibility(View.GONE);
  		relativeLayoutStart.setVisibility(View.VISIBLE);
  		statusText.setVisibility(View.GONE);
+ 		InputMethodManager imm = (InputMethodManager)getSystemService(
+			      Context.INPUT_METHOD_SERVICE);
+ 		imm.showSoftInput(autoCompleteTextViewAddress, 0);
+ 		autoCompleteTextViewAddress.requestFocus();
+ 		autoCompleteTextViewAddress.selectAll();
+
  	}
  	protected void setWorkerScreen()
  	{
@@ -623,6 +646,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			    showDialog(PAUSE_DIALOG);
  				break;
  			case STATE_REMOTE_PAUSED:
+ 				runCommands();
  				if(prevState>currentState)
  				{
  					driver.reset();
@@ -655,6 +679,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			Uri.Builder builder = new Uri.Builder();
 			builder.path(CMD_PATH)
 			.appendQueryParameter(TOKEN_PARAM, getSession_token())
+			.appendQueryParameter(DEVICE_PARAM, android_id)
 			.appendQueryParameter(MODE_PARAM, MODE_PARAM_VALUE);
 			Uri uri=builder.build();
 			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
@@ -844,24 +869,29 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	
 	protected void reportTelemetric()
 	{
-		Uri.Builder builder = new Uri.Builder();
-		builder.path(CMD_PATH)
-		.appendQueryParameter(TOKEN_PARAM, getSession_token())
-		.appendQueryParameter(MODE_PARAM, "telemetry")
-		.appendQueryParameter("battery", Integer.toString(chargeLevel))
-		.appendQueryParameter("signal", Integer.toString(wifiLevel))
-		.appendQueryParameter("state", Integer.toString(currentState))
-		.appendQueryParameter("ping", Integer.toString(ping));
-		Uri uri=builder.build();
-		String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
-		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
-		req.setTimeout(TELEMETRIC_DELAY);
-		req.setAnswerProcessor(emptyResponce1);
-		telemetricManager.push(req);
-		/*ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/wifi.cgi");
-		r.setTimeout(TELEMETRIC_DELAY);
-		r.setAnswerProcessor(emptyResponce);
-		telemetricManager.push(r);*/
+		if(currentState>0)
+		{
+			Uri.Builder builder = new Uri.Builder();
+			builder.path(CMD_PATH)
+			.appendQueryParameter(TOKEN_PARAM, getSession_token())
+			.appendQueryParameter(MODE_PARAM, "telemetry")
+			.appendQueryParameter(DEVICE_PARAM, android_id)
+			.appendQueryParameter("battery", Integer.toString(chargeLevel))
+			.appendQueryParameter("signal", Integer.toString(wifiLevel))
+			.appendQueryParameter("state", Integer.toString(currentState))
+			.appendQueryParameter("ping", Integer.toString(ping));
+			Uri uri=builder.build();
+			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
+			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
+			req.setTimeout(TELEMETRIC_DELAY);
+			req.setAnswerProcessor(emptyResponce1);
+			telemetricManager.push(req);
+		}
+		else
+		{
+			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(GET_TELEMETRICS_WIFI), TELEMETRIC_DELAY);
+			telemetricManager.clearQueue();
+		}
 	}
 	
 	protected void removeTelemetricMessages()
@@ -924,7 +954,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		        new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, emailsSet.toEmailStringSet());
 		autoCompleteTextViewAddress.setAdapter(adapter);
     	
-    	
+	    if(!autoCompleteTextViewAddress.isPopupShowing()){
+	    	autoCompleteTextViewAddress.dismissDropDown();
+	    }
     	
         
         serverAuthority = prefs.getString( SERVER_AUTHORITY_PARAM, "auth.glavbot.ru");
@@ -1318,6 +1350,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						emailsSet.clear();
 						ArrayAdapter<String> adapter =new ArrayAdapter<String>(AvatarMainActivity.this, android.R.layout.simple_list_item_1, emailsSet.toEmailStringSet());
 						autoCompleteTextViewAddress.setAdapter(adapter);
+					    if(!autoCompleteTextViewAddress.isPopupShowing()){
+					    	autoCompleteTextViewAddress.dismissDropDown();
+					    }
 						selectEmailDialog.cancel();
 					}
 				});

@@ -52,7 +52,7 @@
 	
 	<string name="volumeRegulationDlgSetVolume">Укажите громкость:</string>
 	<string name="volumeRegulationDlgHeader">Регулятор громкости</string>
-	<string name="AddressBookHeader">Недавние адреса</string>
+
 	
 	<string name="connectionLostDialogDesc">Соединение потеряно! Пытаемся переподключиться.</string>
 	<string name="connectionLostDialogButton">Завершить сессию</string>
@@ -64,6 +64,11 @@
 	<string name="remotePauseDialogButton">Завершить сессию</string>
 	<string name="timeOutDialogDesc">Время сессии внезапно истекло! Всё, можно только удалить бесполезную ссылку и послать новую.</string>
 	<string name="timeOutDialogButton">Начать новую сессию</string>
+	
+	
+		<!-- Address book  -->
+	<string name="AddressBookHeader">Недавние адреса</string>
+	<string name="AddressBookClearButton"><u>Очистить</u></string>
 	
 	
 </resources>
