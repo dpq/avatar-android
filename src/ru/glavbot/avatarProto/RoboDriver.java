@@ -15,7 +15,7 @@ import android.util.Log;
 public class RoboDriver {
 
 	
-	private static final double Pi = Math.acos(0)*2;
+	private static final double Pi = Math.PI; // equals to JS pi
 	// resoultion
 	private static final int RESOLUTION = 10; // ms
 	//private static final double TURN_SPEED = 1 /*8*Pi/1000*RESOLUTION*/;
@@ -287,22 +287,25 @@ Runnable worker = new Runnable(){
 	
 	public void servoLoop() {
 	    
-	    // wheel speeds
-	    for(int i=0;i<3;i++) {
-	        if(tagWheelSpeeds[i] > curWheelSpeeds[i]) curWheelSpeeds[i] += ACCELERATION;
-	        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] = tagWheelSpeeds[i];
-	        
-	    	//curWheelDirs[i]=tagWheelDirs[i]; 
-	   /*     if(tagWheelDirs[i] > curWheelDirs[i]) curWheelDirs[i] += TURN_SPEED;
-	        if(tagWheelDirs[i] < curWheelDirs[i]) curWheelDirs[i] -= TURN_SPEED;*/
-	        
-	        // if (any of wheel) declination is > calculated omega: set speed to zero!
-	        // calculate mean direction
-	        double meandir = 0;
-	        for(int j=0; j<3;j++) {
-	        	meandir = meandir + curWheelDirs[i]; 
-	        }
-	    }
+
+		if(!inertion.inertionWorking())
+		{
+		    for(int i=0;i<3;i++) {
+		        if(tagWheelSpeeds[i] > curWheelSpeeds[i]) curWheelSpeeds[i] = tagWheelSpeeds[i];  //+= ACCELERATION;
+		        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] = tagWheelSpeeds[i];
+		        
+		    	//curWheelDirs[i]=tagWheelDirs[i]; 
+		   /*     if(tagWheelDirs[i] > curWheelDirs[i]) curWheelDirs[i] += TURN_SPEED;
+		        if(tagWheelDirs[i] < curWheelDirs[i]) curWheelDirs[i] -= TURN_SPEED;*/
+		        
+		        // if (any of wheel) declination is > calculated omega: set speed to zero!
+		        // calculate mean direction
+		        double meandir = 0;
+		        for(int j=0; j<3;j++) {
+		        	meandir = meandir + curWheelDirs[i]; 
+		        }
+		    }
+		}
 	    // head
 	    if((curHeadPos<tagHeadPos)&&(tagHeadPos-curHeadPos>1))
 	    {
@@ -334,7 +337,7 @@ Runnable worker = new Runnable(){
 	    
 	    synchronized(synchronizer)
 	    {
-	    	servosEnabled =(byte) ((/*((Calendar.getInstance().getTimeInMillis()-watchDog)>30000)||*/((Calendar.getInstance().getTimeInMillis()-cmdWatchDog)>2000))?0:1);
+	    	servosEnabled =(byte) ((/*((Calendar.getInstance().getTimeInMillis()-watchDog)>30000)||*/((Calendar.getInstance().getTimeInMillis()-cmdWatchDog)>10000))?0:1);
 	    }
 	 }
 	
@@ -372,8 +375,10 @@ private int prevLedLight=0;
 private volatile long watchDog=Calendar.getInstance().getTimeInMillis(); 
 
 
+// prev dir for inertion
 
-
+private int prevDir=8;
+private double prevOmega=0;
 
 
 private volatile long cmdWatchDog=Calendar.getInstance().getTimeInMillis(); 
@@ -497,38 +502,63 @@ private void setWheelsDirection(int[] dir_array, int oow, int oow2) {
 
 private void setWheelsSpeed(int[] dir_array,int  spd,int oow, int oow2) {
    for(int i=0;i<3;i++) {
-       if(i != oow) setSpeed(i, spd * dir_array[3+i]);
+       if(i != oow) setTagSpeed(i, spd * dir_array[3+i]);
    }
 }
+private static class Inertion {
+	private static final int INERTION_TIME=90;
+	private long inertionStart=Calendar.getInstance().getTimeInMillis();
+	private boolean inertionEnabled=false;
 
+	public void enableInertion()
+	{
+		inertionEnabled=true;
+		inertionStart=Calendar.getInstance().getTimeInMillis();
+	}
 
+	public void disableInertion()
+	{
+		inertionEnabled=false;
+	}
 
+	
+	public boolean inertionWorking()
+	{
+		return inertionEnabled && ((Calendar.getInstance().getTimeInMillis()-inertionStart)<INERTION_TIME);
+	}
+
+};
+
+Inertion inertion = new Inertion();
 
 private void calculateDesiredValues (int direction, double omega, boolean speed) {
 //	int iOmega=radToDeg(omega);
+	int spd = (int)(omega * (((double)WHEEL_CRUISE_SPD)/Pi)); /* * omega / WHEEL_DIRECTIONS[direction][WMK1];*/
     if(direction == 9) {
-    	setSpeed(0, 0); // speed direction: absolutely magic!
-        setSpeed(1, 0);
-        setSpeed(2, 0);
+    	setTagSpeed(0, 0); // speed direction: absolutely magic!
+        setTagSpeed(1, 0);
+        setTagSpeed(2, 0);
     } else {
-	if(Math.abs(omega) > 0.3) { // we got the angular speed
+	if(Math.abs(omega) > 0.1) { // we got the angular speed
 	    if(direction == 8) { // SLEEP (we do not move any direction)
 	    	setWheelsDirection(WHEEL_DIRECTIONS[direction], -1,0);
-	        int spd = (int)(omega * (WHEEL_CRUISE_SPD/Pi)); /* * omega / WHEEL_DIRECTIONS[direction][WMK1];*/
+	        
 	        if(speed)
 	        {
-	        	setSpeed(0, spd); // speed direction: absolutely magic!
-	        	setSpeed(1, -spd);
-	        	setSpeed(2, spd);
+
+		        setTagSpeed(0, spd); 
+		        setTagSpeed(1, -spd);
+		        setTagSpeed(2, spd);
+	        	
 	        }
 	        else
 	        {
-	        	setSpeed(0, 0); // speed direction: absolutely magic!
-	        	setSpeed(1, 0);
-	        	setSpeed(2, 0);
+	        	setTagSpeed(0, 0); 
+	        	setTagSpeed(1, 0);
+	        	setTagSpeed(2, 0);
 	        }
 	    } else { // we have the direction of movement AND angular speed
-	        
+	    	inertion.disableInertion();
 	        // Out-of-order wheel parameters calculation
 	        int oo_diffang = (int)((180/Pi)*omega / WHEEL_DIRECTIONS[direction][WMK1]);
 	        int oo_wheelnum = (int) WHEEL_DIRECTIONS[direction][OOW];
@@ -539,7 +569,7 @@ private void calculateDesiredValues (int direction, double omega, boolean speed)
 
 	        setDirection(oo_wheelnum, oo_wheelangle /*- WHEEL_SHIFT[oo_wheelnum]*/);
 	        if(speed)
-	        setSpeed(oo_wheelnum, oo_wheelspeed * WHEEL_DIRECTIONS[direction][3+oo_wheelnum]);
+	        setTagSpeed(oo_wheelnum, oo_wheelspeed * WHEEL_DIRECTIONS[direction][3+oo_wheelnum]);
 
 	        // Now just set all-other wheels direction and speed TODO: for double-OOW situation, do not!
 	        setWheelsDirection(WHEEL_DIRECTIONS[direction], (int)WHEEL_DIRECTIONS[direction][OOW]/* except this wheel (?) */,0);
@@ -550,19 +580,36 @@ private void calculateDesiredValues (int direction, double omega, boolean speed)
 	        }
 	        else
 	        {
-		        setSpeed(0, 0); // speed direction: absolutely magic!
-		        setSpeed(1, 0);
-		        setSpeed(2, 0);
+		        setTagSpeed(0, 0); // speed direction: absolutely magic!
+		        setTagSpeed(1, 0);
+		        setTagSpeed(2, 0);
 		        
 	        }
 	        	
 	    }
 	    
 	} else { // we do not have angular speed, only current direction (including direction = SLEEP MODE (no move)
-	    setWheelsDirection(WHEEL_DIRECTIONS[direction], -1,0);
-	    setWheelsSpeed(WHEEL_DIRECTIONS[direction], speed?WHEEL_CRUISE_SPD:0, -1,0);
+
+        if(speed)
+        {
+	    	if((Math.abs(prevOmega)==Pi)&&(prevDir==8)&&(direction==8))
+	    	{
+	    		inertion.enableInertion();
+	        /*	setCurSpeed(0, spd); 
+	        	setCurSpeed(1, -spd);
+	        	setCurSpeed(2, spd);*/
+	    	}
+	    	
+		    if(direction!=8)
+		    	inertion.disableInertion();
+	   
+			setWheelsDirection(WHEEL_DIRECTIONS[direction], -1,0);
+		    setWheelsSpeed(WHEEL_DIRECTIONS[direction], speed?WHEEL_CRUISE_SPD:0, -1,0);
+        }
 	}
     }
+    prevDir=direction;
+    prevOmega=omega;
 }
 
 
@@ -575,9 +622,11 @@ private void setDirection(int wheelNum, int dir) {
 
 
 
-private void setSpeed(int wheelNum, int spd) {
+private void setTagSpeed(int wheelNum, int spd) {
     tagWheelSpeeds[wheelNum] = spd;
 }
-
+private void setCurSpeed(int wheelNum, int spd) {
+    curWheelSpeeds[wheelNum] = spd;
+}
 
 }

@@ -199,7 +199,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  	private RoboDriver driver;
  	boolean isNetworkAvailable=false;
  	
- 	private AutoCompleteTextView autoCompleteTextViewAddress;
+ 	private CustomAutoCompleteTextView autoCompleteTextViewAddress;
  	private ImageButton mailListButton;
  	private Button resumeButton;
  	private ProgressDialog progressDialog;
@@ -258,7 +258,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	frameLayoutRun = (FrameLayout)findViewById(R.id.frameLayoutRun);
     	
     	
-    	autoCompleteTextViewAddress = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextViewAddress);
+    	autoCompleteTextViewAddress = (CustomAutoCompleteTextView) findViewById(R.id.autoCompleteTextViewAddress);
     	mailListButton =(ImageButton) findViewById(R.id.MailListButton);
     	mailListButton.setOnClickListener(new OnClickListener() {
 			
@@ -500,8 +500,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
         if(isNetworkAvailable)
         {
         	setCurrentState(Math.abs(currentState));
-        	WifiManager wifi = (WifiManager) getSystemService(WIFI_SERVICE); 
-        	DhcpInfo info = wifi.getDhcpInfo();
+        //	WifiManager wifi = (WifiManager) getSystemService(WIFI_SERVICE); 
+        //	DhcpInfo info = wifi.getDhcpInfo();
         	gatewayIp="192.168.100.35";//android.text.format.Formatter.formatIpAddress(info.serverAddress);
         }
         else
@@ -923,7 +923,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     protected void onResume()
     {
     	super.onResume();
-    	mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);
+    	mainThreadHandler.sendMessage(mainThreadHandler.obtainMessage(CALC_PING));
     	SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
     	email=prefs.getString(SHARED_PREFS_EMAIL, null);
     	ttl=prefs.getInt(SHARED_PREFS_TTL, 0);
