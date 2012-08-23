@@ -259,7 +259,7 @@ Runnable worker = new Runnable(){
 	    {
 	    	resetCmdWatchDog();
 	    	calculateDesiredValues (8, 0,true);
-	    	tagHeadPos=90;
+	    	tagHeadPos=120;
 	    }
     	/*setSpeed(0, 0);
         setSpeed(1, 0);

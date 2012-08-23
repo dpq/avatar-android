@@ -150,6 +150,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
      private static final String SHARE_PATH = "share"; 
      private static final String CMD_PATH = "cmd"; 
+     private static final String START_VIDEO_PATH = "start.cgi"; 
+     
     // private static final String RESTREAMER_PATH = "restreamer"; 
      private static final String MACADDR_PARAM = "macaddr";
      private static final String EMAIL_PARAM = "email";
@@ -157,6 +159,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
      //email: ���� ������� ������ �� ������������� ������?
      private static final String TTL_PARAM = "ttl";
      private static final String TOKEN_PARAM = "token";
+     private static final String HOST_PARAM = "host";
+     private static final String PORT_PARAM = "port";
      private static final String MODE_PARAM = "mode";
      private static final String DEVICE_PARAM = "device";
      private static final String MODE_PARAM_VALUE = "read";
@@ -399,6 +403,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
              		case CALC_PING:
              			calcPing();
              			break;
+             		case WRITE_DATA_ERROR:
+             			reopenAccessory();
+             			break;
              		default:
              			throw new RuntimeException("Unknown command to video writer thread");
              	};
@@ -638,7 +645,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  				if(prevState>currentState)
  				{
  					driver.reset();
- 					stopCommands();
+ 					//stopCommands();
  					stopStreaming();
  				}
 	 			setWorkerScreen();
@@ -742,7 +749,17 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			audioReceiver.startVoice();
 			audioSender.startVoice();
 			videoReceiver.startReceiveVideo();
-			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/start.cgi?token="+getSession_token());
+			
+			Uri.Builder builder = new Uri.Builder();
+			builder.path(START_VIDEO_PATH)
+			.appendQueryParameter(TOKEN_PARAM, getSession_token())
+			.appendQueryParameter(HOST_PARAM, serverAuthority)
+			.appendQueryParameter(PORT_PARAM, Integer.toString(videoPort))
+;
+			Uri uri=builder.build();
+			String realAddress = "http://"+gatewayIp+":6000/"+uri.toString();
+			
+			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,realAddress);
 			r.setTimeout(1000);
 			r.setAnswerProcessor(emptyResponce);
 			bottomCameraStreamManager.push(r);
@@ -1899,8 +1916,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	public static final int RERUN_COMMANDS = 1;
 	public static final int GET_TELEMETRICS_WIFI = 2;
 	public static final int SEND_TELEMETRIC_REPORT = 3;
-	public static final int READ_CHARGE_STATE = 4;
-	public static final int CALC_PING=5;
+	public static final int CALC_PING=4;
 	protected static final int RERUN_COMMANDS_DELAY = 1000;	
 	
 	
@@ -1978,8 +1994,11 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				}
 				if(r.has(CMD_DIR)&&r.has(CMD_OMEGA)&&r.has(CMD_VOMEGA))
 				{
-					driver.setNewDirection(r.getInt(CMD_DIR), r.getDouble(CMD_OMEGA),r.getDouble(CMD_VOMEGA));
-					Log.v("cmd", (String)responce);
+					if(currentState>STATE_PAUSED)
+					{
+						driver.setNewDirection(r.getInt(CMD_DIR), r.getDouble(CMD_OMEGA),r.getDouble(CMD_VOMEGA));
+						Log.v("cmd", (String)responce);
+					}
 				}
 				else
 				{

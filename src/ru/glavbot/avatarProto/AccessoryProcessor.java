@@ -107,7 +107,7 @@ public class AccessoryProcessor extends Activity {
  //   byte[] commandData = new byte[7];
     
 
-
+/*
 @Override
 public Object onRetainNonConfigurationInstance() {
 	if (mAccessory != null) {
@@ -115,95 +115,108 @@ public Object onRetainNonConfigurationInstance() {
 	} else {
 		return super.onRetainNonConfigurationInstance();
 	}
-}
+}*/
 
+volatile byte[] writerData=null;
 
 protected void sendCommand(byte[] commandData) {
 	// TODO Auto-generated method stub
+//	reopenAccessory();
 	synchronized (sync) {
 		if(mOutputStream!=null)
 		{
-			try {
-				mOutputStream.write(commandData,0,commandData.length);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				Log.e("","",e);
 			
+			writerData=commandData;
+			Thread writerThread = new Thread() {
+	            public void run() {                
+	    			try {
+	    				mOutputStream.write(writerData,0,writerData.length);
+	    			} catch (IOException e) {
+	    				// TODO Auto-generated catch block
+	    				Log.e("","",e);
+	    			
+	    			}
+	            }
+	        };
+	        writerThread.start();
+	        
+	        try {
+				writerThread.join(200);
+			} catch (InterruptedException e) {
+				mainThreadHandler.obtainMessage(WRITE_DATA_ERROR).sendToTarget();
 			}
+
 		}
 	}
 }
 
 volatile byte[] readerData = {};//new byte[commandLength];
-Thread readerThread= null;
-Thread watcherThread= null;
+//Thread readerThread= null;
+//Thread watcherThread= null;
+
+public static final int READ_CHARGE_STATE = 1004;
+public static final int WRITE_DATA_ERROR = 1005;
+
 
 protected void readCommand(int commandLength) {
 	// TODO Auto-generated method stub
-	readerData=new byte[commandLength];
+	
 	synchronized (sync) {
 		if(mInputStream!=null)
 		{
-			
-			//try {
-				
-
-				
-			       readerThread = new Thread() {
-			            public void run() {                
-			                try {
-			                	int read=0;
-			                	int totalRead=0;
-			                	while(totalRead<readerData.length)
-			                	{
-			                		read=mInputStream.read(readerData,totalRead, readerData.length-totalRead);
-			                		if(read>0)
-			                		{
-			                			totalRead+=read;
-			                		}
-			                		
-			                	}
-			                	
-								int tmp1=readerData[1];
-								int chrg=(tmp1<<8)+readerData[0]; 
-								if(chrg>0)
-									reportCharge(chrg);
-								
-			                } catch (Exception e) {
-			                  
-			                } 
-			            }
-			        };
-
-			        
-			        watcherThread=  new Thread() {
+			//reopenAccessory();
+			readerData=new byte[commandLength];
+			Thread watcherThread=  new Thread() {
+						
+			        	Thread readerThread = new Thread() {
+				            public void run() {                
+				                try {
+				                	int read=0;
+				                	int totalRead=0;
+				                	while(totalRead<readerData.length)
+				                	{
+				                		read=mInputStream.read(readerData,totalRead, readerData.length-totalRead);
+				                		if(read>0)
+				                		{
+				                			totalRead+=read;
+				                		}
+				                		
+				                	}
+				                	
+									int tmp1=readerData[1];
+									int chrg=(tmp1<<8)+readerData[0]; 
+									if(chrg>0)
+										reportCharge(chrg);
+									
+				                } catch (Exception e) {
+				                  
+				                } 
+				                      }
+				        };
 			            public void run() {   
 			            	readerThread.start();
 			            	try {
 								readerThread.join(1000);
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
-								e.printStackTrace();
+								//e.printStackTrace();
+								mainThreadHandler.obtainMessage(WRITE_DATA_ERROR).sendToTarget();
 							}
 			            }
 			        };
 			        
 			        watcherThread.start();
-			        
-				
-					
-					
-				//	return readerData;
-				
-
 		}
-	//	return readerData;
+
 	}
 }
 
+
+
+
 private void reportCharge(int chrg)
 {
-	Message msg=mainThreadHandler.obtainMessage(AvatarMainActivity.READ_CHARGE_STATE);
+	Message msg=mainThreadHandler.obtainMessage(READ_CHARGE_STATE);
 	msg.arg1=chrg;
 	mainThreadHandler.sendMessage(msg);
 }
@@ -213,41 +226,62 @@ private void reportCharge(int chrg)
 @Override
 protected void onResume() {
 	super.onResume();
-	synchronized (sync) {
-	//Intent intent = getIntent();
-		if (mInputStream != null && mOutputStream != null) {
-			return;
-		}
+	requestAccessory();
+}
 
-		UsbAccessory[] accessories = mUsbManager.getAccessoryList();
-		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
-		if (accessory != null) {
-			if (mUsbManager.hasPermission(accessory)) {
-				openAccessory(accessory);
-			} else {
-				synchronized (mUsbReceiver) {
-					if (!mPermissionRequestPending) {
-						mUsbManager.requestPermission(accessory,mPermissionIntent);
-						mPermissionRequestPending = true;
+
+protected void reopenAccessory()
+{
+	synchronized (sync) {
+		closeAccessory();
+	}
+	requestAccessory();
+}
+
+
+protected void requestAccessory()
+{
+	synchronized (sync) {
+			
+		//Intent intent = getIntent();
+			if (mInputStream != null && mOutputStream != null) {
+				return;
+			}
+
+			UsbAccessory[] accessories = mUsbManager.getAccessoryList();
+			UsbAccessory accessory = (accessories == null ? null : accessories[0]);
+			if (accessory != null) {
+				if (mUsbManager.hasPermission(accessory)) {
+					openAccessory(accessory);
+				} else {
+					synchronized (mUsbReceiver) {
+						if (!mPermissionRequestPending) {
+							mUsbManager.requestPermission(accessory,mPermissionIntent);
+							mPermissionRequestPending = true;
+					}
 				}
 			}
+		} else {
+			Log.d(TAG, "mAccessory is null");
 		}
-	} else {
-		Log.d(TAG, "mAccessory is null");
-	}
-	}
+		}
 }
+
 
 @Override
 protected void onPause() {
 	super.onPause();
+	synchronized (sync) {
 	closeAccessory();
+	}
 }
 
 @Override
 public void onDestroy() {
 	unregisterReceiver(mUsbReceiver);
-	closeAccessory();
+	synchronized (sync) {
+		closeAccessory();
+	}
 	super.onDestroy();
 }
 
