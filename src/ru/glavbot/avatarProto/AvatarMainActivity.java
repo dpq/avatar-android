@@ -811,7 +811,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionSuccessful(Object responce) {
 			// TODO Auto-generated method stub
 				String answer = (String)responce;
-				answer.charAt(0);
+				//answer.charAt(0);
 		}
 
 		@Override
@@ -906,7 +906,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			Uri uri=builder.build();
 			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
 			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
-			req.setTimeout(TELEMETRIC_DELAY);
+			req.setTimeout(1000);
 			req.setAnswerProcessor(emptyResponce1);
 			telemetricManager.push(req);
 		}
