@@ -642,11 +642,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
  				setWorkerScreen();
  				break;
  			case STATE_PAUSED:
+ 				runCommands();
  				if(prevState>currentState)
  				{
  					driver.reset();
  					//stopCommands();
  					stopStreaming();
+ 					
  				}
 	 			setWorkerScreen();
 	 			driver.updateLuxmeterValue(STOPITSOT);
@@ -672,6 +674,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
  			case STATE_PAUSED_NO_NETWORK: 				
  				break;
 
+ 		}
+ 		if(currentState>0)
+ 		{
+ 			reportTelemetric();
  		}
  		getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putInt(SHARED_PREFS_STATE, currentState).commit();
 
@@ -1641,7 +1647,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					@Override
 					public void doAction() {
 						// TODO Auto-generated method stub
-						setCurrentState(STATE_ON);
+						if(isNetworkAvailable)
+						{
+							setCurrentState(STATE_ENABLED);
+						}
+						else
+						{
+							setCurrentState(STATE_ENABLED_NO_NETWORK);
+						}
 					}
 					
 				});
