@@ -109,7 +109,7 @@ Servo head;
 long timer = millis(); 
 long chargeTimer=millis();
 
-const byte defCommand[] = {1,90,90,0,0,90,0,0,120,0,0,0,0};
+const byte defCommand[] = {1,120,90,0,0,90,0,0,120,0,0,0,0};
 static unsigned char my_msg[cmdLength];
 
 void setup()

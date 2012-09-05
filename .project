@@ -4,6 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>AVRestreamer</project>
+		<project>CustomLogger</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

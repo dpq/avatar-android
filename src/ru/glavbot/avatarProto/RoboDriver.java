@@ -3,14 +3,13 @@ package ru.glavbot.avatarProto;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-//import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import ru.glavbot.customLogger.AVLogger;
 
-//import android.os.Message;
-import android.util.Log;
+
 
 public class RoboDriver {
 
@@ -71,7 +70,7 @@ ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 Runnable worker = new Runnable(){
 
 	public void run() {
-		// TODO Auto-generated method stub
+		
 	    synchronized(synchronizer)
 	    {
 		try{
@@ -81,7 +80,7 @@ Runnable worker = new Runnable(){
 			if(isChanged())
 			{
 				//watchDog=Calendar.getInstance().getTimeInMillis(); 
-				//Log.v("Goes to arduino",String.format("%d", curHeadPos));
+				//AVLogger.v("Goes to arduino",String.format("%d", curHeadPos));
 				ds.writeByte(servosEnabled);
 				ds.writeByte(curHeadPos);
 				int compensedValue;
@@ -126,8 +125,8 @@ Runnable worker = new Runnable(){
 				
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			Log.e("","",e);
+	
+			AVLogger.e("","",e);
 			
 		}
 		counter++;
@@ -147,13 +146,13 @@ Runnable worker = new Runnable(){
 		v&=0x000000ff;
 			debug+= String.format("%04d ",v);
 		}
-	//	Log.v("Goes to arduino",debug);
+	//	AVLogger.v("Goes to arduino",debug);
 		counter=0;
 		}
 		//sendCommand(s.toByteArray());
 		}catch(Exception e)
 		{
-			Log.wtf("RoboRuler", "This should never happen!");
+			AVLogger.wtf("RoboRuler", "This should never happen!");
 		}
 	    }
 	}};
@@ -171,7 +170,7 @@ Runnable worker = new Runnable(){
 	
 	
 	protected void headControl(double vOmega) {
-		// TODO Auto-generated method stub
+	
 		tagHeadPos=normalize((int)vOmega,180);
 		
 	}
@@ -180,11 +179,11 @@ Runnable worker = new Runnable(){
 	{
 		if(src > Pi) {
 			src = Pi;
-	        Log.v(TAG,"dir >!!!!");
+	        AVLogger.v(TAG,"dir >!!!!");
 	    }
 	    if(src < 0) {
 	    	src = 0;
-	        Log.v(TAG,"dir <!!!!");
+	        AVLogger.v(TAG,"dir <!!!!");
 	    }
 	    return src;
 	}*/
@@ -208,11 +207,11 @@ Runnable worker = new Runnable(){
 	{
 		if(src > max) {
 			src = max;
-	        Log.v(TAG,"dir >!!!!");
+	        AVLogger.v(TAG,"dir >!!!!");
 	    }
 	    if(src < 0) {
 	    	src = 0;
-	        Log.v(TAG,"dir <!!!!");
+	        AVLogger.v(TAG,"dir <!!!!");
 	    }
 	    return src;
 	}
@@ -291,8 +290,10 @@ Runnable worker = new Runnable(){
 		if(!inertion.inertionWorking())
 		{
 		    for(int i=0;i<3;i++) {
-		        if(tagWheelSpeeds[i] > curWheelSpeeds[i]) curWheelSpeeds[i] = tagWheelSpeeds[i];  //+= ACCELERATION;
-		        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] = tagWheelSpeeds[i];
+		        if(tagWheelSpeeds[i] > curWheelSpeeds[i]) curWheelSpeeds[i] += ACCELERATION;
+		        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] -= ACCELERATION;
+		        
+		        if(tagWheelSpeeds[i]==0) curWheelSpeeds[i]=0;
 		        
 		    	//curWheelDirs[i]=tagWheelDirs[i]; 
 		   /*     if(tagWheelDirs[i] > curWheelDirs[i]) curWheelDirs[i] += TURN_SPEED;

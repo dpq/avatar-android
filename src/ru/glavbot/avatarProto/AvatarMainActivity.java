@@ -13,6 +13,7 @@ package ru.glavbot.avatarProto;
 
 //import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -33,6 +34,7 @@ import ru.glavbot.asyncHttpRequest.ConnectionManager;
 import ru.glavbot.asyncHttpRequest.ConnectionRequest;
 import ru.glavbot.asyncHttpRequest.ProcessAsyncRequestResponceProrotype;
 import ru.glavbot.avatarProto.FullScreenDialog.FullScreenDialogButtonListener;
+import ru.glavbot.customLogger.AVLogger;
 
 
 import android.app.Activity;
@@ -52,21 +54,18 @@ import android.hardware.SensorManager;
 
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
-import android.net.DhcpInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings.Secure;
 //import android.os.StrictMode;
 
-import android.util.Log;
+//import android.util.Log;
 
-//import android.view.KeyEvent;
-import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.SurfaceView;
 import android.view.View;
@@ -79,11 +78,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 //import android.widget.Toast;
@@ -151,6 +150,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String SHARE_PATH = "share"; 
      private static final String CMD_PATH = "cmd"; 
      private static final String START_VIDEO_PATH = "start.cgi"; 
+     private static final String RESET_ACCESSORY_PATH="arduino.cgi";
      
     // private static final String RESTREAMER_PATH = "restreamer"; 
      private static final String MACADDR_PARAM = "macaddr";
@@ -210,6 +210,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
  	TextView statusText;
  	TextView textViewSignal;
  	TextView textViewCharge;
+ 	TextView textViewEmail;
+ 	
+ 	ImageView imageViewSignal;
+ 	ImageView imageViewCharge;
  	private String android_id;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -217,7 +221,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		try {
 			Thread.sleep(1000, 0);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 		/*try {
@@ -267,7 +271,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	mailListButton.setOnClickListener(new OnClickListener() {
 			
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
+				
 				showDialog(SELECT_EMAIL_DIALOG);
 			}
 		});
@@ -344,6 +348,12 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	textViewSignal= (TextView)findViewById(R.id.TextViewSignal);  
     	textViewSignal.setText("");
     	textViewCharge=(TextView)findViewById(R.id.TextViewCharge);  
+    	textViewEmail=(TextView)findViewById(R.id.TextViewEmail);  
+    	
+     	imageViewSignal=(ImageView)findViewById(R.id.ImageViewSignal);
+     	imageViewCharge=(ImageView)findViewById(R.id.ImageViewCharge);
+    	
+    	
 		volumeSelect=(SeekBar)findViewById(R.id.seekBarVolume);
 		volumeSelect.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			
@@ -382,47 +392,65 @@ public class AvatarMainActivity extends AccessoryProcessor {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         
-        mainThreadHandler = new Handler()
-    	{
-    		 public void handleMessage(Message msg) {
-             	
-             	switch (msg.what)
-             	{
-             		case RERUN_COMMANDS:
-             			reRunCommands();
-             			break;
-             		case GET_TELEMETRICS_WIFI:
-             			getTelemetricsWifi();
-             			break;
-             		case SEND_TELEMETRIC_REPORT:
-             			reportTelemetric();
-             			break;
-             		case READ_CHARGE_STATE:
-             			readChargeState(msg.arg1);
-             			break;
-             		case CALC_PING:
-             			calcPing();
-             			break;
-             		case WRITE_DATA_ERROR:
-             			reopenAccessory();
-             			break;
-             		default:
-             			throw new RuntimeException("Unknown command to video writer thread");
-             	};
-    				
-             }
-    	};
-        
-        
+        mainThreadHandler = new AvatarMainActivityHandler();      
         driver= new RoboDriver(this);
     }
     
     
+    protected class AvatarMainActivityHandler extends  AccessoryHandler
+    {
+    	@Override
+    	public void handleMessage(Message msg) {
+         	
+    		super.handleMessage(msg);
+         	switch (msg.what)
+         	{
+         		case RERUN_COMMANDS:
+         			reRunCommands();
+         			break;
+         		case GET_TELEMETRICS_WIFI:
+         			getTelemetricsWifi();
+         			break;
+         		case SEND_TELEMETRIC_REPORT:
+         			reportTelemetric();
+         			break;
+         		case CALC_PING:
+         			calcPing();
+         			break;
+         		//default:
+         			//throw new RuntimeException("Unknown command to video writer thread");
+         	};
+				
+         }
+    }
+    
+    @Override
+    protected void reopenAccessory()
+    {
+    	super.reopenAccessory();
+    	if (!isAccessoryAvailable())
+    	{
+			Uri.Builder builder = new Uri.Builder();
+			builder.path(RESET_ACCESSORY_PATH)
+;
+			Uri uri=builder.build();
+			String realAddress = "http://"+gatewayIp+":6000/"+uri.toString();
+			
+			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,realAddress);
+			r.setTimeout(1000);
+			r.setAnswerProcessor(emptyResponce);
+			bottomCameraStreamManager.push(r);
+    	}
+    }
+    
     protected long pingStartMsecs;
     protected int ping = 0;
     
+    //protected LogCollector logCollector;
+    ArrayList<String> logData= new ArrayList<String>();
+    
     protected void calcPing() {
-		// TODO Auto-generated method stub
+		
 
     	if(currentState>0)
     	{
@@ -524,7 +552,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(BroadcastReceiver.class.getSimpleName(), "action: "
+            AVLogger.d(BroadcastReceiver.class.getSimpleName(), "action: "
                     + intent.getAction());
             int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,-1);
             isNetworkAvailable =state == WifiManager.WIFI_STATE_ENABLED;
@@ -594,6 +622,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
  		statusText.setVisibility(View.VISIBLE);
  		frameLayoutRun.setVisibility(View.VISIBLE);
  		relativeLayoutStart.setVisibility(View.GONE);
+ 		textViewEmail.setText(getEmail());
  		InputMethodManager imm = (InputMethodManager)getSystemService(
  			      Context.INPUT_METHOD_SERVICE);
  			imm.hideSoftInputFromWindow(autoCompleteTextViewAddress.getWindowToken(), 0);
@@ -784,7 +813,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
-			// TODO Auto-generated method stub
+		
 				String answer = (String)responce;
 				answer.charAt(0);
 		}
@@ -809,7 +838,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
-			// TODO Auto-generated method stub
+	
 				String answer = (String)responce;
 				//answer.charAt(0);
 		}
@@ -842,6 +871,18 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			
 			wifiLevel =	Integer.parseInt(((String)responce));
 			textViewSignal.setText((String)responce);
+			
+			if(wifiLevel>=-50)
+				imageViewSignal.setImageResource(R.drawable.signal_good);
+			else
+			{
+				if(wifiLevel>=-70)
+					imageViewSignal.setImageResource(R.drawable.signal_medium);
+				else
+				{
+					imageViewSignal.setImageResource(R.drawable.signal_poor);
+				}
+			}
 			/*if(wifiLevel>-70)
 			{
 				textViewSignal.setText("");
@@ -905,7 +946,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			.appendQueryParameter("ping", Integer.toString(ping));
 			Uri uri=builder.build();
 			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
-			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
+			String data = avLogger.exportLog().toString();
+			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.POST, realAddress,data);
 			req.setTimeout(1000);
 			req.setAnswerProcessor(emptyResponce1);
 			telemetricManager.push(req);
@@ -914,7 +956,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		{
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(GET_TELEMETRICS_WIFI), TELEMETRIC_DELAY);
 			telemetricManager.clearQueue();
+			
 		}
+		logData.clear();
 	}
 	
 	protected void removeTelemetricMessages()
@@ -937,15 +981,24 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			audiomanager.setMode(AudioManager.MODE_NORMAL);
 		}
 		driver.stop();
+	//	logCollector.cancel(true);
     }
     
     
     //LinkedHashSet<String> emailsSet=new LinkedHashSet<String>();
     
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     protected void onResume()
     {
     	super.onResume();
+    	
+    	//ArrayList<String> logcatParams= new ArrayList<String>();
+    	//logcatParams.add("*:d");
+    	
+    	
+    	//logCollector= new LogCollector(logData);
+    	//logCollector.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, logcatParams);
     	mainThreadHandler.sendMessage(mainThreadHandler.obtainMessage(CALC_PING));
     	SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
     	email=prefs.getString(SHARED_PREFS_EMAIL, null);
@@ -1081,7 +1134,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		EmailWithDateHashSet(){};
 		
 		public void addEmail(String string) {
-			// TODO Auto-generated method stub
+		
 
 			boolean found=false;
 			for(EmailWithDate item: this)
@@ -1173,7 +1226,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				j.put("email", email);
 				j.put("date", date.getTimeInMillis());
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
+			
 				e.printStackTrace();
 			}
 			
@@ -1188,7 +1241,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				date.setTimeInMillis(j.getLong("date"));
 				
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
+			
 				e.printStackTrace();
 			}
 			
@@ -1309,7 +1362,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 							setTtl((int) ttl);
 						}catch(NumberFormatException e)
 						{
-							Log.e("AvatarMainActivity", "AlertDialog.buttonOk.onClick", e);
+							AVLogger.e("AvatarMainActivity", "AlertDialog.buttonOk.onClick", e);
 							setTtl(0);
 						}
 						shareRobot();
@@ -1614,7 +1667,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 					@Override
 					public void doAction() {
-						// TODO Auto-generated method stub
+					
 						setCurrentState(STATE_OFF);
 					}
 					
@@ -1646,7 +1699,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 					@Override
 					public void doAction() {
-						// TODO Auto-generated method stub
+				
 						if(isNetworkAvailable)
 						{
 							setCurrentState(STATE_ENABLED);
@@ -1670,7 +1723,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 					@Override
 					public void doAction() {
-						// TODO Auto-generated method stub
+					
 						setCurrentState(STATE_OFF);
 					}
 					
@@ -1687,7 +1740,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 					@Override
 					public void doAction() {
-						// TODO Auto-generated method stub
+						
 						setCurrentState(STATE_OFF);
 					}
 					
@@ -1784,7 +1837,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		}*/
 		else if (id==SELECT_EMAIL_DIALOG)
 		{
-			//TODO maybe something needs to be added
+			
 			//AlertDialog d=(AlertDialog)dialog;gfghfghfghfghfghfghfg
 			//d.getListView().setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, emailsSet.toArray(new String[0])));
 			
@@ -1854,7 +1907,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
-			Log.v("connect", (String)responce);
+			AVLogger.v("connect", (String)responce);
 			progressDialog.dismiss();
 			try
 			{
@@ -1872,13 +1925,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFail, r.getString("message")), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 					
 				}
-				//Log.v("connect", (String)responce);
+				//AVLogger.v("connect", (String)responce);
 				
 				//setCurrentState(STATE_ON);
 			}
 			catch(JSONException e)
 			{
-				Log.e("ConnectionResponceHandler", "onConnectionSuccessful", e);
+				AVLogger.e("ConnectionResponceHandler", "onConnectionSuccessful", e);
 				toastBuilder.makeAndShowToast(R.string.toastInviteHz, ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
 				//setCurrentState(STATE_ON);
 				
@@ -1904,6 +1957,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		
 	};
 	
+	@Override
 	protected void readChargeState(int charge)
 	{
 		
@@ -1985,7 +2039,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				r = new JSONObject((String)responce);
 				}catch(JSONException e)
 				{
-					Log.v("ConnectionResponceHandler", "parceJson", e);
+					AVLogger.v("ConnectionResponceHandler", "parceJson", e);
 					
 					return;
 				}
@@ -2010,7 +2064,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					if(currentState>STATE_PAUSED)
 					{
 						driver.setNewDirection(r.getInt(CMD_DIR), r.getDouble(CMD_OMEGA),r.getDouble(CMD_VOMEGA));
-						Log.v("cmd", (String)responce);
+						AVLogger.v("cmd", (String)responce);
 					}
 				}
 				else
@@ -2032,13 +2086,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			}
 			catch(JSONException e)
 			{
-				Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
+				AVLogger.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
 				
 
 			}
 		/*	catch(IOException e)
 			{
-				Log.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
+				AVLogger.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
 				sendCommand(error);
 			}*/
 		}

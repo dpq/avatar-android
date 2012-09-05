@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import ru.glavbot.customLogger.AVLogger;
+
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -20,10 +22,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
+
 import android.util.Log;
 import android.widget.Toast;
 
-public class AccessoryProcessor extends Activity {
+public abstract class AccessoryProcessor extends Activity {
 	
 	private static final String TAG = "RoboRuler"; 
 
@@ -34,6 +37,19 @@ public class AccessoryProcessor extends Activity {
 	private boolean mPermissionRequestPending;
 
 	private UsbAccessory mAccessory;
+	
+	protected AVLogger avLogger;
+	
+	protected boolean isAccessoryAvailable()
+	{
+		boolean avail=false;
+		synchronized (sync)
+		{
+			avail=(mAccessory!=null);
+		}
+		return avail;
+	}
+	
 	private ParcelFileDescriptor mFileDescriptor;
 	private BufferedInputStream mInputStream=null;
 	//protected FileOutputStream mOutputStream;
@@ -52,7 +68,7 @@ public class AccessoryProcessor extends Activity {
 							UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
 						openAccessory(accessory);
 					} else {
-						Log.d(TAG, "permission denied for accessory "
+						AVLogger.d(TAG, "permission denied for accessory "
 								+ accessory);
 					}
 					mPermissionRequestPending = false;
@@ -86,6 +102,7 @@ public class AccessoryProcessor extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        avLogger= new AVLogger(Log.DEBUG);
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
@@ -116,6 +133,10 @@ public Object onRetainNonConfigurationInstance() {
 		return super.onRetainNonConfigurationInstance();
 	}
 }*/
+    
+    protected abstract void readChargeState(int charge);
+    
+
 
 volatile byte[] writerData=null;
 
@@ -133,7 +154,7 @@ protected void sendCommand(byte[] commandData) {
 	    				mOutputStream.write(writerData,0,writerData.length);
 	    			} catch (IOException e) {
 	    				// TODO Auto-generated catch block
-	    				Log.e("","",e);
+	    				AVLogger.e("","",e);
 	    			
 	    			}
 	            }
@@ -226,6 +247,10 @@ private void reportCharge(int chrg)
 @Override
 protected void onResume() {
 	super.onResume();
+	if(mainThreadHandler == null)
+	{
+		throw new RuntimeException("mainThreadHandler is not initialized!!!!");
+	}
 	requestAccessory();
 }
 
@@ -241,15 +266,16 @@ protected void reopenAccessory()
 
 protected void requestAccessory()
 {
-	synchronized (sync) {
-			
-		//Intent intent = getIntent();
+		synchronized (sync) {
+
+			// Intent intent = getIntent();
 			if (mInputStream != null && mOutputStream != null) {
 				return;
 			}
 
 			UsbAccessory[] accessories = mUsbManager.getAccessoryList();
-			UsbAccessory accessory = (accessories == null ? null : accessories[0]);
+			UsbAccessory accessory = (accessories == null ? null
+					: accessories[0]);
 			if (accessory != null) {
 				if (mUsbManager.hasPermission(accessory)) {
 					openAccessory(accessory);
@@ -258,12 +284,12 @@ protected void requestAccessory()
 						if (!mPermissionRequestPending) {
 							mUsbManager.requestPermission(accessory,mPermissionIntent);
 							mPermissionRequestPending = true;
+						}
 					}
 				}
+			} else {
+				AVLogger.d(TAG, "mAccessory is null");
 			}
-		} else {
-			Log.d(TAG, "mAccessory is null");
-		}
 		}
 }
 
@@ -285,7 +311,28 @@ public void onDestroy() {
 	super.onDestroy();
 }
 
-protected Handler mainThreadHandler;
+
+protected class AccessoryHandler extends Handler
+{
+	 public void handleMessage(Message msg) {
+      	
+      	switch (msg.what)
+      	{
+      		case READ_CHARGE_STATE:
+      			readChargeState(msg.arg1);
+      			break;
+      		case WRITE_DATA_ERROR:
+      			reopenAccessory();
+      			break;
+
+
+      	};
+				
+      }
+}
+
+
+protected AccessoryHandler mainThreadHandler;
 
 
 
@@ -293,6 +340,9 @@ Handler getHandler()
 {
 	return mainThreadHandler;
 }
+
+
+
 
 
 private void openAccessory(UsbAccessory accessory) {
@@ -310,10 +360,10 @@ private void openAccessory(UsbAccessory accessory) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
-		Log.d(TAG, "accessory opened"); 
+		AVLogger.d(TAG, "accessory opened"); 
 		//enableControls(true);
 	} else {
-		Log.d(TAG, "accessory open fail");
+		AVLogger.d(TAG, "accessory open fail");
 	}
 }
 
