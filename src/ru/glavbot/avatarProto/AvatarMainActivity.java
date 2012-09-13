@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashSet;
+import java.util.ListIterator;
 import java.util.Set;
 //import java.util.SortedSet;
 //import java.util.TreeSet;
@@ -117,8 +118,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private AudioReceiver audioReceiver;
      private VideoReceiver videoReceiver;
  
-	  private SensorManager mSensorManager;
-	  private Sensor mLuxmeter;
+	//  private SensorManager mSensorManager;
+	//  private Sensor mLuxmeter;
      private String gatewayIp;
      
    //  private static final int SEND_CONTROL_LINK_DIALOG = 1001;
@@ -224,6 +225,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			
 			e.printStackTrace();
 		}
+		 mainThreadHandler = new AvatarMainActivityHandler();     
 		/*try {
 		    Runtime.getRuntime().exec("su"); 
 		} catch( Exception e ) { // pokemon catching
@@ -389,10 +391,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
         audioSender = new AudioSender();
         audioReceiver= new AudioReceiver();
         
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+      //  mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+       // mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         
-        mainThreadHandler = new AvatarMainActivityHandler();      
+        
         driver= new RoboDriver(this);
     }
     
@@ -464,7 +466,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     		ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
     		req.setTimeout(TELEMETRIC_DELAY/2);
     		req.setAnswerProcessor(pingResponce);
-    		pingStartMsecs=Calendar.getInstance().getTimeInMillis();
+    		pingStartMsecs=System.currentTimeMillis();
     		pingManager.push(req);
     		/*ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/wifi.cgi");
     		r.setTimeout(TELEMETRIC_DELAY);
@@ -486,7 +488,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 			
-			long pingEndMsecs=Calendar.getInstance().getTimeInMillis();
+			long pingEndMsecs=System.currentTimeMillis();
 			ping = (int)(pingEndMsecs-pingStartMsecs)/2;
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), TELEMETRIC_DELAY);
 				
@@ -508,7 +510,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	};
     
     
-
+/*
 	SensorEventListener sensorEventListener = new SensorEventListener(){
 
 		public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -525,7 +527,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		}
     	
     };
-    
+    */
     
     
     boolean isListeningNetwork=false;
@@ -726,11 +728,12 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			Uri uri=builder.build();
 			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
 			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
-			req.setTimeout(100000);
+			req.setTimeout(5000);
 			req.setAnswerProcessor(cmdConnectionResponse);
 			req.setProgressProcessor(cmdConnectionResponse);
 			req.setProcessingType(ConnectionRequest.READ_STRINGS_ONE_BY_ONE);
 			protocolManager.push(req);
+			//mainThreadHandler.removeMessages(RERUN_COMMANDS);
 			sendTelemetricMessage();
 			commandsRunning=true;
 		}
@@ -946,7 +949,13 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			.appendQueryParameter("ping", Integer.toString(ping));
 			Uri uri=builder.build();
 			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
-			String data = avLogger.exportLog().toString();
+			String data="";
+			ArrayList<String> log=avLogger.exportLog();
+			ListIterator<String> it= log.listIterator();
+			while (it.hasNext())
+			{
+				data+=("\r\n"+it.next());
+			}
 			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.POST, realAddress,data);
 			req.setTimeout(1000);
 			req.setAnswerProcessor(emptyResponce1);
@@ -974,7 +983,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         
        disableAll();
        stopListeningNetwork();
-       mSensorManager.unregisterListener(sensorEventListener);
+     //  mSensorManager.unregisterListener(sensorEventListener);
        AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
 		if(audiomanager.getMode()!=AudioManager.MODE_NORMAL)
 		{
@@ -1056,7 +1065,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			int maxVoice = audiomanager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
 			audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, maxVoice, 0);
 		}
-		mSensorManager.registerListener(sensorEventListener, mLuxmeter, SensorManager.SENSOR_DELAY_GAME);
+		//mSensorManager.registerListener(sensorEventListener, mLuxmeter, SensorManager.SENSOR_DELAY_GAME);
    		doResume();
    		driver.start();
     }
@@ -1984,7 +1993,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	public static final int GET_TELEMETRICS_WIFI = 2;
 	public static final int SEND_TELEMETRIC_REPORT = 3;
 	public static final int CALC_PING=4;
-	protected static final int RERUN_COMMANDS_DELAY = 1000;	
+	protected static final int RERUN_COMMANDS_DELAY = 7500;	
 	
 	
 	
@@ -1998,6 +2007,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionSuccessful(Object responce) {
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);//  reRunCommands();
 			OnScreenLogger.setCommands(false);
+			stopStreaming();
 			driver.reset();
 		}
 
@@ -2005,6 +2015,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionUnsuccessful(int statusCode) {
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 			OnScreenLogger.setCommands(false);
+			stopStreaming();
 			//driver.reset();
 		}
 
@@ -2013,6 +2024,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 			//driver.reset();
 			OnScreenLogger.setCommands(false);
+			stopStreaming();
 			//driver.reset();
 		}
 		
@@ -2029,72 +2041,48 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		
 		protected void parceJson(Object responce)
 		{
-			JSONObject r;
 			
-			/*{a:N1, b:N2, c:N3, sa:M1, sb:M2, sc:M3, h:A }*/
-			driver.resetCmdWatchDog();
-			try
-			{
-				try{
-				r = new JSONObject((String)responce);
-				}catch(JSONException e)
-				{
-					AVLogger.v("ConnectionResponceHandler", "parceJson", e);
-					
-					return;
-				}
-				
-				if(r.has(CMD_SLEEP))
-				{
-					int sleep=r.getInt(CMD_SLEEP);
-					if(currentState>STATE_REMOTE_PAUSED)
-					{
-						if(sleep==0)
-						{
-							setCurrentState(STATE_ENABLED);
-						}
-						else
-						{
-							setCurrentState(STATE_ON);
-						}
-					}
-				}
-				if(r.has(CMD_DIR)&&r.has(CMD_OMEGA)&&r.has(CMD_VOMEGA))
-				{
-					if(currentState>STATE_PAUSED)
-					{
-						driver.setNewDirection(r.getInt(CMD_DIR), r.getDouble(CMD_OMEGA),r.getDouble(CMD_VOMEGA));
-						AVLogger.v("cmd", (String)responce);
-					}
-				}
-				else
-				{
-					
-				}
-				
-				
-				/*	s.reset();
-					ds.writeByte(r.getInt("h"));
-					ds.writeByte(r.getInt("a"));
-					ds.writeShort(r.getInt("sa"));
-					ds.writeByte(r.getInt("b"));
-					ds.writeShort(r.getInt("sb"));
-					ds.writeByte(r.getInt("c"));
-					ds.writeShort(r.getInt("sc"));
-					sendCommand(s.toByteArray());*/
-				
-			}
-			catch(JSONException e)
-			{
-				AVLogger.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
-				
+			String resp = (String) responce;
+			/* {a:N1, b:N2, c:N3, sa:M1, sb:M2, sc:M3, h:A } */
+			if (resp.length() > 1) {
+				driver.resetCmdWatchDog();
+				JSONObject r;
+				try {
+					try {
+						r = new JSONObject(resp);
+					} catch (JSONException e) {
+						AVLogger.v("ConnectionResponceHandler", "parceJson", e);
 
+						return;
+					}
+
+					if (r.has(CMD_SLEEP)) {
+						int sleep = r.getInt(CMD_SLEEP);
+						if (currentState > STATE_REMOTE_PAUSED) {
+							if (sleep == 0) {
+								setCurrentState(STATE_ENABLED);
+							} else {
+								setCurrentState(STATE_ON);
+							}
+						}
+					}
+					if (r.has(CMD_DIR) && r.has(CMD_OMEGA) && r.has(CMD_VOMEGA)) {
+						if (currentState > STATE_PAUSED) {
+							driver.setNewDirection(r.getInt(CMD_DIR),
+									r.getDouble(CMD_OMEGA),
+									r.getDouble(CMD_VOMEGA));
+							AVLogger.d("cmd", (String) responce);
+						}
+					} else {
+
+					}
+
+				} catch (JSONException e) {
+					AVLogger.v("ConnectionResponceHandler", "parceJson", e);
+
+				}
 			}
-		/*	catch(IOException e)
-			{
-				AVLogger.v("ConnectionResponceHandler", "onConnectionSuccessful", e);
-				sendCommand(error);
-			}*/
+
 		}
 		
 		@Override

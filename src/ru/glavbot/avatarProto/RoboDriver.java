@@ -23,7 +23,7 @@ public class RoboDriver {
 	private static final String TAG="RoboDriver";
 
 	
-	private volatile long chargeWatchDog=Calendar.getInstance().getTimeInMillis(); 
+	private volatile long chargeWatchDog=System.currentTimeMillis(); 
 	private static final int CHARGE_DELAY=60000;
 	private int needReadCharge = 0;
 	private int prevNeedReadCharge = 0;
@@ -79,7 +79,7 @@ Runnable worker = new Runnable(){
 		try {
 			if(isChanged())
 			{
-				//watchDog=Calendar.getInstance().getTimeInMillis(); 
+				//watchDog=System.currentTimeMillis(); 
 				//AVLogger.v("Goes to arduino",String.format("%d", curHeadPos));
 				ds.writeByte(servosEnabled);
 				ds.writeByte(curHeadPos);
@@ -104,7 +104,7 @@ Runnable worker = new Runnable(){
 				
 				if(needReadCharge!=0)
 				{
-					/*byte[] data = */readCommand(2);
+					/*byte[] data = *//*readCommand(2);*/
 					
 					
 					needReadCharge=0;
@@ -327,9 +327,9 @@ Runnable worker = new Runnable(){
 	    	curLEDlight-=5;
 	    }
 	    // charge
-	    if(Calendar.getInstance().getTimeInMillis()-chargeWatchDog>CHARGE_DELAY)
+	    if(System.currentTimeMillis()-chargeWatchDog>CHARGE_DELAY)
 	    {
-	    	chargeWatchDog=Calendar.getInstance().getTimeInMillis();
+	    	chargeWatchDog=System.currentTimeMillis();
 	    	needReadCharge=1;
 	    }
 	   
@@ -338,17 +338,17 @@ Runnable worker = new Runnable(){
 	    
 	    synchronized(synchronizer)
 	    {
-	    	servosEnabled =(byte) ((/*((Calendar.getInstance().getTimeInMillis()-watchDog)>30000)||*/((Calendar.getInstance().getTimeInMillis()-cmdWatchDog)>10000))?0:1);
+	    	servosEnabled =(byte) ((/*((System.currentTimeMillis()-watchDog)>30000)||*/((System.currentTimeMillis()-cmdWatchDog)>10000))?0:1);
 	    }
 	 }
 	
 protected void sendCommand(byte[] byteArray) {
 		owner.sendCommand(byteArray);
 	}
-
+/*
 protected void readCommand( int size) {
 	 owner.readCommand(size);
-}
+}*/
 
 // CURRENT POSITIONS
 
@@ -373,7 +373,7 @@ private int prevLedLight=0;
 
 // watchdog for disable servos;
 
-private volatile long watchDog=Calendar.getInstance().getTimeInMillis(); 
+private volatile long watchDog=System.currentTimeMillis(); 
 
 
 // prev dir for inertion
@@ -382,14 +382,14 @@ private int prevDir=8;
 private double prevOmega=0;
 
 
-private volatile long cmdWatchDog=Calendar.getInstance().getTimeInMillis(); 
+private volatile long cmdWatchDog=System.currentTimeMillis(); 
 
 
 public void resetCmdWatchDog()
 {
     synchronized(synchronizer)
     {
-    	cmdWatchDog=Calendar.getInstance().getTimeInMillis(); 
+    	cmdWatchDog=System.currentTimeMillis(); 
     }
 }
 
@@ -417,7 +417,7 @@ boolean isChanged()
 boolean resetWatchdog()
 {
 	
-	watchDog=Calendar.getInstance().getTimeInMillis();
+	watchDog=System.currentTimeMillis();
 	servosEnabled=1;
 	return true;
 }
@@ -508,13 +508,13 @@ private void setWheelsSpeed(int[] dir_array,int  spd,int oow, int oow2) {
 }
 private static class Inertion {
 	private static final int INERTION_TIME=90;
-	private long inertionStart=Calendar.getInstance().getTimeInMillis();
+	private long inertionStart=System.currentTimeMillis();
 	private boolean inertionEnabled=false;
 
 	public void enableInertion()
 	{
 		inertionEnabled=true;
-		inertionStart=Calendar.getInstance().getTimeInMillis();
+		inertionStart=System.currentTimeMillis();
 	}
 
 	public void disableInertion()
@@ -525,7 +525,7 @@ private static class Inertion {
 	
 	public boolean inertionWorking()
 	{
-		return inertionEnabled && ((Calendar.getInstance().getTimeInMillis()-inertionStart)<INERTION_TIME);
+		return inertionEnabled && ((System.currentTimeMillis()-inertionStart)<INERTION_TIME);
 	}
 
 };

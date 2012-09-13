@@ -6,6 +6,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.NoSuchElementException;
+import java.util.Vector;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import ru.glavbot.customLogger.AVLogger;
 
@@ -51,9 +55,9 @@ public abstract class AccessoryProcessor extends Activity {
 	}
 	
 	private ParcelFileDescriptor mFileDescriptor;
-	private BufferedInputStream mInputStream=null;
+	private volatile BufferedInputStream mInputStream=null;
 	//protected FileOutputStream mOutputStream;
-	protected FileOutputStream mOutputStream=null;
+	protected volatile FileOutputStream mOutputStream=null;
 	
 	protected Object sync=new Object();
 	
@@ -79,11 +83,11 @@ public abstract class AccessoryProcessor extends Activity {
 					if (accessory != null && accessory.equals(mAccessory)) {
 						closeAccessory();
 						try {
-							Process process = new ProcessBuilder()
+						/*	Process process = new ProcessBuilder()
 						       .command("/system/bin/su")
 						       .start();
 								OutputStream o =process.getOutputStream();
-								o.write("/system/bin/reboot -p\n".getBytes());
+								o.write("/system/bin/reboot -p\n".getBytes());*/
 
 						} catch (Exception e) {
 							Toast.makeText(getApplicationContext(), "fail!", Toast.LENGTH_LONG).show();
@@ -102,7 +106,7 @@ public abstract class AccessoryProcessor extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        avLogger= new AVLogger(Log.DEBUG);
+        avLogger= new AVLogger(Log.INFO);
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
@@ -138,46 +142,132 @@ public Object onRetainNonConfigurationInstance() {
     
 
 
-volatile byte[] writerData=null;
+volatile WriterThread writer=null;
+volatile ReaderThread reader= null;
+
+protected static class WriterThread extends Thread
+{
+	FileOutputStream  os;
+	protected LinkedBlockingQueue<byte[]> commands = new LinkedBlockingQueue<byte[]>(2);
+	Handler errHandler;
+	WriterThread(FileOutputStream mOS,Handler h)
+	{
+		this.setName("ArduinoWriter");
+		this.os=mOS;
+		errHandler=h;
+	}
+	
+	public LinkedBlockingQueue<byte[]> getCommands()
+	{
+		return commands;
+	}
+	
+	
+	public void run()
+	{
+		while (!isInterrupted())
+		{
+			
+
+			try{
+			byte[] cmd =commands.take();
+				os.write(cmd,0,cmd.length);
+			
+			}catch (IOException e) {
+				// TODO Auto-generated catch block
+			AVLogger.e("","",e);
+			errHandler.obtainMessage(WRITE_DATA_ERROR).sendToTarget();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				AVLogger.e("","",e);
+			}
+		}
+		
+	}
+	
+	
+	
+};
+
+protected static class ReaderThread extends Thread
+{
+	BufferedInputStream  is;
+	protected Vector<byte[]> commands = new Vector<byte[]>();
+	Handler handler;
+	ReaderThread(BufferedInputStream mIS,Handler h)
+	{
+		this.setName("ArduinoReader");
+		this.is=mIS;
+		handler=h;
+	}
+	
+	byte[] cmd= new byte[2];
+	
+	public void run()
+	{
+		while (!isInterrupted())
+		{
+			try {
+            	int read=0;
+            	int totalRead=0;
+            	while(totalRead<cmd.length)
+            	{
+            		read=is.read(cmd,totalRead, cmd.length-totalRead);
+            		if(read>0)
+            		{
+            			totalRead+=read;
+            		}
+            		
+            	}
+            	
+				int tmp1=cmd[1];
+				int chrg=(tmp1<<8)+cmd[0]; 
+				if(chrg>0)
+				{
+					Message msg=handler.obtainMessage(READ_CHARGE_STATE);
+					msg.arg1=chrg;
+					handler.sendMessage(msg);
+				}
+			}
+			catch (IOException e)
+			{
+				
+			}
+		}
+		
+	}
+	
+	
+	
+};
+
 
 protected void sendCommand(byte[] commandData) {
 	// TODO Auto-generated method stub
 //	reopenAccessory();
 	synchronized (sync) {
-		if(mOutputStream!=null)
+		if(mOutputStream!=null&&writer!=null)
 		{
-			
-			writerData=commandData;
-			Thread writerThread = new Thread() {
-	            public void run() {                
-	    			try {
-	    				mOutputStream.write(writerData,0,writerData.length);
-	    			} catch (IOException e) {
-	    				// TODO Auto-generated catch block
-	    				AVLogger.e("","",e);
-	    			
-	    			}
-	            }
-	        };
-	        writerThread.start();
-	        
-	        try {
-				writerThread.join(200);
-			} catch (InterruptedException e) {
-				mainThreadHandler.obtainMessage(WRITE_DATA_ERROR).sendToTarget();
-			}
-
+			writer.getCommands().offer(commandData);
 		}
+	/*try {
+		mOutputStream.write(commandData,0,commandData.length);
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}*/
 	}
 }
 
-volatile byte[] readerData = {};//new byte[commandLength];
-//Thread readerThread= null;
-//Thread watcherThread= null;
+
+
+
 
 public static final int READ_CHARGE_STATE = 1004;
 public static final int WRITE_DATA_ERROR = 1005;
 
+/*
+volatile boolean tryingRead=false; 
 
 protected void readCommand(int commandLength) {
 	// TODO Auto-generated method stub
@@ -187,7 +277,10 @@ protected void readCommand(int commandLength) {
 		{
 			//reopenAccessory();
 			readerData=new byte[commandLength];
-			Thread watcherThread=  new Thread() {
+			if(!tryingRead)
+			{
+				tryingRead=true;
+				Thread watcherThread=  new Thread() {
 						
 			        	Thread readerThread = new Thread() {
 				            public void run() {                
@@ -218,6 +311,7 @@ protected void readCommand(int commandLength) {
 			            	readerThread.start();
 			            	try {
 								readerThread.join(1000);
+								tryingRead=false;
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								//e.printStackTrace();
@@ -228,13 +322,14 @@ protected void readCommand(int commandLength) {
 			        
 			        watcherThread.start();
 		}
+		}
 
 	}
 }
 
+*/
 
-
-
+/*
 private void reportCharge(int chrg)
 {
 	Message msg=mainThreadHandler.obtainMessage(READ_CHARGE_STATE);
@@ -242,7 +337,7 @@ private void reportCharge(int chrg)
 	mainThreadHandler.sendMessage(msg);
 }
 
-
+*/
 
 @Override
 protected void onResume() {
@@ -352,6 +447,7 @@ private void openAccessory(UsbAccessory accessory) {
 		FileDescriptor fd = mFileDescriptor.getFileDescriptor();
 		mInputStream =new BufferedInputStream( new FileInputStream(fd));
 		mOutputStream =  new FileOutputStream(fd);
+		//tryingRead=false;
 		//Thread thread = new Thread(this, "DemoKit");
 		//thread.start();
 		/*try {
@@ -360,6 +456,13 @@ private void openAccessory(UsbAccessory accessory) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
+		
+		//reader = new ReaderThread(mInputStream,mainThreadHandler);
+		writer = new WriterThread(mOutputStream,mainThreadHandler);
+		writer.start();
+		//reader.start();
+		
+		
 		AVLogger.d(TAG, "accessory opened"); 
 		//enableControls(true);
 	} else {
@@ -377,7 +480,12 @@ private void closeAccessory() {
 	} catch (IOException e) {
 	} finally {
 		mInputStream=null;
-
+	}
+	
+	if(reader!=null)
+	{
+		reader.interrupt();
+		reader=null;
 	}
 	
 	try {
@@ -387,8 +495,15 @@ private void closeAccessory() {
 	}
 	} catch (IOException e) {
 	} finally {
+
 		mOutputStream=null;
 
+	}
+	
+	if(writer!=null)
+	{
+		writer.interrupt();
+		writer=null;
 	}
 	
 	try {
