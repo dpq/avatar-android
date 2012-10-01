@@ -205,6 +205,7 @@
 							android:id="@+id/videoView" 
 							android:layout_height="fill_parent"
 							android:layout_marginTop="10dip"
+							android:layout_centerInParent="true"
 							android:keepScreenOn="true"
 							/>
  	    

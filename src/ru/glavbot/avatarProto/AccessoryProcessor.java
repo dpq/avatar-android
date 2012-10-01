@@ -456,11 +456,16 @@ private void openAccessory(UsbAccessory accessory) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
-		
-		//reader = new ReaderThread(mInputStream,mainThreadHandler);
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		reader = new ReaderThread(mInputStream,mainThreadHandler);
 		writer = new WriterThread(mOutputStream,mainThreadHandler);
 		writer.start();
-		//reader.start();
+		reader.start();
 		
 		
 		AVLogger.d(TAG, "accessory opened"); 

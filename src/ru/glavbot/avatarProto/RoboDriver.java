@@ -17,7 +17,6 @@ public class RoboDriver {
 	private static final double Pi = Math.PI; // equals to JS pi
 	// resoultion
 	private static final int RESOLUTION = 10; // ms
-	//private static final double TURN_SPEED = 1 /*8*Pi/1000*RESOLUTION*/;
 	private static final double ACCELERATION = 4;
 	private static final int WHEEL_CRUISE_SPD = 252;
 	private static final String TAG="RoboDriver";
@@ -28,134 +27,79 @@ public class RoboDriver {
 	private int needReadCharge = 0;
 	private int prevNeedReadCharge = 0;
 	
-	
-	//volatile OutputStream commandWriter= null; 
-//	private volatile int[] compensationAngles={0,0,0};
-//	private volatile int[] wheelDirections = {1,1,1};
-	//int[] servoDirections = {1,1,1};
-	
 
-	
-	/*public synchronized void setCompensationAngles(int[] newAngles)
-	{
-	    synchronized(synchronizer)
-	    {
-	    	for(int i=0;i<compensationAngles.length;i++)
-	    		compensationAngles[i]=newAngles[i];
-	    }
-	}
-	public int[] getCompensationAngles()
-	{
-		return	compensationAngles;
-	}*/
-/*	public synchronized  void setWheelDirs(int[] newDirs)
-	{
-		for(int i=0;i<wheelDirections.length;i++)
-			wheelDirections[i]=newDirs[i];
-	}
-	public int[] getWheelDirs()
-	{
-		return	wheelDirections;
-	}*/
-	
-	
 	ByteArrayOutputStream s = new ByteArrayOutputStream(13);
 	DataOutputStream ds = new DataOutputStream(s);
-//	byte[] error={90,90,0,90,0,90,0,0};
+
 
 	
 ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 
 
-Runnable worker = new Runnable(){
+	Runnable worker = new Runnable() {
 
-	public void run() {
-		
-	    synchronized(synchronizer)
-	    {
-		try{
-		servoLoop();
-		s.reset();
-		try {
-			if(isChanged())
-			{
-				//watchDog=System.currentTimeMillis(); 
-				//AVLogger.v("Goes to arduino",String.format("%d", curHeadPos));
-				ds.writeByte(servosEnabled);
-				ds.writeByte(curHeadPos);
-				int compensedValue;
-				for(int i =0;i<3;i++)
-				{
-					compensedValue=normalize(curWheelDirs[i]/*+compensationAngles[i]*/);
-					ds.writeByte(compensedValue);
-					compensedValue=(int)curWheelSpeeds[i]/**wheelDirections[i]*/;
-					ds.writeShort(compensedValue);
-				}
-			/*	compensedValue=normalize(radToDeg(curWheelDirs[1])+compensationAngles[1]);
-				ds.writeByte(compensedValue);
-				ds.writeShort((int)curWheelSpeeds[1]);
-				ds.writeByte(radToDeg(curWheelDirs[2]));
-				ds.writeShort((int)curWheelSpeeds[2]);*/
-				ds.writeByte(curLEDlight);
-				ds.writeByte(needReadCharge);
-				sendCommand(s.toByteArray());
-				copyCurPrev();
-				
-				
-				if(needReadCharge!=0)
-				{
-					/*byte[] data = *//*readCommand(2);*/
-					
-					
-					needReadCharge=0;
-				}
-				
-				
-				/*
-				 * 
-				 * 
-				 * 
-				 * 
-				 * */
-				
-				
-				
-				
-				
-				
-			}
-		} catch (IOException e) {
-	
-			AVLogger.e("","",e);
-			
-		}
-		counter++;
-		if(counter==200)
-		{
-		String debug="";
-		byte[] b =s.toByteArray();	
-		
-		for(int i=0;i<3;i++){
-			
-				debug+= String.format(" %d ",curWheelDirs[i]);
-			}
+		public void run() {
 
-		
-		for(int i=0;i<b.length;i++){
-		int v = b[i];
-		v&=0x000000ff;
-			debug+= String.format("%04d ",v);
+			synchronized (synchronizer) {
+				try {
+					servoLoop();
+					s.reset();
+					try {
+						if (isChanged()) {
+
+							ds.writeByte(servosEnabled);
+							ds.writeByte(curHeadPos);
+							int compensedValue;
+							for (int i = 0; i < 3; i++) {
+								compensedValue = normalize(curWheelDirs[i]/* +compensationAngles[i]*/);
+								ds.writeByte(compensedValue);
+								compensedValue = (int) curWheelSpeeds[i]/*wheelDirections[i] */;
+								ds.writeShort(compensedValue);
+							}
+
+							ds.writeByte(curLEDlight);
+							ds.writeByte(needReadCharge);
+							sendCommand(s.toByteArray());
+							copyCurPrev();
+
+							if (needReadCharge != 0) {
+								needReadCharge = 0;
+							}
+							
+							
+							String debug = "";
+							byte[] b = s.toByteArray();
+
+							/*for (int i = 0; i < 3; i++) {
+
+								debug += String.format(" %d ", curWheelDirs[i]);
+							}*/
+
+							for (int i = 0; i < b.length; i++) {
+								int v = b[i];
+								v &= 0x000000ff;
+								debug += String.format("%03d ", v);
+							}
+							AVLogger.v("Goes to arduino", debug);
+							
+							
+						}
+					} catch (IOException e) {
+
+						AVLogger.e("", "", e);
+
+					}
+					counter++;
+					if (counter == 200) {
+						
+						counter = 0;
+					}
+				} catch (Exception e) {
+					AVLogger.wtf("RoboRuler", "This should never happen!");
+				}
+			}
 		}
-	//	AVLogger.v("Goes to arduino",debug);
-		counter=0;
-		}
-		//sendCommand(s.toByteArray());
-		}catch(Exception e)
-		{
-			AVLogger.wtf("RoboRuler", "This should never happen!");
-		}
-	    }
-	}};
+	};
 	
 	
 
@@ -163,10 +107,6 @@ Runnable worker = new Runnable(){
 	
 	static int counter = 0;
 	Object synchronizer = new Object();
-	/*private static int radToDeg(double rad)
-	{
-		return (int)( (rad*180.0)/Pi);
-	}*/
 	
 	
 	protected void headControl(double vOmega) {
@@ -175,18 +115,6 @@ Runnable worker = new Runnable(){
 		
 	}
 
-	/*protected double normalize(double src)
-	{
-		if(src > Pi) {
-			src = Pi;
-	        AVLogger.v(TAG,"dir >!!!!");
-	    }
-	    if(src < 0) {
-	    	src = 0;
-	        AVLogger.v(TAG,"dir <!!!!");
-	    }
-	    return src;
-	}*/
 	public void updateLuxmeterValue(float luxmeter)
 	{
 	    synchronized(synchronizer)
@@ -237,16 +165,23 @@ Runnable worker = new Runnable(){
 	}
 	
 	
+	public void calibrate(int newDir, double newOmega, double newVOmega)
+	{
+		calibrationFlag=true;
+		setNewDirection(newDir,newOmega,newVOmega,false);
+	}
+	
+	
 	public void setNewDirection(int newDir, double newOmega, double newVOmega)
 	{
 		setNewDirection( newDir,  newOmega,  newVOmega, true);
 	}
 	
-	public void setNewDirection(int newDir, double newOmega, double newVOmega, boolean speed)
+	private void setNewDirection(int newDir, double newOmega, double newVOmega, boolean speed)
 	{
 	    synchronized(synchronizer)
 	    {
-	    	resetCmdWatchDog();
+	    	resetWatchdog();
 	    	calculateDesiredValues (newDir, newOmega,speed);
 	    	headControl(newVOmega);
 	    }
@@ -256,26 +191,20 @@ Runnable worker = new Runnable(){
 	{
 	    synchronized(synchronizer)
 	    {
-	    	resetCmdWatchDog();
+	    	resetWatchdog();
 	    	calculateDesiredValues (8, 0,true);
 	    	tagHeadPos=120;
 	    }
-    	/*setSpeed(0, 0);
-        setSpeed(1, 0);
-        setSpeed(2, 0);*/
 	}
 	
 	public void toWork()
 	{
 	    synchronized(synchronizer)
 	    {
-	    	resetCmdWatchDog();
+	    	resetWatchdog();
 	    	calculateDesiredValues (8, 0,true);
 	    	tagHeadPos=70;
 	    }
-    	/*setSpeed(0, 0);
-        setSpeed(1, 0);
-        setSpeed(2, 0);*/
 	}
 
 	public double dePi(double val) {
@@ -345,10 +274,7 @@ Runnable worker = new Runnable(){
 protected void sendCommand(byte[] byteArray) {
 		owner.sendCommand(byteArray);
 	}
-/*
-protected void readCommand( int size) {
-	 owner.readCommand(size);
-}*/
+
 
 // CURRENT POSITIONS
 
@@ -371,11 +297,6 @@ volatile private int[] prevWheelDirs = {0,0,0};
 volatile private int prevHeadPos = 0;
 private int prevLedLight=0;
 
-// watchdog for disable servos;
-
-private volatile long watchDog=System.currentTimeMillis(); 
-
-
 // prev dir for inertion
 
 private int prevDir=8;
@@ -385,18 +306,11 @@ private double prevOmega=0;
 private volatile long cmdWatchDog=System.currentTimeMillis(); 
 
 
-public void resetCmdWatchDog()
-{
-    synchronized(synchronizer)
-    {
-    	cmdWatchDog=System.currentTimeMillis(); 
-    }
-}
-
-
 byte servosEnabled=1;
 
 byte prevServosEnabled = servosEnabled;
+
+private volatile boolean calibrationFlag = false;
 
 boolean isChanged()
 {
@@ -411,13 +325,18 @@ boolean isChanged()
 		return true;
 	if(needReadCharge!=prevNeedReadCharge)
 		return true;
+	if(calibrationFlag)
+	{
+		calibrationFlag = false;
+		return true;
+	}
 	return false;
 }
 
 boolean resetWatchdog()
 {
 	
-	watchDog=System.currentTimeMillis();
+	cmdWatchDog=System.currentTimeMillis();
 	servosEnabled=1;
 	return true;
 }
@@ -481,7 +400,7 @@ public static final int[][] ETALON_WHEEL_DIRECTIONS = {
 
 
 // SpringRC  servo matrix (Robo version)
-public static int[][] WHEEL_DIRECTIONS = {
+public volatile static int[][] WHEEL_DIRECTIONS = {
 { 120,  60,  30, 1, 1, 1,  2, 10, 2}, // 0   ^
 {  75,  15,  15, 1, 1, 1,  0, 10, 2}, // 1   /'   -20
 {  30, 150,  120, 1,-1,-1,  0, 10, 2}, // 2   >
@@ -532,86 +451,100 @@ private static class Inertion {
 
 Inertion inertion = new Inertion();
 
-private void calculateDesiredValues (int direction, double omega, boolean speed) {
-//	int iOmega=radToDeg(omega);
-	int spd = (int)(omega * (((double)WHEEL_CRUISE_SPD)/Pi)); /* * omega / WHEEL_DIRECTIONS[direction][WMK1];*/
-    if(direction == 9) {
-    	setTagSpeed(0, 0); // speed direction: absolutely magic!
-        setTagSpeed(1, 0);
-        setTagSpeed(2, 0);
-    } else {
-	if(Math.abs(omega) > 0.1) { // we got the angular speed
-	    if(direction == 8) { // SLEEP (we do not move any direction)
-	    	setWheelsDirection(WHEEL_DIRECTIONS[direction], -1,0);
-	        
-	        if(speed)
-	        {
+	private void calculateDesiredValues(int direction, double omega,
+			boolean speed) {
 
-		        setTagSpeed(0, spd); 
-		        setTagSpeed(1, -spd);
-		        setTagSpeed(2, spd);
-	        	
-	        }
-	        else
-	        {
-	        	setTagSpeed(0, 0); 
-	        	setTagSpeed(1, 0);
-	        	setTagSpeed(2, 0);
-	        }
-	    } else { // we have the direction of movement AND angular speed
-	    	inertion.disableInertion();
-	        // Out-of-order wheel parameters calculation
-	        int oo_diffang = (int)((180/Pi)*omega / WHEEL_DIRECTIONS[direction][WMK1]);
-	        int oo_wheelnum = (int) WHEEL_DIRECTIONS[direction][OOW];
-	        int oo_wheelangle = WHEEL_DIRECTIONS[direction][ oo_wheelnum ] + oo_diffang;
-	            // OO-wheel speed uses WHEEL_CRUISE_SPD as base parameter (which is 2/3 full throttle) and magic coeffs of current direction
-	        //double oo_wheelspeed =  WHEEL_DIRECTIONS[direction][3+oo_wheelnum]*WHEEL_CRUISE_SPD * (1+ ( Math.abs(oo_diffang) / WHEEL_DIRECTIONS[direction][WMK2]));
-	        int oo_wheelspeed =  WHEEL_CRUISE_SPD;
+		int spd = (int) (omega * (((double) WHEEL_CRUISE_SPD) / Pi)); /*
+																	 *  * omega /
+																	 * WHEEL_DIRECTIONS
+																	 * [
+																	 * direction
+																	 * ][WMK1];
+																	 */
+		if (direction == 9) {
+			setTagSpeed(0, 0); // speed direction: absolutely magic!
+			setTagSpeed(1, 0);
+			setTagSpeed(2, 0);
+		} else {
+			if (Math.abs(omega) > 0.1) { // we got the angular speed
+				if (direction == 8) { // SLEEP (we do not move any direction)
+					setWheelsDirection(WHEEL_DIRECTIONS[direction], -1, 0);
 
-	        setDirection(oo_wheelnum, oo_wheelangle /*- WHEEL_SHIFT[oo_wheelnum]*/);
-	        if(speed)
-	        setTagSpeed(oo_wheelnum, oo_wheelspeed * WHEEL_DIRECTIONS[direction][3+oo_wheelnum]);
+					if (speed) {
 
-	        // Now just set all-other wheels direction and speed TODO: for double-OOW situation, do not!
-	        setWheelsDirection(WHEEL_DIRECTIONS[direction], (int)WHEEL_DIRECTIONS[direction][OOW]/* except this wheel (?) */,0);
-	        //setWheelsSpeed(WHEEL_DIRECTIONS[direction], WHEEL_DIRECTIONS[direction][3+oo_wheelnum]*WHEEL_CRUISE_SPD,(int) WHEEL_DIRECTIONS[direction][OOW],0);
-	        if(speed)
-	        {
-	        	setWheelsSpeed(WHEEL_DIRECTIONS[direction], (int)WHEEL_CRUISE_SPD,(int) WHEEL_DIRECTIONS[direction][OOW],0);
-	        }
-	        else
-	        {
-		        setTagSpeed(0, 0); // speed direction: absolutely magic!
-		        setTagSpeed(1, 0);
-		        setTagSpeed(2, 0);
-		        
-	        }
-	        	
-	    }
-	    
-	} else { // we do not have angular speed, only current direction (including direction = SLEEP MODE (no move)
+						setTagSpeed(0, spd);
+						setTagSpeed(1, -spd);
+						setTagSpeed(2, spd);
 
-        if(speed)
-        {
-	    	if((Math.abs(prevOmega)==Pi)&&(prevDir==8)&&(direction==8))
-	    	{
-	    		inertion.enableInertion();
-	        /*	setCurSpeed(0, spd); 
-	        	setCurSpeed(1, -spd);
-	        	setCurSpeed(2, spd);*/
-	    	}
-	    	
-		    if(direction!=8)
-		    	inertion.disableInertion();
-	   
-			setWheelsDirection(WHEEL_DIRECTIONS[direction], -1,0);
-		    setWheelsSpeed(WHEEL_DIRECTIONS[direction], speed?WHEEL_CRUISE_SPD:0, -1,0);
-        }
+					} else {
+						setTagSpeed(0, 0);
+						setTagSpeed(1, 0);
+						setTagSpeed(2, 0);
+					}
+				} else { // we have the direction of movement AND angular speed
+					inertion.disableInertion();
+					// Out-of-order wheel parameters calculation
+					int oo_diffang = (int) ((180 / Pi) * omega / WHEEL_DIRECTIONS[direction][WMK1]);
+					int oo_wheelnum = (int) WHEEL_DIRECTIONS[direction][OOW];
+					int oo_wheelangle = WHEEL_DIRECTIONS[direction][oo_wheelnum]+ oo_diffang;
+					// OO-wheel speed uses WHEEL_CRUISE_SPD as base parameter
+					// (which is 2/3 full throttle) and magic coeffs of current
+					// direction
+					// double oo_wheelspeed =
+					// WHEEL_DIRECTIONS[direction][3+oo_wheelnum]*WHEEL_CRUISE_SPD
+					// * (1+ ( Math.abs(oo_diffang) /
+					// WHEEL_DIRECTIONS[direction][WMK2]));
+					int oo_wheelspeed = WHEEL_CRUISE_SPD;
+
+					setDirection(oo_wheelnum, oo_wheelangle);
+					if (speed)
+						setTagSpeed(oo_wheelnum, oo_wheelspeed
+								* WHEEL_DIRECTIONS[direction][3 + oo_wheelnum]);
+
+					// Now just set all-other wheels direction and speed TODO:
+					// for double-OOW situation, do not!
+					setWheelsDirection(WHEEL_DIRECTIONS[direction],
+							(int) WHEEL_DIRECTIONS[direction][OOW]/*
+																 * except this
+																 * wheel (?)
+																 */, 0);
+					// setWheelsSpeed(WHEEL_DIRECTIONS[direction],
+					// WHEEL_DIRECTIONS[direction][3+oo_wheelnum]*WHEEL_CRUISE_SPD,(int)
+					// WHEEL_DIRECTIONS[direction][OOW],0);
+					if (speed) {
+						setWheelsSpeed(WHEEL_DIRECTIONS[direction],
+								(int) WHEEL_CRUISE_SPD,
+								(int) WHEEL_DIRECTIONS[direction][OOW], 0);
+					} else {
+						setTagSpeed(0, 0); // speed direction: absolutely magic!
+						setTagSpeed(1, 0);
+						setTagSpeed(2, 0);
+
+					}
+
+				}
+
+			} else { // we do not have angular speed, only current direction
+						// (including direction = SLEEP MODE (no move)
+
+				if (speed) {
+					if ((Math.abs(prevOmega) == Pi) && (prevDir == 8)
+							&& (direction == 8)) {
+						inertion.enableInertion();
+					}
+
+					if (direction != 8)
+						inertion.disableInertion();
+					setWheelsSpeed(WHEEL_DIRECTIONS[direction],
+							speed ? WHEEL_CRUISE_SPD : 0, -1, 0);
+				}
+
+				setWheelsDirection(WHEEL_DIRECTIONS[direction], -1, 0);
+			}
+		}
+		prevDir = direction;
+		prevOmega = omega;
 	}
-    }
-    prevDir=direction;
-    prevOmega=omega;
-}
 
 
 private void setDirection(int wheelNum, int dir) {
@@ -619,15 +552,8 @@ private void setDirection(int wheelNum, int dir) {
     curWheelDirs[wheelNum] = normalize(dir);
 }
 
-
-
-
-
 private void setTagSpeed(int wheelNum, int spd) {
     tagWheelSpeeds[wheelNum] = spd;
-}
-private void setCurSpeed(int wheelNum, int spd) {
-    curWheelSpeeds[wheelNum] = spd;
 }
 
 }

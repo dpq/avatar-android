@@ -194,7 +194,7 @@ void setAll()
          byte data[2];
          data[0]=(byte)sensorValue;
          data[1]=(byte)(sensorValue>>8);
-         //acc.write(data,2);
+         acc.write(data,2, USB_NAK_NOWAIT);
          Serial.print("\r\nData: ");
           Serial.print(data[0],DEC);
           Serial.print(data[1],DEC);

@@ -140,6 +140,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      
      private static final String SHARED_PREFS = "RobotSharedPrefs";
      private static final String SHARED_PREFS_EMAIL = "email";
+     private static final String SHARED_PREFS_VOLUME = "volume";
      private static final String SHARED_PREFS_TTL = "ttl";
      private static final String SHARED_PREFS_TOKEN = "token"; 
      private static final String SHARED_PREFS_WHEELS = "wheels"; 
@@ -152,6 +153,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String CMD_PATH = "cmd"; 
      private static final String START_VIDEO_PATH = "start.cgi"; 
      private static final String RESET_ACCESSORY_PATH="arduino.cgi";
+     private static final int CAMERAS_TIMEOUT=10000;
      
     // private static final String RESTREAMER_PATH = "restreamer"; 
      private static final String MACADDR_PARAM = "macaddr";
@@ -367,8 +369,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 					boolean fromUser) {
 				if(fromUser)
 				{
-					AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
-					audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, progress, 0);
+					setVolume(progress);
+					/*AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
+					audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, progress, 0);*/
 				}
 			}
 		});
@@ -397,6 +400,44 @@ public class AvatarMainActivity extends AccessoryProcessor {
         
         driver= new RoboDriver(this);
     }
+    
+    protected void setVolume(int newVolume)
+    {
+		AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
+		audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, newVolume, 0);
+		if(volumeSelect!=null)
+		{
+			volumeSelect.setProgress(newVolume);
+		}
+		SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
+		prefs.edit().putInt(SHARED_PREFS_VOLUME, newVolume).apply();
+		
+    }
+    
+    protected void restoreVolume()
+    {
+    	
+    	
+    	
+		AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
+		if(audiomanager.getMode()!=AudioManager.MODE_IN_COMMUNICATION)
+		{
+			audiomanager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+		}
+		
+		SharedPreferences prefs = getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE );
+    	int volume = prefs.getInt(SHARED_PREFS_VOLUME, audiomanager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL));
+		
+    	
+		
+		audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, volume, 0);
+		if(volumeSelect!=null)
+		{
+			volumeSelect.setProgress(volume);
+		}
+    }
+    
+
     
     
     protected class AvatarMainActivityHandler extends  AccessoryHandler
@@ -508,7 +549,31 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);}
 		
 	};
-    
+	ProcessAsyncRequestResponceProrotype emptyResponce = new ProcessAsyncRequestResponceProrotype()
+	{
+
+		@Override
+		protected void onConnectionSuccessful(Object responce) {
+			
+
+				
+		}
+
+		@Override
+		protected void onConnectionUnsuccessful(int statusCode) {
+			//textViewSignal.setText(String.format("%d", statusCode));
+			//sendTelemetricMessage();
+			//mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);	
+		}
+
+		@Override
+		protected void onConnectionFail(Throwable e) {
+			//textViewSignal.setText(e.getMessage());
+			//sendTelemetricMessage();
+		//	mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);
+		}
+		
+	};
     
 /*
 	SensorEventListener sensorEventListener = new SensorEventListener(){
@@ -728,7 +793,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			Uri uri=builder.build();
 			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
 			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
-			req.setTimeout(5000);
+			req.setTimeout(7500);
 			req.setAnswerProcessor(cmdConnectionResponse);
 			req.setProgressProcessor(cmdConnectionResponse);
 			req.setProcessingType(ConnectionRequest.READ_STRINGS_ONE_BY_ONE);
@@ -770,11 +835,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			videoReceiver.stopReceiveVideo();
 			audioSender.stopVoice();
 			audioReceiver.stopVoice();
-			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/stop.cgi");
-			r.setTimeout(1000);
-			r.setAnswerProcessor(emptyResponce);
-			bottomCameraStreamManager.push(r);
 			streamsRunning=false;
+			sendStopCamerasRequest();
 		}
 	}
     
@@ -787,55 +849,101 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			audioReceiver.startVoice();
 			audioSender.startVoice();
 			videoReceiver.startReceiveVideo();
+			streamsRunning=true;
+			sendStartCamerasRequest();
 			
+		}
+    }
+	
+	private void sendStopCamerasRequest()
+	{
+		if(!streamsRunning)
+		{
+			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/stop.cgi");
+			r.setTimeout(CAMERAS_TIMEOUT);
+			r.setAnswerProcessor(stopCameraResponce);
+		//	bottomCameraStreamManager.clearQueue(); // only last one should be executed
+			bottomCameraStreamManager.push(r);
+		}
+	}
+	
+	
+	private void sendStartCamerasRequest()
+	{
+		if(streamsRunning)
+		{
 			Uri.Builder builder = new Uri.Builder();
 			builder.path(START_VIDEO_PATH)
 			.appendQueryParameter(TOKEN_PARAM, getSession_token())
 			.appendQueryParameter(HOST_PARAM, serverAuthority)
-			.appendQueryParameter(PORT_PARAM, Integer.toString(videoPort))
-;
+			.appendQueryParameter(PORT_PARAM, Integer.toString(videoPort));
+		
 			Uri uri=builder.build();
 			String realAddress = "http://"+gatewayIp+":6000/"+uri.toString();
-			
+		
 			ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,realAddress);
-			r.setTimeout(1000);
-			r.setAnswerProcessor(emptyResponce);
+			r.setTimeout(CAMERAS_TIMEOUT);
+			r.setAnswerProcessor(startCameraResponce);
+		//	bottomCameraStreamManager.clearQueue(); // only last one should be executed
 			bottomCameraStreamManager.push(r);
-			streamsRunning=true;
 		}
-    }
-	
+	}
 	
 
 	
 	ConnectionManager bottomCameraStreamManager = new ConnectionManager();
 
 	
-	ProcessAsyncRequestResponceProrotype emptyResponce = new ProcessAsyncRequestResponceProrotype()
+	ProcessAsyncRequestResponceProrotype startCameraResponce = new ProcessAsyncRequestResponceProrotype()
 	{
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 		
 				String answer = (String)responce;
-				answer.charAt(0);
+				//answer.charAt(0);
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
-		
+			sendStartCamerasRequest();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
 			
 		}
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
-		
+			sendStartCamerasRequest();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 		}
 		
 	};
 	
+	ProcessAsyncRequestResponceProrotype stopCameraResponce = new ProcessAsyncRequestResponceProrotype()
+	{
+
+		@Override
+		protected void onConnectionSuccessful(Object responce) {
+		
+				String answer = (String)responce;
+				//answer.charAt(0);
+		}
+
+		@Override
+		protected void onConnectionUnsuccessful(int statusCode) {
+			sendStopCamerasRequest();
+		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
+			
+		}
+
+		@Override
+		protected void onConnectionFail(Throwable e) {
+			sendStopCamerasRequest();
+		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
+		}
+		
+	};
+	/*
 	ProcessAsyncRequestResponceProrotype emptyResponce1 = new ProcessAsyncRequestResponceProrotype()
 	{
 
@@ -859,7 +967,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 		}
 		
-	};
+	};*/
 	
 	private static final int TELEMETRIC_DELAY=10000;
 	//private static final int TELEMETRIC_REPORT_DELAY= TELEMETRIC_DELAY;
@@ -872,20 +980,28 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 			
-			wifiLevel =	Integer.parseInt(((String)responce));
-			textViewSignal.setText((String)responce);
-			
-			if(wifiLevel>=-50)
-				imageViewSignal.setImageResource(R.drawable.signal_good);
-			else
-			{
-				if(wifiLevel>=-70)
-					imageViewSignal.setImageResource(R.drawable.signal_medium);
+			try{
+				wifiLevel =	Integer.parseInt(((String)responce));
+				if(wifiLevel>=-50)
+					imageViewSignal.setImageResource(R.drawable.signal_good);
 				else
 				{
-					imageViewSignal.setImageResource(R.drawable.signal_poor);
-				}
+					if(wifiLevel>=-70)
+						imageViewSignal.setImageResource(R.drawable.signal_medium);
+					else
+					{
+						imageViewSignal.setImageResource(R.drawable.signal_poor);
+					}
+				}	
 			}
+			catch(NumberFormatException e)
+			{
+				wifiLevel=(int)STOPITSOT;
+				AVLogger.e("", "unknown router behaviour",e);
+			}
+			textViewSignal.setText((String)responce);
+			
+
 			/*if(wifiLevel>-70)
 			{
 				textViewSignal.setText("");
@@ -918,7 +1034,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	protected void getTelemetricsWifi()
 	{
 		ConnectionRequest r = new ConnectionRequest(ConnectionRequest.GET,"http://"+gatewayIp+":6000/wifi.cgi");
-		r.setTimeout(TELEMETRIC_DELAY);
+		r.setTimeout(TELEMETRIC_DELAY/2);
 		r.setAnswerProcessor(telemetricsWifiResponce);
 		telemetricManager.push(r);
 	}
@@ -958,7 +1074,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			}
 			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.POST, realAddress,data);
 			req.setTimeout(1000);
-			req.setAnswerProcessor(emptyResponce1);
+			req.setAnswerProcessor(emptyResponce);
 			telemetricManager.push(req);
 		}
 		else
@@ -1057,14 +1173,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	setPortsAndHosts();
     	startListeningNetwork();
     	
-		AudioManager audiomanager = (AudioManager)getSystemService(Activity.AUDIO_SERVICE);
-		if(audiomanager.getMode()!=AudioManager.MODE_IN_COMMUNICATION)
-		{
-			audiomanager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-			//audiomanager.setSpeakerphoneOn(true);
-			int maxVoice = audiomanager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
-			audiomanager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, maxVoice, 0);
-		}
+
+		restoreVolume();
 		//mSensorManager.registerListener(sensorEventListener, mLuxmeter, SensorManager.SENSOR_DELAY_GAME);
    		doResume();
    		driver.start();
@@ -1127,7 +1237,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			int progress = seekBarAngle.getProgress();
 			RoboDriver.WHEEL_DIRECTIONS[desiredPositions[0]][wheelId]=progress;
 			RoboDriver.WHEEL_DIRECTIONS[desiredPositions[1]][wheelId]=progress;
-			driver.setNewDirection(desiredPositions[0], 0, 0,false);
+			driver.calibrate(desiredPositions[0], 0, driver.tagHeadPos);
 		}
 	}
 	
@@ -1524,7 +1634,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						desiredPositions[1]=9; break;
 					}
 						resetSeekBar();
-						driver.setNewDirection(desiredPositions[0], 0, 0,false);
+						driver.calibrate(desiredPositions[0], 0, driver.tagHeadPos);
 					}
 				});
 				
@@ -1901,7 +2011,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		
 			String realAddress = SERVER_SCHEME+"://"+serverAuthority+":"+serverHttpPort+"/"+uri.toString();
 			ConnectionRequest req= new ConnectionRequest(ConnectionRequest.GET, realAddress);
-			req.setTimeout(30000);
+			req.setTimeout(10000);
 			req.setAnswerProcessor(shareConnectionResponce);
 			req.setProcessingType(ConnectionRequest.READ_ALL);
 			protocolManager.push(req);
@@ -2043,9 +2153,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		{
 			
 			String resp = (String) responce;
+			//driver.resetWatchdog();
 			/* {a:N1, b:N2, c:N3, sa:M1, sb:M2, sc:M3, h:A } */
 			if (resp.length() > 1) {
-				driver.resetCmdWatchDog();
+				//driver.resetCmdWatchDog();
 				JSONObject r;
 				try {
 					try {
