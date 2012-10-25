@@ -34,7 +34,7 @@
 	<string name="configSrvDlgAudioOutPort">Порт исходящего аудиопотока:</string>
 	<string name="configSrvDlgAudioInPort">Порт входящего аудиопотока:</string>
 	<string name="configSrvDlgVideoOutPort">Порт видеопотока:</string>
-	
+	<string name="configSrvDlgUseGsm">Использовать Gsm</string>
 	<string name="configSrvDlgDirs">Выберите направление</string>
 	<string name="configSrvDlgDirT">Разворот</string>
 	<string name="configSrvDlgDirF">Вперед</string>
@@ -48,7 +48,8 @@
 	<string name="configSrvDlgWheelFL">Переднее левое</string>
 	<string name="configSrvDlgWheelB">Заднее</string>
 	
-	
+	<string name="configSrvDlgButtonOk">Ок</string>
+	<string name="configSrvDlgButtonCancel">Отмена</string>
 	
 	<string name="volumeRegulationDlgSetVolume">Укажите громкость:</string>
 	<string name="volumeRegulationDlgHeader">Регулятор громкости</string>

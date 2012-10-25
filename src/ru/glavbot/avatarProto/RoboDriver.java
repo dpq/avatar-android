@@ -267,7 +267,7 @@ ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 	    
 	    synchronized(synchronizer)
 	    {
-	    	servosEnabled =(byte) ((/*((System.currentTimeMillis()-watchDog)>30000)||*/((System.currentTimeMillis()-cmdWatchDog)>10000))?0:1);
+	    	servosEnabled =(byte) ((/*((System.currentTimeMillis()-watchDog)>30000)||*/((System.currentTimeMillis()-cmdWatchDog)>100))?0:1);
 	    }
 	 }
 	

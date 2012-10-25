@@ -83,76 +83,77 @@ public final class R {
     }
     public static final class id {
         public static final int AddressBookListId=0x7f070002;
-        public static final int CameraPreview=0x7f07003e;
-        public static final int FrameLayoutMailSelector=0x7f07002d;
-        public static final int ImageViewCharge=0x7f070039;
-        public static final int ImageViewLogo=0x7f07002c;
-        public static final int ImageViewMaxVolume=0x7f070042;
-        public static final int ImageViewNoVolume=0x7f070040;
-        public static final int ImageViewSignal=0x7f070037;
-        public static final int LinearLayoutIndicators=0x7f070036;
-        public static final int LinearLayoutVolume=0x7f07003f;
-        public static final int MailListButton=0x7f07002f;
-        public static final int PauseButton=0x7f07003d;
-        public static final int RelativeLayoutButtons=0x7f070035;
-        public static final int ResumeButton=0x7f070031;
-        public static final int SendLinkButton=0x7f070030;
-        public static final int SettingsButton=0x7f070032;
-        public static final int StatusText=0x7f070043;
-        public static final int StopButton=0x7f07003c;
-        public static final int TextViewCharge=0x7f07003a;
-        public static final int TextViewEmail=0x7f07003b;
-        public static final int TextViewSignal=0x7f070038;
+        public static final int CameraPreview=0x7f07003f;
+        public static final int FrameLayoutMailSelector=0x7f07002e;
+        public static final int ImageViewCharge=0x7f07003a;
+        public static final int ImageViewLogo=0x7f07002d;
+        public static final int ImageViewMaxVolume=0x7f070043;
+        public static final int ImageViewNoVolume=0x7f070041;
+        public static final int ImageViewSignal=0x7f070038;
+        public static final int LinearLayoutIndicators=0x7f070037;
+        public static final int LinearLayoutVolume=0x7f070040;
+        public static final int MailListButton=0x7f070030;
+        public static final int PauseButton=0x7f07003e;
+        public static final int RelativeLayoutButtons=0x7f070036;
+        public static final int ResumeButton=0x7f070032;
+        public static final int SendLinkButton=0x7f070031;
+        public static final int SettingsButton=0x7f070033;
+        public static final int StatusText=0x7f070044;
+        public static final int StopButton=0x7f07003d;
+        public static final int TextViewCharge=0x7f07003b;
+        public static final int TextViewEmail=0x7f07003c;
+        public static final int TextViewSignal=0x7f070039;
         public static final int WipeButton=0x7f070001;
-        public static final int autoCompleteTextViewAddress=0x7f07002e;
-        public static final int buttonAction=0x7f070029;
-        public static final int buttonCancel=0x7f070025;
-        public static final int buttonOk=0x7f070024;
+        public static final int autoCompleteTextViewAddress=0x7f07002f;
+        public static final int buttonAction=0x7f07002a;
+        public static final int buttonCancel=0x7f070026;
+        public static final int buttonOk=0x7f070025;
+        public static final int checkBoxUseGsm=0x7f070015;
         public static final int editTextAudioInPort=0x7f070014;
         public static final int editTextAudioOutPort=0x7f070011;
         public static final int editTextServer=0x7f070008;
         public static final int editTextServerPort=0x7f07000b;
         public static final int editTextVideoOutPort=0x7f07000e;
-        public static final int frameLayoutMain=0x7f07002a;
-        public static final int frameLayoutRun=0x7f070033;
-        public static final int imageViewErrLevel=0x7f070045;
-        public static final int imageViewIcon=0x7f070027;
+        public static final int frameLayoutMain=0x7f07002b;
+        public static final int frameLayoutRun=0x7f070034;
+        public static final int imageViewErrLevel=0x7f070046;
+        public static final int imageViewIcon=0x7f070028;
         public static final int layoutAudioInPort=0x7f070012;
         public static final int layoutAudioOutPort=0x7f07000f;
         public static final int layoutVideoOutPort=0x7f07000c;
-        public static final int layout_buttons=0x7f070023;
+        public static final int layout_buttons=0x7f070024;
         public static final int layout_config_server_root=0x7f070005;
-        public static final int layout_fsd_root=0x7f070026;
+        public static final int layout_fsd_root=0x7f070027;
         public static final int layout_server=0x7f070006;
         public static final int layout_server_port=0x7f070009;
-        public static final int radio0=0x7f07001e;
-        public static final int radio1=0x7f07001f;
-        public static final int radio2=0x7f070020;
-        public static final int radioBR=0x7f07001b;
-        public static final int radioF=0x7f070018;
-        public static final int radioGroupDest=0x7f070016;
-        public static final int radioGroupWheel=0x7f07001d;
-        public static final int radioR=0x7f07001a;
-        public static final int radioRF=0x7f070019;
-        public static final int radioT=0x7f070017;
-        public static final int relativeLayoutStart=0x7f07002b;
-        public static final int seekBarAngle=0x7f070022;
-        public static final int seekBarVolume=0x7f070041;
+        public static final int radio0=0x7f07001f;
+        public static final int radio1=0x7f070020;
+        public static final int radio2=0x7f070021;
+        public static final int radioBR=0x7f07001c;
+        public static final int radioF=0x7f070019;
+        public static final int radioGroupDest=0x7f070017;
+        public static final int radioGroupWheel=0x7f07001e;
+        public static final int radioR=0x7f07001b;
+        public static final int radioRF=0x7f07001a;
+        public static final int radioT=0x7f070018;
+        public static final int relativeLayoutStart=0x7f07002c;
+        public static final int seekBarAngle=0x7f070023;
+        public static final int seekBarVolume=0x7f070042;
         public static final int textAudioInPort=0x7f070013;
         public static final int textAudioOutPort=0x7f070010;
-        public static final int textDirectionsHeader=0x7f070015;
+        public static final int textDirectionsHeader=0x7f070016;
         public static final int textVideoOutPort=0x7f07000d;
-        public static final int textViewDescription=0x7f070028;
-        public static final int textViewText=0x7f070046;
-        public static final int textWheelAngle=0x7f070021;
-        public static final int textWheelHeader=0x7f07001c;
+        public static final int textViewDescription=0x7f070029;
+        public static final int textViewText=0x7f070047;
+        public static final int textWheelAngle=0x7f070022;
+        public static final int textWheelHeader=0x7f07001d;
         public static final int text_server=0x7f070007;
         public static final int text_server_port=0x7f07000a;
-        public static final int toast_layout_root=0x7f070044;
+        public static final int toast_layout_root=0x7f070045;
         public static final int txtDate=0x7f070004;
         public static final int txtHeader=0x7f070000;
         public static final int txtMail=0x7f070003;
-        public static final int videoView=0x7f070034;
+        public static final int videoView=0x7f070035;
     }
     public static final class layout {
         public static final int addressbook_header_row=0x7f030000;
@@ -164,11 +165,11 @@ public final class R {
         public static final int toast_layout=0x7f030006;
     }
     public static final class string {
-        public static final int AddressBookClearButton=0x7f050038;
+        public static final int AddressBookClearButton=0x7f05003b;
         /**  Address book  
  Address book  
          */
-        public static final int AddressBookHeader=0x7f050037;
+        public static final int AddressBookHeader=0x7f05003a;
         public static final int TextNeedCharge=0x7f050019;
         public static final int TextNoTimeLeft=0x7f05001a;
         public static final int TextViewAddressHint=0x7f05000b;
@@ -185,24 +186,27 @@ public final class R {
         public static final int btnstartstoptext=0x7f050016;
         public static final int configSrvDlgAudioInPort=0x7f05001f;
         public static final int configSrvDlgAudioOutPort=0x7f05001e;
-        public static final int configSrvDlgDirF=0x7f050023;
-        public static final int configSrvDlgDirR=0x7f050025;
-        public static final int configSrvDlgDirRB=0x7f050026;
-        public static final int configSrvDlgDirRF=0x7f050024;
-        public static final int configSrvDlgDirT=0x7f050022;
-        public static final int configSrvDlgDirs=0x7f050021;
+        public static final int configSrvDlgButtonCancel=0x7f05002d;
+        public static final int configSrvDlgButtonOk=0x7f05002c;
+        public static final int configSrvDlgDirF=0x7f050024;
+        public static final int configSrvDlgDirR=0x7f050026;
+        public static final int configSrvDlgDirRB=0x7f050027;
+        public static final int configSrvDlgDirRF=0x7f050025;
+        public static final int configSrvDlgDirT=0x7f050023;
+        public static final int configSrvDlgDirs=0x7f050022;
         /**  ConfigSrvDialog 
          */
         public static final int configSrvDlgHeader=0x7f05001b;
         public static final int configSrvDlgServer=0x7f05001c;
         public static final int configSrvDlgServerPort=0x7f05001d;
+        public static final int configSrvDlgUseGsm=0x7f050021;
         public static final int configSrvDlgVideoOutPort=0x7f050020;
-        public static final int configSrvDlgWheelB=0x7f05002a;
-        public static final int configSrvDlgWheelFL=0x7f050029;
-        public static final int configSrvDlgWheelFR=0x7f050028;
-        public static final int configSrvDlgWheels=0x7f050027;
-        public static final int connectionLostDialogButton=0x7f05002e;
-        public static final int connectionLostDialogDesc=0x7f05002d;
+        public static final int configSrvDlgWheelB=0x7f05002b;
+        public static final int configSrvDlgWheelFL=0x7f05002a;
+        public static final int configSrvDlgWheelFR=0x7f050029;
+        public static final int configSrvDlgWheels=0x7f050028;
+        public static final int connectionLostDialogButton=0x7f050031;
+        public static final int connectionLostDialogDesc=0x7f050030;
         public static final int control1=0x7f050002;
         public static final int control2=0x7f050003;
         public static final int control3=0x7f050004;
@@ -213,26 +217,25 @@ public final class R {
         public static final int control8=0x7f050009;
         public static final int control9=0x7f05000a;
         public static final int hello=0x7f050001;
-        public static final int lowChargeDialogButton=0x7f050030;
-        public static final int lowChargeDialogDesc=0x7f05002f;
-        public static final int pauseDialogButton=0x7f050032;
-        public static final int pauseDialogDesc=0x7f050031;
-        public static final int remotePauseDialogButton=0x7f050034;
-        public static final int remotePauseDialogDesc=0x7f050033;
-        public static final int sendLinkDlgButtonCancel=0x7f05003b;
-        public static final int sendLinkDlgButtonOk=0x7f05003a;
-        public static final int sendLinkDlgEmail=0x7f05003c;
-        public static final int sendLinkDlgExpires=0x7f05003d;
-        public static final int sendLinkDlgHeader=0x7f050039;
-        /**  	<string name="sendLinkDlgButtonOk">Ok</string>
-	<string name="sendLinkDlgButtonCancel">Cancel</string>
+        public static final int lowChargeDialogButton=0x7f050033;
+        public static final int lowChargeDialogDesc=0x7f050032;
+        public static final int pauseDialogButton=0x7f050035;
+        public static final int pauseDialogDesc=0x7f050034;
+        public static final int remotePauseDialogButton=0x7f050037;
+        public static final int remotePauseDialogDesc=0x7f050036;
+        public static final int sendLinkDlgButtonCancel=0x7f05003e;
+        public static final int sendLinkDlgButtonOk=0x7f05003d;
+        public static final int sendLinkDlgEmail=0x7f05003f;
+        public static final int sendLinkDlgExpires=0x7f050040;
+        public static final int sendLinkDlgHeader=0x7f05003c;
+        /**  	
 	<string name="sendLinkDlgHeader">Enter invite options</string>
 	<string name="sendLinkDlgEmail">Enter email</string>
 	<string name="sendLinkDlgExpires">Select expiration time, current %d h</string> 
          */
         public static final int sendingLinkMessage=0x7f05000f;
-        public static final int timeOutDialogButton=0x7f050036;
-        public static final int timeOutDialogDesc=0x7f050035;
+        public static final int timeOutDialogButton=0x7f050039;
+        public static final int timeOutDialogDesc=0x7f050038;
         public static final int toastInviteFail=0x7f050012;
         public static final int toastInviteFailNoConnection=0x7f050015;
         public static final int toastInviteHz=0x7f050013;
@@ -241,10 +244,10 @@ public final class R {
         /**  toasts 
          */
         public static final int toastNoWifi=0x7f050010;
-        public static final int volumeRegulationDlgHeader=0x7f05002c;
+        public static final int volumeRegulationDlgHeader=0x7f05002f;
         /**   
          */
-        public static final int volumeRegulationDlgSetVolume=0x7f05002b;
+        public static final int volumeRegulationDlgSetVolume=0x7f05002e;
     }
     public static final class style {
         public static final int AppTheme=0x7f060000;

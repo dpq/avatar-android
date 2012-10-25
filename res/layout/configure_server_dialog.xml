@@ -120,6 +120,11 @@
         	android:layout_weight="1"
         	android:inputType="number"/>
 	</LinearLayout>
+	<CheckBox android:id="@+id/checkBoxUseGsm" 
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content" 
+	    android:text="@string/configSrvDlgUseGsm"  
+	/>
 	<!-- 
 	<LinearLayout android:id="@+id/layoutAngles"
               android:orientation="horizontal"
@@ -261,12 +266,12 @@
 		    android:id="@+id/buttonOk"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
-		    android:text="@string/sendLinkDlgButtonOk" />
+		    android:text="@string/configSrvDlgButtonOk" />
 			<Button
 		    android:id="@+id/buttonCancel"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
-		    android:text="@string/sendLinkDlgButtonCancel" />
+		    android:text="@string/configSrvDlgButtonCancel" />
 	</LinearLayout>
  
 

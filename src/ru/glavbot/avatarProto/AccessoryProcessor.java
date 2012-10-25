@@ -128,7 +128,7 @@ public abstract class AccessoryProcessor extends Activity {
  //   byte[] commandData = new byte[7];
     
 
-/*
+
 @Override
 public Object onRetainNonConfigurationInstance() {
 	if (mAccessory != null) {
@@ -136,7 +136,7 @@ public Object onRetainNonConfigurationInstance() {
 	} else {
 		return super.onRetainNonConfigurationInstance();
 	}
-}*/
+}
     
     protected abstract void readChargeState(int charge);
     
@@ -210,15 +210,16 @@ protected static class ReaderThread extends Thread
 			try {
             	int read=0;
             	int totalRead=0;
-            	while(totalRead<cmd.length)
-            	{
-            		read=is.read(cmd,totalRead, cmd.length-totalRead);
-            		if(read>0)
+            	if(is.available()>=2)
+            		while(totalRead<cmd.length)
             		{
-            			totalRead+=read;
-            		}
+            			read=is.read(cmd,totalRead, cmd.length-totalRead);
+            			if(read>0)
+            			{
+            				totalRead+=read;
+            			}
             		
-            	}
+            		}
             	
 				int tmp1=cmd[1];
 				int chrg=(tmp1<<8)+cmd[0]; 
@@ -392,9 +393,9 @@ protected void requestAccessory()
 @Override
 protected void onPause() {
 	super.onPause();
-	synchronized (sync) {
-	closeAccessory();
-	}
+	//synchronized (sync) {
+	//closeAccessory();
+	//}
 }
 
 @Override
@@ -462,10 +463,10 @@ private void openAccessory(UsbAccessory accessory) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		reader = new ReaderThread(mInputStream,mainThreadHandler);
+		//reader = new ReaderThread(mInputStream,mainThreadHandler);
 		writer = new WriterThread(mOutputStream,mainThreadHandler);
 		writer.start();
-		reader.start();
+		//reader.start();
 		
 		
 		AVLogger.d(TAG, "accessory opened"); 

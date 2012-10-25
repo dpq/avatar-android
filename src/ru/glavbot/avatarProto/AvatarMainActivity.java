@@ -12,6 +12,7 @@ package ru.glavbot.avatarProto;
 //import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 //import java.io.Serializable;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -80,12 +81,14 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 //import android.widget.Toast;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.RelativeLayout;
@@ -173,6 +176,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String VIDEO_PORT_OUT_PARAM = "videoPortOut";
      private static final String AUDIO_PORT_IN_PARAM = "audioPortIn";
      private static final String AUDIO_PORT_OUT_PARAM = "audioPortOut";
+     private static final String USE_GSM_PARAM = "useGsm";
+     
      
      private static final String EMAILS_LIST_PARAM = "emailsListWithTime";
      private static final int MAX_EMAILS=15;
@@ -191,6 +196,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private int videoPort = 5001;
      private int audioPortIn = 10002;
      private int audioPortOut = 10003;
+     private boolean useGsm = false;
      ToastBuilder toastBuilder = new ToastBuilder(this);
      private static final float STOPITSOT = 100500; 
      
@@ -397,6 +403,16 @@ public class AvatarMainActivity extends AccessoryProcessor {
       //  mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
        // mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         
+		try {
+			Process process = new ProcessBuilder()
+		       .command("/system/bin/su")
+		       .start();
+			OutputStream o =process.getOutputStream();
+			o.write("/system/xbin/echo \"65536 130100 260200\" > /proc/sys/net/ipv4/tcp_wmem\n".getBytes());		
+		       
+		} catch (Exception e) {
+			Toast.makeText(getApplicationContext(), "fail!", Toast.LENGTH_LONG).show();
+		} 
         
         driver= new RoboDriver(this);
     }
@@ -1112,7 +1128,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     
     //LinkedHashSet<String> emailsSet=new LinkedHashSet<String>();
     
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
 	@Override
     protected void onResume()
     {
@@ -1165,6 +1181,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
         videoPort =prefs.getInt( VIDEO_PORT_OUT_PARAM, 5001);
         audioPortIn = prefs.getInt( AUDIO_PORT_IN_PARAM, 10002);
         audioPortOut = prefs.getInt( AUDIO_PORT_OUT_PARAM, 10003);
+        useGsm = prefs.getBoolean(USE_GSM_PARAM, true);
         
         unpackWheelArray();
         
@@ -1175,7 +1192,6 @@ public class AvatarMainActivity extends AccessoryProcessor {
     	
 
 		restoreVolume();
-		//mSensorManager.registerListener(sensorEventListener, mLuxmeter, SensorManager.SENSOR_DELAY_GAME);
    		doResume();
    		driver.start();
     }
@@ -1184,7 +1200,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
     {
     	videoReceiver.setAddress(serverAuthority, videoPort);
     	audioSender.setHostAndPort(serverAuthority, audioPortOut);
+    	audioSender.setUseGsm(useGsm);
     	audioReceiver.setHostAndPort(serverAuthority, audioPortIn);
+    	audioReceiver.setUseGsm(useGsm);
     	//videoSender.setHostAndPort(serverAuthority, videoPort);
     }
     
@@ -1214,6 +1232,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	EditText editTextWheel2Angle;
 	EditText editTextWheel3Angle;
 	SeekBar  volumeSelect;
+	CheckBox checkBoxUseGsm;
 	
 	RadioGroup radioGroupWheel;
 	RadioGroup radioGroupDest;
@@ -1577,6 +1596,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 				editTextVideoOutPort=(EditText) layout.findViewById(R.id.editTextVideoOutPort);
 				editTextAudioOutPort=(EditText) layout.findViewById(R.id.editTextAudioOutPort);
 				editTextAudioInPort=(EditText) layout.findViewById(R.id.editTextAudioInPort);
+				checkBoxUseGsm=(CheckBox)layout.findViewById(R.id.checkBoxUseGsm);
 				/*
 				editTextWheel1Angle=(EditText) layout.findViewById(R.id.editTextWheel1Angle);
 				editTextWheel1Angle.setText(String.format("%d", angles[0]));
@@ -1696,6 +1716,9 @@ public class AvatarMainActivity extends AccessoryProcessor {
 							s = "10002";
 						}
 						audioPortOut=Integer.decode(s);
+						
+						
+						useGsm=checkBoxUseGsm.isChecked();
 						/*s=editTextWheel1Angle.getText().toString();
 						if(s.length()==0)
 						{
@@ -1722,6 +1745,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						editor.putInt(VIDEO_PORT_OUT_PARAM, videoPort);
 						editor.putInt(AUDIO_PORT_IN_PARAM, audioPortIn);
 						editor.putInt(AUDIO_PORT_OUT_PARAM, audioPortOut);
+						editor.putBoolean(USE_GSM_PARAM, useGsm);
 					  //  editor.putInt( WHEEL_ANGLE_1,  angles[0]);  
 					   // editor.putInt( WHEEL_ANGLE_2,  angles[1]);   
 					   // editor.putInt( WHEEL_ANGLE_3,  angles[2]);
@@ -1947,6 +1971,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			editTextVideoOutPort.setText(String.format("%d", videoPort));
 			editTextAudioOutPort.setText(String.format("%d", audioPortOut));
 			editTextAudioInPort.setText(String.format("%d", audioPortIn));	
+			checkBoxUseGsm.setChecked(useGsm);
 			resetSeekBar();
 		}/*else if(id==VOLUME_REGULATION_DIALOG)
 		{
@@ -2213,7 +2238,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	{		
 		videoReceiver.setToken("web-"+session_token);
 		audioSender.setToken("ava-"+session_token);
-		audioReceiver.setToken("web-"+session_token);
+		audioReceiver.setToken("web-"+session_token);//web-
 		//videoSender.setToken("ava-"+session_token);
 		
 	}

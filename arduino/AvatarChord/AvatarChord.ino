@@ -9,6 +9,8 @@ const int aPin=2;
 const int bPin=5;
 const int cPin=8;
 const int headPin=49;
+const int headControlPin=48;
+
 
 const int cmdLength=13;
 
@@ -116,7 +118,7 @@ void setup()
 {
 	Serial.begin(115200);
 	Serial.print("\r\nStart");
-
+        Serial1.begin(24000);
 	  // set the digital pin as output:
         //int current;
         //for(current = ledPinStart;current<ledPinStart+ledPinLen;current++)
@@ -125,6 +127,7 @@ void setup()
         c.init(cPin);
         //pinMode(headPin, OUTPUT);   
 	head.attach(headPin);
+        digitalWrite(headControlPin,HIGH);
         acc.powerOn();
         ledShield.begin();
         ledShield.setCurrent(350,350,350); // set maximum current for channel 1-3 (mA)
@@ -160,9 +163,9 @@ void setAll()
 {
   if(my_msg[0]!=0)
   {
-        if(!head.attached())
-            head.attach(headPin);
-    
+        //if(!head.attached())
+         //   head.attach(headPin);
+        digitalWrite(headControlPin,HIGH);
         //if(head.read()!=my_msg[1])
         head.write(my_msg[1]);
         a.enable();
@@ -178,28 +181,34 @@ void setAll()
   }
   else
   {
-    if(head.attached())
+    digitalWrite(headControlPin,LOW);
+   /* if(head.attached())
     {
         head.detach();
         digitalWrite(headPin,LOW);
     }
     a.disable();
     b.disable();
-    c.disable();
+    c.disable();*/
   }
   if(my_msg[12]!=0)
   {
       if (acc.isConnected()) {
          int sensorValue = analogRead(A0);
-         byte data[2];
-         data[0]=(byte)sensorValue;
-         data[1]=(byte)(sensorValue>>8);
-         acc.write(data,2, USB_NAK_NOWAIT);
-         Serial.print("\r\nData: ");
-          Serial.print(data[0],DEC);
-          Serial.print(data[1],DEC);
-         Serial.print("\r\nCharge: ");
-         Serial.print(sensorValue,DEC);
+         //byte data[2];
+         //data[0]=(byte)sensorValue;
+         //data[1]=(byte)(sensorValue>>8);
+         
+         
+         Serial1.print(sensorValue,DEC);
+         Serial1.print("\0");
+         
+         //acc.write(data,2, USB_NAK_NOWAIT);
+         //Serial.print("\r\nData: ");
+          //Serial.print(data[0],DEC);
+          //Serial.print(data[1],DEC);
+         //Serial.print("\r\nCharge: ");
+         //Serial.print(sensorValue,DEC);
       }
   }
 }

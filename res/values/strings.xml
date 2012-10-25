@@ -16,8 +16,7 @@
 	<string name="btnsendlinktext">Start new session</string>
 	<string name="btnresumesessiontext">Resume session</string>
 	<string name="btnsettingstext">Robot settings</string>
-<!-- 	<string name="sendLinkDlgButtonOk">Ok</string>
-	<string name="sendLinkDlgButtonCancel">Cancel</string>
+<!-- 	
 	<string name="sendLinkDlgHeader">Enter invite options</string>
 	<string name="sendLinkDlgEmail">Enter email</string>
 	<string name="sendLinkDlgExpires">Select expiration time, current %d h</string> -->
@@ -47,7 +46,7 @@
 	<string name="configSrvDlgAudioOutPort">Outgoing audio port:</string>
 	<string name="configSrvDlgAudioInPort">Incoming audio port:</string>
 	<string name="configSrvDlgVideoOutPort">Video port:</string>
-	
+	<string name="configSrvDlgUseGsm">Use Gsm</string>
 	<string name="configSrvDlgDirs">Select direction</string>
 	<string name="configSrvDlgDirT">Turn</string>
 	<string name="configSrvDlgDirF">Forward</string>
@@ -60,6 +59,11 @@
 	<string name="configSrvDlgWheelFR">Front right</string>
 	<string name="configSrvDlgWheelFL">Front left</string>
 	<string name="configSrvDlgWheelB">Backward</string>
+	
+	<string name="configSrvDlgButtonOk">Ok</string>
+	<string name="configSrvDlgButtonCancel">Cancel</string>
+	
+	
 	<!--  -->
 	<string name="volumeRegulationDlgSetVolume">Set volume:</string>
 	<string name="volumeRegulationDlgHeader">Volume regulation</string>
