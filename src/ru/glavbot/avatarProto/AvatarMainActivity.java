@@ -408,7 +408,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		       .command("/system/bin/su")
 		       .start();
 			OutputStream o =process.getOutputStream();
-			o.write("/system/xbin/echo \"65536 130100 260200\" > /proc/sys/net/ipv4/tcp_wmem\n".getBytes());		
+			o.write("/system/xbin/echo \"4096 8192 16384\" > /proc/sys/net/ipv4/tcp_wmem\n".getBytes());		
 		       
 		} catch (Exception e) {
 			Toast.makeText(getApplicationContext(), "fail!", Toast.LENGTH_LONG).show();
