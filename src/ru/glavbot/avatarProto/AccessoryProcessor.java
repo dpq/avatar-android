@@ -27,7 +27,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 
-import android.util.Log;
+//import android.util.Log;
 import android.widget.Toast;
 
 public abstract class AccessoryProcessor extends Activity {
