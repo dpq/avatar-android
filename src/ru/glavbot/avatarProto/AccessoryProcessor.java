@@ -5,9 +5,9 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.NoSuchElementException;
+//import java.io.OutputStream;
+//import java.util.ArrayList;
+//import java.util.NoSuchElementException;
 import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -72,7 +72,7 @@ public abstract class AccessoryProcessor extends Activity {
 							UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
 						openAccessory(accessory);
 					} else {
-						AVLogger.d(TAG, "permission denied for accessory "
+						AVLogger.w(TAG, "permission denied for accessory "
 								+ accessory);
 					}
 					mPermissionRequestPending = false;
@@ -102,11 +102,13 @@ public abstract class AccessoryProcessor extends Activity {
 		}
 	};
 	
+	protected abstract int getLogLevel();
+	
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        avLogger= new AVLogger(Log.INFO);
+        avLogger= new AVLogger(getLogLevel());
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
@@ -384,7 +386,7 @@ protected void requestAccessory()
 					}
 				}
 			} else {
-				AVLogger.d(TAG, "mAccessory is null");
+				AVLogger.w(TAG, "mAccessory is null");
 			}
 		}
 }
@@ -469,10 +471,10 @@ private void openAccessory(UsbAccessory accessory) {
 		//reader.start();
 		
 		
-		AVLogger.d(TAG, "accessory opened"); 
+		AVLogger.v(TAG, "accessory opened"); 
 		//enableControls(true);
 	} else {
-		AVLogger.d(TAG, "accessory open fail");
+		AVLogger.w(TAG, "accessory open fail");
 	}
 }
 

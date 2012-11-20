@@ -127,6 +127,7 @@ void setup()
         c.init(cPin);
         //pinMode(headPin, OUTPUT);   
 	head.attach(headPin);
+        pinMode(headControlPin, OUTPUT);
         digitalWrite(headControlPin,HIGH);
         acc.powerOn();
         ledShield.begin();
@@ -166,6 +167,7 @@ void setAll()
         //if(!head.attached())
          //   head.attach(headPin);
         digitalWrite(headControlPin,HIGH);
+        delay(2);
         //if(head.read()!=my_msg[1])
         head.write(my_msg[1]);
         a.enable();
@@ -181,6 +183,7 @@ void setAll()
   }
   else
   {
+    delay(2);
     digitalWrite(headControlPin,LOW);
    /* if(head.attached())
     {

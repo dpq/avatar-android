@@ -3,7 +3,7 @@ package ru.glavbot.avatarProto;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Calendar;
+//import java.util.Calendar;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -267,7 +267,7 @@ ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 	    
 	    synchronized(synchronizer)
 	    {
-	    	servosEnabled =(byte) ((/*((System.currentTimeMillis()-watchDog)>30000)||*/((System.currentTimeMillis()-cmdWatchDog)>100))?0:1);
+	    	servosEnabled =(byte) ((/*((System.currentTimeMillis()-watchDog)>30000)||*/((System.currentTimeMillis()-cmdWatchDog)>2000))?0:1);
 	    }
 	 }
 	

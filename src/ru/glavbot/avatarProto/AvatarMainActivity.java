@@ -12,7 +12,7 @@ package ru.glavbot.avatarProto;
 //import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 //import java.io.Serializable;
-import java.io.OutputStream;
+//import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -49,18 +49,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+//import android.hardware.Sensor;
+//import android.hardware.SensorEvent;
+//import android.hardware.SensorEventListener;
+//import android.hardware.SensorManager;
 
 import android.media.AudioManager;
-import android.net.ConnectivityManager;
+//import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
-import android.os.AsyncTask;
+//import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.provider.Settings.Secure;
@@ -68,6 +68,7 @@ import android.provider.Settings.Secure;
 
 //import android.util.Log;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceView;
 import android.view.View;
@@ -100,7 +101,7 @@ import android.widget.TextView;
 
 public class AvatarMainActivity extends AccessoryProcessor {
 	
-	private static final String TAG= "AvatarMainActivity";
+//	private static final String TAG= "AvatarMainActivity";
 	boolean DEBUG=true;
     /** Called when the activity is first created. */
     // private Button startButton;
@@ -110,7 +111,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
    //  private Button resumeButton;
      private Button stopButton;
     // private Button volumeButton;
-     private SurfaceView cameraPreview;
+    // private SurfaceView cameraPreview;
      private SurfaceView videoView;
      private FrameLayout frameLayoutRun;
      private RelativeLayout relativeLayoutStart;
@@ -146,6 +147,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
      private static final String SHARED_PREFS_VOLUME = "volume";
      private static final String SHARED_PREFS_TTL = "ttl";
      private static final String SHARED_PREFS_TOKEN = "token"; 
+     private static final String SHARED_PREFS_LOGLEVEL = "loglevel"; 
      private static final String SHARED_PREFS_WHEELS = "wheels"; 
      private static final String SHARED_PREFS_STATE = "state";      
      
@@ -207,7 +209,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
     // private boolean turnedOn=false;
      
  //	private WebView webView;
- 	private ConnectivityManager network;
+ 	//private ConnectivityManager network;
  	private ConnectionManager protocolManager;
  	private RoboDriver driver;
  	boolean isNetworkAvailable=false;
@@ -224,6 +226,38 @@ public class AvatarMainActivity extends AccessoryProcessor {
  	ImageView imageViewSignal;
  	ImageView imageViewCharge;
  	private String android_id;
+ 	
+ 	protected void setLogLevel(int llevel)
+ 	{
+ 		if((llevel<Log.VERBOSE) ||(llevel>Log.ASSERT) )
+ 		{
+ 			AVLogger.e("", String.format("trying to set log level to %d",llevel));
+ 		}else
+ 		{
+ 			if(llevel!=getLogLevel())
+ 			{
+ 				getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).edit().putInt(SHARED_PREFS_LOGLEVEL, llevel).apply();
+ 				if(avLogger!= null)
+ 				{
+ 					avLogger.setLogLevel(llevel);
+ 				}
+ 			}
+ 		}
+ 	}
+ 	
+ 	@Override
+ 	protected int getLogLevel()
+ 	{
+ 		if(avLogger==null)
+ 		{
+ 			return getSharedPreferences (SHARED_PREFS,Context.MODE_PRIVATE ).getInt(SHARED_PREFS_LOGLEVEL, Log.DEBUG);
+ 		}else
+ 		{
+ 			return avLogger.getLogLevel();
+ 		}
+ 	}
+ 	
+ 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -252,7 +286,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		logger = OnScreenLogger.init(statusText);
         
         videoView= (SurfaceView)findViewById(R.id.videoView);
-    	cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
+    	//cameraPreview = (SurfaceView)findViewById(R.id.CameraPreview);
 		settingsButton=(Button)findViewById(R.id.SettingsButton);
 		settingsButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -402,17 +436,17 @@ public class AvatarMainActivity extends AccessoryProcessor {
         
       //  mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
        // mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        
+       /* 
 		try {
 			Process process = new ProcessBuilder()
 		       .command("/system/bin/su")
 		       .start();
 			OutputStream o =process.getOutputStream();
-			o.write("/system/xbin/echo \"4096 8192 16384\" > /proc/sys/net/ipv4/tcp_wmem\n".getBytes());		
+			o.write("/system/xbin/echo \"16384 32768 65536\" > /proc/sys/net/ipv4/tcp_wmem\n".getBytes());		
 		       
 		} catch (Exception e) {
 			Toast.makeText(getApplicationContext(), "fail!", Toast.LENGTH_LONG).show();
-		} 
+		} */
         
         driver= new RoboDriver(this);
     }
@@ -546,8 +580,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionSuccessful(Object responce) {
 			
 			long pingEndMsecs=System.currentTimeMillis();
-			ping = (int)(pingEndMsecs-pingStartMsecs)/2;
-			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), TELEMETRIC_DELAY);
+			int rtt = (int)(pingEndMsecs-pingStartMsecs);
+			audioSender.calcPackageMillis(rtt);
+			ping = (rtt/2);
+			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING),100);
 				
 		}
 
@@ -555,6 +591,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionUnsuccessful(int statusCode) {
 			//textViewSignal.setText(String.format("%d", statusCode));
 			//sendTelemetricMessage();
+			AVLogger.w("pingResponce",String.format("connection error %d",statusCode));
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);	
 		}
 
@@ -562,6 +599,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionFail(Throwable e) {
 			//textViewSignal.setText(e.getMessage());
 			//sendTelemetricMessage();
+			AVLogger.w("pingResponce","connection failed with exception",e);
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);}
 		
 	};
@@ -577,6 +615,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
+			AVLogger.w("emptyResponce",String.format("connection error %d",statusCode));
 			//textViewSignal.setText(String.format("%d", statusCode));
 			//sendTelemetricMessage();
 			//mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);	
@@ -584,6 +623,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
+			AVLogger.w("emptyResponce","connection failed with exception",e);
 			//textViewSignal.setText(e.getMessage());
 			//sendTelemetricMessage();
 		//	mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING), 1000);
@@ -635,7 +675,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            AVLogger.d(BroadcastReceiver.class.getSimpleName(), "action: "
+            AVLogger.v(BroadcastReceiver.class.getSimpleName(), "action: "
                     + intent.getAction());
             int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,-1);
             isNetworkAvailable =state == WifiManager.WIFI_STATE_ENABLED;
@@ -916,12 +956,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 		
+				@SuppressWarnings("unused")
 				String answer = (String)responce;
 				//answer.charAt(0);
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
+			AVLogger.w("startCameraResponce",String.format("connection error %d",statusCode));
 			sendStartCamerasRequest();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
 			
@@ -929,6 +971,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
+			AVLogger.w("startCameraResponce","connection failed with exception",e);
 			sendStartCamerasRequest();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 		}
@@ -941,12 +984,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
 		
+				@SuppressWarnings("unused")
 				String answer = (String)responce;
 				//answer.charAt(0);
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
+			AVLogger.w("stopCameraResponce",String.format("connection error %d",statusCode));
 			sendStopCamerasRequest();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
 			
@@ -954,6 +999,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
+			AVLogger.w("stopCameraResponce","connection failed with exception",e);
 			sendStopCamerasRequest();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 		}
@@ -1033,6 +1079,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
 			textViewSignal.setText(String.format("%d", statusCode));
+			AVLogger.w("telemetricWifiResponce",String.format("connection error %d",statusCode));
 			sendTelemetricMessage();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
 			
@@ -1040,6 +1087,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
+			AVLogger.w("telemetricWifiResponce","connection failed with exception",e);
 			textViewSignal.setText(e.getMessage());
 			sendTelemetricMessage();
 		//	toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
@@ -2085,6 +2133,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
+			AVLogger.w("shareConnectionResponce",String.format("connection error %d",statusCode));
 			progressDialog.dismiss();
 			toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteServerRefuse, statusCode), ToastBuilder.ICON_WARN, ToastBuilder.LENGTH_LONG);
 			//setCurrentState(STATE_ON);	
@@ -2093,6 +2142,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionFail(Throwable e) {
+			AVLogger.e("shareConnectionResponce","connection failed with exception",e);
 			progressDialog.dismiss();
 			toastBuilder.makeAndShowToast(getResources().getString(R.string.toastInviteFailNoConnection, e.getMessage()), ToastBuilder.ICON_ERROR, ToastBuilder.LENGTH_LONG);
 			//setCurrentState(STATE_ON);
@@ -2140,15 +2190,22 @@ public class AvatarMainActivity extends AccessoryProcessor {
 
 		@Override
 		protected void onConnectionSuccessful(Object responce) {
+			
+			parceJson((String)responce);
+			
+			if(currentState >= STATE_ON)
+			{
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);//  reRunCommands();
 			OnScreenLogger.setCommands(false);
 			stopStreaming();
 			driver.reset();
+			}
 		}
 
 		@Override
 		protected void onConnectionUnsuccessful(int statusCode) {
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
+			AVLogger.w("cmdConnectionResponse",String.format("connection error %d",statusCode));
 			OnScreenLogger.setCommands(false);
 			stopStreaming();
 			//driver.reset();
@@ -2158,6 +2215,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		protected void onConnectionFail(Throwable e) {
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(RERUN_COMMANDS), RERUN_COMMANDS_DELAY);
 			//driver.reset();
+			AVLogger.w("cmdConnectionResponse","connection failed with exception",e);
+			
 			OnScreenLogger.setCommands(false);
 			stopStreaming();
 			//driver.reset();
@@ -2167,7 +2226,14 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		DataOutputStream ds = new DataOutputStream(s);
 		byte[] error={90,90,0,90,0,90,0};*/
 		private static final String CMD_SLEEP="sleep";
+		private static final String CMD_STATUS="status";
+		private static final String CMD_ERRNUM="num";
+		private static final String CMD_ERROR_TEXT="txt";
+		private static final String STATUS_ERROR="error";
+		
+		
 		private static final String CMD_DIR="dir";
+		private static final String CMD_LOGLEVEL= "loglevel";
 		private static final String CMD_OMEGA="theta";
 		private static final String CMD_VOMEGA="phi";
 		
@@ -2192,6 +2258,23 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						return;
 					}
 
+					if (r.has(CMD_STATUS))
+					{
+						String status = r.getString(CMD_STATUS);
+						if(status.equalsIgnoreCase(STATUS_ERROR))
+						{
+							setCurrentState(STATE_OFF);
+							if(r.has(CMD_ERROR_TEXT)&&r.has(CMD_ERRNUM))
+							{
+								toastBuilder.makeAndShowToast(String.format("error %d: %s", r.getInt(CMD_ERRNUM), r.getString(CMD_ERROR_TEXT)),ToastBuilder.ICON_ERROR , Toast.LENGTH_LONG);
+							}
+							else
+							{
+								toastBuilder.makeAndShowToast("command server returned unspecified error",ToastBuilder.ICON_ERROR , Toast.LENGTH_LONG);
+							}
+						}
+					}
+					
 					if (r.has(CMD_SLEEP)) {
 						int sleep = r.getInt(CMD_SLEEP);
 						if (currentState > STATE_REMOTE_PAUSED) {
@@ -2207,11 +2290,16 @@ public class AvatarMainActivity extends AccessoryProcessor {
 							driver.setNewDirection(r.getInt(CMD_DIR),
 									r.getDouble(CMD_OMEGA),
 									r.getDouble(CMD_VOMEGA));
-							AVLogger.d("cmd", (String) responce);
+							AVLogger.v("cmd", (String) responce);
 						}
 					} else {
 
 					}
+					if(r.has(CMD_LOGLEVEL))
+					{
+						setLogLevel(r.getInt(CMD_LOGLEVEL));
+					}
+					
 
 				} catch (JSONException e) {
 					AVLogger.v("ConnectionResponceHandler", "parceJson", e);
