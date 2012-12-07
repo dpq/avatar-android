@@ -118,8 +118,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
      
      
     // private VideoSender videoSender;
-     private AudioSender audioSender;
-     private AudioReceiver audioReceiver;
+  //   private AudioSender audioSender;
+//     private AudioReceiver audioReceiver;
      private VideoReceiver videoReceiver;
  
 	//  private SensorManager mSensorManager;
@@ -431,8 +431,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		
 		videoReceiver = new VideoReceiver(videoView);
     //    videoSender = new VideoSender(this, cameraPreview);
-        audioSender = new AudioSender();
-        audioReceiver= new AudioReceiver();
+     //   audioSender = new AudioSender();
+     //   audioReceiver= new AudioReceiver();
         
       //  mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
        // mLuxmeter = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
@@ -581,7 +581,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			
 			long pingEndMsecs=System.currentTimeMillis();
 			int rtt = (int)(pingEndMsecs-pingStartMsecs);
-			audioSender.calcPackageMillis(rtt);
+	//		audioSender.calcPackageMillis(rtt);
 			ping = (rtt/2);
 			mainThreadHandler.sendMessageDelayed(mainThreadHandler.obtainMessage(CALC_PING),100);
 				
@@ -889,8 +889,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		{
 	//		videoSender.stopCamera();
 			videoReceiver.stopReceiveVideo();
-			audioSender.stopVoice();
-			audioReceiver.stopVoice();
+		//	audioSender.stopVoice();
+		//	audioReceiver.stopVoice();
 			streamsRunning=false;
 			sendStopCamerasRequest();
 		}
@@ -902,8 +902,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		{
 			//videoSender.startCamera();
 			
-			audioReceiver.startVoice();
-			audioSender.startVoice();
+		//	audioReceiver.startVoice();
+		//	audioSender.startVoice();
 			videoReceiver.startReceiveVideo();
 			streamsRunning=true;
 			sendStartCamerasRequest();
@@ -1247,10 +1247,10 @@ public class AvatarMainActivity extends AccessoryProcessor {
     public void setPortsAndHosts()
     {
     	videoReceiver.setAddress(serverAuthority, videoPort);
-    	audioSender.setHostAndPort(serverAuthority, audioPortOut);
-    	audioSender.setUseGsm(useGsm);
-    	audioReceiver.setHostAndPort(serverAuthority, audioPortIn);
-    	audioReceiver.setUseGsm(useGsm);
+    //	audioSender.setHostAndPort(serverAuthority, audioPortOut);
+    //	audioSender.setUseGsm(useGsm);
+    //	audioReceiver.setHostAndPort(serverAuthority, audioPortIn);
+    //	audioReceiver.setUseGsm(useGsm);
     	//videoSender.setHostAndPort(serverAuthority, videoPort);
     }
     
@@ -2325,8 +2325,8 @@ public class AvatarMainActivity extends AccessoryProcessor {
 	private void writeTokenToWorkers(String session_token)
 	{		
 		videoReceiver.setToken("web-"+session_token);
-		audioSender.setToken("ava-"+session_token);
-		audioReceiver.setToken("web-"+session_token);//web-
+	//	audioSender.setToken("ava-"+session_token);
+	//	audioReceiver.setToken("web-"+session_token);//web-
 		//videoSender.setToken("ava-"+session_token);
 		
 	}
