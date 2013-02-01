@@ -228,7 +228,7 @@ void loop()
         //static int my_already_read=0;
         if(millis()-timer>10) { // sending 100 times per second
 	    if (acc.isConnected()) {
-                int curRead=acc.read(my_msg,cmdLength,1);
+                int curRead=acc.read(my_msg,cmdLength,1 );
                   //my_msg[my_already_read]=curRead;
                  // my_already_read++;
 

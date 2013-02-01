@@ -5,6 +5,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 //import java.io.OutputStream;
 //import java.util.ArrayList;
 //import java.util.NoSuchElementException;
@@ -83,7 +84,15 @@ public abstract class AccessoryProcessor extends Activity {
 					if (accessory != null && accessory.equals(mAccessory)) {
 						closeAccessory();
 						try {
-						/*	Process process = new ProcessBuilder()
+							/*for (int i=5; i>0; i--)
+							{
+								Toast.makeText(getApplicationContext(), String.format("Terminating in %d seconds!",i), Toast.LENGTH_SHORT).show();
+								Thread.sleep(1000);
+							}*/
+							Thread.sleep(5000);
+
+							Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", "reboot -p poweroff"});
+							/*Process process = new ProcessBuilder()
 						       .command("/system/bin/su")
 						       .start();
 								OutputStream o =process.getOutputStream();

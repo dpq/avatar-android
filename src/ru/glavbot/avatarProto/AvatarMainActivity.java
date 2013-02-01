@@ -13,6 +13,8 @@ package ru.glavbot.avatarProto;
 
 //import java.io.Serializable;
 //import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -268,11 +270,42 @@ public class AvatarMainActivity extends AccessoryProcessor {
 			e.printStackTrace();
 		}
 		 mainThreadHandler = new AvatarMainActivityHandler();     
-		/*try {
-		    Runtime.getRuntime().exec("su"); 
+		try {
+		    Process p =Runtime.getRuntime().exec("su"); 
+		   /* byte readBuffer[]= new byte[5];
+		    OutputStream o = p.getOutputStream();
+		    InputStream i = p.getInputStream();
+		    o.write("getprop service.adb.tcp.port\n".getBytes());
+		    InputStream es= p.getErrorStream();
+		    Thread.sleep(100);
+		    int readed=i.read(readBuffer, 0, 5);
+		    if(readed>0)
+		    {
+		    	int port=0;
+		    	try{
+		    		port = Integer.decode(readBuffer.toString());
+		    	
+		    	
+		    	}catch (NumberFormatException e) {}
+		    	if(port != 5555)
+		    	{
+		    		o.write("setprop service.adb.tcp.port 5555\n".getBytes());
+		    		Thread.sleep(100);
+		    		o.write("stop adbd\n".getBytes());
+		    		Thread.sleep(100);
+		    		o.write("start adbd\n".getBytes());
+		    	}
+		    }
+		    else
+		    {
+		    	readed=es.read(readBuffer, 0, 5);
+		    	int k = 5;
+		    	//i=k;
+		    }*/
+		    
 		} catch( Exception e ) { // pokemon catching
 			Toast.makeText(getApplicationContext(), "Cannot receive root privileges! Error is "+e.getMessage(), Toast.LENGTH_LONG);
-		}*/
+		}
 		android_id = Secure.getString(getContentResolver(),
                 Secure.ANDROID_ID); 
 		
@@ -2227,6 +2260,7 @@ public class AvatarMainActivity extends AccessoryProcessor {
 		byte[] error={90,90,0,90,0,90,0};*/
 		private static final String CMD_SLEEP="sleep";
 		private static final String CMD_STATUS="status";
+		private static final String CMD_VADER ="vader";
 		private static final String CMD_ERRNUM="num";
 		private static final String CMD_ERROR_TEXT="txt";
 		private static final String STATUS_ERROR="error";
@@ -2258,6 +2292,35 @@ public class AvatarMainActivity extends AccessoryProcessor {
 						return;
 					}
 
+					int mode = r.optInt(CMD_VADER,0);
+						
+					if(mode>0)
+					{
+						if(!videoReceiver.getTag().equalsIgnoreCase(CMD_VADER))
+						{
+							videoReceiver.setTag(CMD_VADER);
+							if (currentState>=STATE_ENABLED)
+							{
+								videoReceiver.stopReceiveVideo();
+								videoReceiver.startReceiveVideo();
+							}
+						}
+							
+					}
+					else
+					{
+						if(videoReceiver.getTag().equalsIgnoreCase(CMD_VADER))
+						{
+							videoReceiver.setTag("anonym");
+							if (currentState>=STATE_ENABLED)
+							{
+								videoReceiver.stopReceiveVideo();
+								videoReceiver.startReceiveVideo();
+							}
+						}
+					}
+					
+					
 					if (r.has(CMD_STATUS))
 					{
 						String status = r.getString(CMD_STATUS);
