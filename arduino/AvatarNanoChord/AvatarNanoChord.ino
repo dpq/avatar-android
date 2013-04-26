@@ -8,10 +8,10 @@ unsigned char cmd[CMDLENGTH]={0};
 const int leftForwardPin =4;
 const int leftBackwardPin= 5;
 const int leftShimPin= 6;
-const int rightForwardPin =7;
-const int rightBackwardPin = 8;
-const int rightShimPin = 9;
-const int headPin= 10;
+const int rightForwardPin =8;
+const int rightBackwardPin = 9;
+const int rightShimPin = 10;
+const int headPin= 11;
 
 
 Servo head;
@@ -33,17 +33,18 @@ class Track{
   }
 
   
-  void setValues(int dir, int val)
+  void beginSetValues(int dir, int val)
   {
+     analogWrite(sp,val);
     if(dir >0)
     {
       digitalWrite(bp,LOW);
-      digitalWrite(fp,HIGH);
+
     }
     else
     {
       digitalWrite(fp,LOW);
-      digitalWrite(bp,HIGH);
+
     }
     if(val==0)
     {
@@ -51,7 +52,25 @@ class Track{
       digitalWrite(fp,LOW);
     }
     
-    analogWrite(sp,val);
+ 
+
+  }
+  
+  void endSetValues(int dir, int val)
+  {
+    if(dir >0)
+    {
+
+      digitalWrite(fp,HIGH);
+    }
+    else
+    {
+
+      digitalWrite(bp,HIGH);
+    }
+
+    
+
 
   }
   
@@ -77,15 +96,21 @@ void setup()
 void loop()
 {
 
-        if(millis()-timer>10) { // sending 100 times per second
+        if(millis()-timer>20) { // sending 50 times per second
 	    if (Serial.available()>=CMDLENGTH) {
                 for(int i=0; i<CMDLENGTH;i++)            
                 {
                   cmd[i]=Serial.read();
                 }
-                left.setValues(cmd[0],cmd[1]);
-                right.setValues(cmd[2],cmd[3]);
+                left.beginSetValues(cmd[0],cmd[1]);
+                right.beginSetValues(cmd[2],cmd[3]);
                 head.write(cmd[4]);
+                
+                delay(10);
+                
+                left.endSetValues(cmd[0],cmd[1]);
+                right.endSetValues(cmd[2],cmd[3]);
+
 
 	    }
 

@@ -222,7 +222,9 @@ ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 		        if(tagWheelSpeeds[i] > curWheelSpeeds[i]) curWheelSpeeds[i] += ACCELERATION;
 		        if(tagWheelSpeeds[i] < curWheelSpeeds[i]) curWheelSpeeds[i] -= ACCELERATION;
 		        
-		        if(tagWheelSpeeds[i]==0) curWheelSpeeds[i]=0;
+		        
+		        
+		        //if(tagWheelSpeeds[i]==0) curWheelSpeeds[i]=0;
 		        
 		    	//curWheelDirs[i]=tagWheelDirs[i]; 
 		   /*     if(tagWheelDirs[i] > curWheelDirs[i]) curWheelDirs[i] += TURN_SPEED;
@@ -235,6 +237,11 @@ ScheduledThreadPoolExecutor timer= new ScheduledThreadPoolExecutor(1);
 		        	meandir = meandir + curWheelDirs[i]; 
 		        }
 		    }
+		    if(needStop&&(Math.abs(curWheelSpeeds[0])<ACCELERATION))
+	        {
+		    	needStop=false;
+		    	prevDir=8;
+	        }
 		}
 	    // head
 	    if((curHeadPos<tagHeadPos)&&(tagHeadPos-curHeadPos>1))
@@ -300,6 +307,7 @@ private int prevLedLight=0;
 // prev dir for inertion
 
 private int prevDir=8;
+private boolean needStop=false;
 private double prevOmega=0;
 
 
@@ -453,25 +461,23 @@ Inertion inertion = new Inertion();
 
 	private void calculateDesiredValues(int direction, double omega,
 			boolean speed) {
-
-		int spd = (int) (omega * (((double) WHEEL_CRUISE_SPD) / Pi)); /*
-																	 *  * omega /
-																	 * WHEEL_DIRECTIONS
-																	 * [
-																	 * direction
-																	 * ][WMK1];
-																	 */
+// speed
+		
+		
+		//halt
 		if (direction == 9) {
 			setTagSpeed(0, 0); // speed direction: absolutely magic!
 			setTagSpeed(1, 0);
 			setTagSpeed(2, 0);
-		} else {
+		} 
+		//not halt
+		else {
 			if (Math.abs(omega) > 0.1) { // we got the angular speed
 				if (direction == 8) { // SLEEP (we do not move any direction)
 					setWheelsDirection(WHEEL_DIRECTIONS[direction], -1, 0);
 
-					if (speed) {
-
+					if (speed&&(!needStop)) {
+						int spd = (int) (omega * (((double) WHEEL_CRUISE_SPD) / Pi));
 						setTagSpeed(0, spd);
 						setTagSpeed(1, -spd);
 						setTagSpeed(2, spd);
@@ -526,7 +532,7 @@ Inertion inertion = new Inertion();
 
 			} else { // we do not have angular speed, only current direction
 						// (including direction = SLEEP MODE (no move)
-
+				setTagDirection( direction);
 				if (speed) {
 					if ((Math.abs(prevOmega) == Pi) && (prevDir == 8)
 							&& (direction == 8)) {
@@ -538,13 +544,31 @@ Inertion inertion = new Inertion();
 					setWheelsSpeed(WHEEL_DIRECTIONS[direction],
 							speed ? WHEEL_CRUISE_SPD : 0, -1, 0);
 				}
-
-				setWheelsDirection(WHEEL_DIRECTIONS[direction], -1, 0);
+				if(!needStop)
+				{
+					setWheelsDirection(WHEEL_DIRECTIONS[direction], -1, 0);
+				}
 			}
 		}
-		prevDir = direction;
+		if(!needStop)
+		{
+			prevDir = direction;
+		}
 		prevOmega = omega;
 	}
+	
+private void setTagDirection(int direction)
+{
+	if((direction==8)&& (prevDir!=8))
+		{
+			needStop = true;
+		}
+	else
+	{
+		
+	}
+
+}
 
 
 private void setDirection(int wheelNum, int dir) {
